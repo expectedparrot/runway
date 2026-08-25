@@ -19,7 +19,7 @@ output, and escaping that matches it exactly. Both are documented in README.md.
 
 from __future__ import annotations
 
-from . import progress
+from . import inspection, progress
 from .markdown import render_option_text, render_question_text
 from .question_types import RENDERERS, get_renderer
 from .renderer import (
@@ -38,6 +38,7 @@ __all__ = [
     "SUPPORTED_QUESTION_TYPES",
     "__version__",
     "get_renderer",
+    "inspection",
     "item_names",
     "iter_questions",
     "previewable",

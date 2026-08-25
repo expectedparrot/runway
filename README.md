@@ -19,7 +19,7 @@ time, each with a recorded parity test.
 git clone https://github.com/expectedparrot/runway.git
 cd runway
 uv sync
-uv run runway examples/mixed_survey.json
+uv run runway check examples/mixed_survey.json
 ```
 
 Or install it as a tool, so `runway` is on your PATH anywhere:
@@ -48,14 +48,68 @@ install is still reproducible.
 ## Usage
 
 ```bash
-runway examples/mixed_survey.json            # -> outputs/mixed_survey.html
-runway examples/mixed_survey.json --split    # -> one file per question
-runway examples/*.json                       # -> one .html per survey
-runway examples/*.json -o build/previews     # -> somewhere else
+runway check  survey.json     # what each question will render as
+runway render survey.json     # write the HTML
+runway types                  # which question types have a control
+runway guide                  # what this does, and what a preview cannot show
+runway version                # version, and the types it draws
 ```
 
-`python -m runway` is the same entry point if you would rather not rely on the
-script being on `PATH`.
+A verb is always required — `runway survey.json` is not a shortcut for
+`runway render survey.json`, so what a command does never depends on what its
+argument happens to be named. `python -m runway` is the same entry point if you
+would rather not rely on the script being on `PATH`.
+
+### check
+
+Start here. It writes nothing, and tells you what each question will actually
+become:
+
+```
+$ runway check examples/mixed_survey.json
+
+mixed_survey.json  -  7 items
+
+  drawn      commute_mode          multiple_choice
+  drawn      commute_enjoyment     likert_five
+  drawn      commute_satisfaction  linear_scale
+  note       commute_barriers      rank             (no preview built for this type yet)
+  warning    commute_breakdown     dict             (never shown to a respondent)
+
+5 drawn, 1 note, 1 warning
+```
+
+Four verdicts, and they are genuinely different news. **drawn** previews with
+its real control. **automatic** is answered on the server, so nobody is ever
+shown it and nothing is missing. **note** means this package has not
+transcribed a control for the type yet — the survey is fine, the preview is
+behind. **warning** means the type has no human-survey rendering anywhere, so
+no preview could exist; that one is about the survey rather than about this
+tool, and it is the only one `check` exits non-zero for.
+
+The verdict is the page's verdict — `test_check_agrees_with_what_render_produces`
+renders every example and confirms the two cannot disagree.
+
+`check` is also where the thinking wrapper shows up, which is the case worth
+having a command for at all:
+
+```
+  automatic  pet_category    multiple_choice   (thinking)
+```
+
+That question is a `multiple_choice` and would otherwise look perfectly
+previewable. Nobody is ever asked it.
+
+### render
+
+```bash
+runway render examples/mixed_survey.json            # -> outputs/mixed_survey.html
+runway render examples/mixed_survey.json --split    # -> one file per question
+runway render examples/*.json                       # -> one .html per survey
+runway render examples/*.json -o build/previews     # -> somewhere else
+```
+
+`--json` on `check`, `types` and `version` gives machine-readable output.
 
 Each survey is written under its own file name, so several can be rendered into
 one output directory and sit side by side. The library call keeps its own
@@ -467,10 +521,11 @@ runway/
 │   ├── goldens.py                reads the two recorded files
 │   ├── react_cases.json          what was rendered
 │   ├── react_goldens.json        what came out
-│   └── test_*.py
+│   └── test_*.py                 parity, survey, markdown, packaging, cli
 └── src/runway/
     ├── __init__.py               public API
-    ├── cli.py                    the `runway` command
+    ├── cli.py                    the `runway` command: render/check/types/guide/version
+    ├── inspection.py             what a question will render as, without rendering
     ├── __main__.py               `python -m runway`
     ├── renderer.py               page/body/progress composition
     ├── progress.py               which indicator a config draws at a position

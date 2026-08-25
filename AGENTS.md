@@ -46,6 +46,20 @@ Recording happens in the repository that owns the React components, not here.
 A change to those components arrives as a new pair of files; the diff is the
 specification for whatever the templates then need.
 
+## The command line
+
+Five commands, argparse, no CLI dependency: `render`, `check`, `types`,
+`guide`, `version`. A verb is always required.
+
+`check` classifies without rendering, and `inspection.classify` must keep
+mirroring `renderer.render_question`'s dispatch order — background questions
+are tested for *before* the type registry, because a thinking-wrapped
+`multiple_choice` is still `multiple_choice` and the registry would happily
+promise a radio list for a page nobody is served.
+`test_check_agrees_with_what_render_produces` renders every example and holds
+the two to each other, so adding a renderer without updating the classifier
+fails there rather than in someone's report.
+
 ## Scope
 
 Question types are added one at a time, each with a recorded parity test — see
