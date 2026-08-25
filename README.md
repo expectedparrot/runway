@@ -16,14 +16,34 @@ time, each with a recorded parity test.
 ## Install
 
 ```bash
-pip install -e .
+git clone https://github.com/expectedparrot/runway.git
+cd runway
+uv sync
+uv run runway examples/mixed_survey.json
 ```
 
-Python 3.10+, **Jinja2** (which brings MarkupSafe), and
-**`markdown-it-py[linkify]`** for question and option text — see
-[Markdown](#markdown). The `linkify` extra is not optional: the `gfm-like`
-preset raises `ModuleNotFoundError` without it rather than quietly leaving bare
-URLs unlinked. Nothing else.
+Or install it as a tool, so `runway` is on your PATH anywhere:
+
+```bash
+uv tool install git+https://github.com/expectedparrot/runway.git
+```
+
+To work on it, `uv sync --extra dev` adds pytest and ruff. `pip install -e
+".[dev]"` works too, and resolves fresh rather than from `uv.lock`.
+
+Python 3.10+ and three runtime dependencies: **Jinja2** (which brings
+MarkupSafe), **`markdown-it-py[linkify]`** for question and option text — see
+[Markdown](#markdown) — and **`edsl`** itself. The `linkify` extra is not
+optional: the `gfm-like` preset raises `ModuleNotFoundError` without it rather
+than quietly leaving bare URLs unlinked.
+
+**`edsl` is tracked from git `main`, not from a release**, which has two
+consequences worth knowing before you install. Installing needs git and network
+access, so this is not a package you can vendor into an air-gapped build. And a
+direct URL reference in the dependency list is something PyPI rejects outright,
+so runway is installable from a checkout or a git URL but cannot be published to
+PyPI while that line stands. `uv.lock` pins the exact commit, so a locked
+install is still reproducible.
 
 ## Usage
 
@@ -284,12 +304,13 @@ utilities, so it is not a concatenation), and the progress bar's ARIA and
 ## Tests
 
 ```bash
-pytest                       # everything
-python tests/test_choice.py  # or a standalone runner, which needs no pytest
+uv run pytest                       # everything
+uv run python tests/test_choice.py  # or a standalone runner, which needs no pytest
 ```
 
 The standalone runners exist so a single file can be run and read on its own;
-they need `runway` importable, so either `pip install -e .` or `PYTHONPATH=src`.
+they need `runway` importable, so run them through `uv run` or with the package
+installed.
 
 `test_choice` holds the question byte-parity tests and the goldens' own
 contract; `test_progress` covers the indicator — its markup against the
@@ -435,6 +456,7 @@ does, or a newly supported type will keep reading as unsupportable.
 ```
 runway/
 ├── pyproject.toml
+├── uv.lock
 ├── examples/                     surveys to render
 │   ├── one_question_survey.json  one multiple choice question
 │   ├── mixed_survey.json         one of every type, drawn and undrawn

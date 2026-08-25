@@ -20,10 +20,14 @@ emits, make it uglier.
 ## Development checks
 
 ```bash
-pip install -e ".[dev]"
-ruff check .
-pytest -q
+uv sync --extra dev
+uv run ruff check .
+uv run pytest -q
 ```
+
+Commit `uv.lock` whenever you change a dependency — CI syncs with `--locked`
+and fails rather than re-resolving, so an unlocked `pyproject.toml` change
+breaks the build instead of quietly making CI test something nobody else has.
 
 `pytest` runs against the source tree. `tests/test_packaging.py` is the one
 that also means something against a built wheel — run the suite from an
@@ -50,10 +54,12 @@ it falls through to a stand-in that renders a complete page with a note in
 place of the control, and that is the intended behavior for everything outside
 the supported table.
 
-Nothing here calls a model, reaches the network at run time, or needs node. The
-single external reference in a rendered page is the Google Fonts stylesheet
-link, which is deliberate and documented under **Known gaps**. Keep it that
-way: a new runtime dependency needs a reason in the README.
+Nothing here calls a model, reaches the network at run time, or needs node —
+`edsl` is a declared dependency but rendering does not go through it, and a
+preview is still a pure function from a question dict to a string. The single
+external reference in a rendered page is the Google Fonts stylesheet link, which
+is deliberate and documented under **Known gaps**. Keep it that way: a new
+runtime dependency needs a reason in the README.
 
 ## Public repository
 

@@ -12,9 +12,13 @@ jobs:
         python-version: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: pytest -q
+          enable-cache: true
+      # --locked fails rather than re-resolving, so a pyproject change that was
+      # never locked is a build error here instead of a silent difference
+      # between what CI tested and what anyone else installs. This clones edsl
+      # from git on a cold cache, which is why caching above is not optional.
+      - run: uv sync --extra dev --locked --python ${{ matrix.python-version }}
+      - run: uv run ruff check .
+      - run: uv run pytest -q

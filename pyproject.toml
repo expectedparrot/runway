@@ -19,12 +19,18 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Text Processing :: Markup :: HTML",
 ]
-# Deliberately short. The linkify extra is not optional: markdown-it's
-# `gfm-like` preset raises ModuleNotFoundError without it rather than quietly
-# leaving bare URLs unlinked.
+# The linkify extra is not optional: markdown-it's `gfm-like` preset raises
+# ModuleNotFoundError without it rather than quietly leaving bare URLs
+# unlinked.
+#
+# edsl is tracked from git main rather than a release. Two consequences worth
+# knowing before changing it: this project cannot be uploaded to PyPI while a
+# direct URL reference is in this list, and installing requires git and network
+# access. `uv.lock` pins the commit, so a locked install is still reproducible.
 dependencies = [
   "Jinja2>=3.1",
   "markdown-it-py[linkify]>=3.0",
+  "edsl @ git+https://github.com/expectedparrot/edsl.git@main",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +47,11 @@ Source = "https://github.com/expectedparrot/runway"
 # templates/ and assets/ live inside the package directory, so hatchling ships
 # them with it. They are not decoration: a wheel without them renders nothing,
 # which tests/test_packaging.py is there to catch.
+# Required for the edsl dependency: hatchling refuses direct URL requirements
+# (`pkg @ git+https://...`) unless a project opts in.
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/runway"]
 
