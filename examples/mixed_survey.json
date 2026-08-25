@@ -1,0 +1,104 @@
+{
+  "questions": [
+    {
+      "question_name": "commute_mode",
+      "question_type": "multiple_choice",
+      "question_text": "How do you usually get to work?",
+      "question_options": [
+        "Drive alone",
+        "Carpool",
+        "Public transit",
+        "Walk or cycle",
+        "I work from home"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_time",
+      "question_type": "multiple_choice",
+      "question_text": "How long is your commute, door to door, one way?",
+      "question_options": [
+        "Under 10 minutes",
+        "10 to 20 minutes",
+        "20 to 30 minutes",
+        "30 to 45 minutes",
+        "45 to 60 minutes",
+        "Over an hour",
+        "It varies too much to say"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_enjoyment",
+      "question_type": "likert_five",
+      "question_text": "My commute is a good use of my time.",
+      "question_options": [
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_satisfaction",
+      "question_type": "linear_scale",
+      "question_text": "How is your commute, all things considered?",
+      "question_options": [1, 2, 3, 4, 5],
+      "option_labels": {
+        "1": "Couldn't be worse",
+        "5": "Couldn't be better"
+      },
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_switch",
+      "question_type": "yes_no",
+      "question_text": "Would you switch if a better option existed?",
+      "question_options": ["Yes", "No"],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_barriers",
+      "question_type": "rank",
+      "question_text": "Rank these from most to least annoying.",
+      "question_options": [
+        "Traffic",
+        "Cost",
+        "Crowding",
+        "Unreliable timing"
+      ],
+      "num_selections": 4,
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_breakdown",
+      "question_type": "dict",
+      "question_text": "Roughly how does a typical week's commuting break down?",
+      "answer_keys": ["days_in_office", "minutes_each_way", "usual_departure"],
+      "value_types": ["int", "int", "str"],
+      "value_descriptions": [
+        "Days per week you travel to a workplace",
+        "Door-to-door minutes, one way",
+        "The time you normally leave home"
+      ],
+      "include_comment": true,
+      "permissive": false,
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "humanize_schema": {
+    "questions": {
+      "commute_mode": {
+        "comment": { "label": "Anything you'd add about how you get there?" }
+      },
+      "commute_time": {
+        "format": { "type": "dropdown" }
+      }
+    },
+    "survey": {
+      "custom_css": null
+    }
+  }
+}

@@ -1,0 +1,10 @@
+/* Input for the questions.css build -- see tailwind.config.cjs.
+ *
+ * `base` is Tailwind's preflight, which the live app also loads. Without it the
+ * browser's default input/select/label styling shows through and the controls
+ * do not match the app.
+ *
+ * `components` is omitted: none of the question components use @apply-based
+ * component classes, so it would emit nothing. */
+@tailwind base;
+@tailwind utilities;

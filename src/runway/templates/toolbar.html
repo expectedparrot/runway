@@ -1,0 +1,33 @@
+{# Preview chrome: the bar that jumps between questions.
+
+   This is not part of the survey. Every class is either a Tailwind utility or
+   a `preview-` hook, never `edsl-`, so a survey's custom CSS cannot style it by
+   accident -- and page.html re-asserts its essential layout after custom CSS,
+   so a stylesheet with broad selectors cannot leave the preview unnavigable. #}
+<div class="preview-toolbar fixed top-0 left-0 right-0 z-50 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-2 text-sm">
+{#- -#}
+<span class="font-semibold text-gray-500 shrink-0">Survey preview</span>
+{#- -#}
+<span id="preview-counter" class="tabular-nums text-gray-500 shrink-0">1 / {{ count }}</span>
+{#- -#}
+<div class="flex items-center gap-1 shrink-0">
+{#- -#}
+<button type="button" id="preview-prev" class="rounded-md border border-gray-300 bg-white px-2 py-1 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40" aria-label="Previous question">&#x2190;</button>
+{#- -#}
+<button type="button" id="preview-next" class="rounded-md border border-gray-300 bg-white px-2 py-1 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40" aria-label="Next question">&#x2192;</button>
+{#- -#}
+</div>
+{#- -#}
+<label for="preview-question-select" class="sr-only">Jump to question</label>
+{#- -#}
+<select id="preview-question-select" class="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-900">
+{#- -#}
+{%- for item in items %}
+<option value="{{ loop.index0 }}">{{ loop.index }}. {{ item.name }} — {{ item.pretty_type }}{% if item.is_background %} (automatic){% endif %}</option>
+{#- -#}
+{%- endfor %}
+</select>
+{#- -#}
+<noscript><span class="text-gray-500">JavaScript is off — showing the first question only.</span></noscript>
+{#- -#}
+</div>

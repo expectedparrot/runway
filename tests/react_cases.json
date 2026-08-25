@@ -1,0 +1,888 @@
+{
+  "multiple_choice_radio": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "multiple_choice_escaped": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Don't say \"hi\" & <b>bye</b>",
+      "question_options": [
+        "Don't \"know\" & <x>"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "multiple_choice_dropdown": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  },
+  "likert_five_radio": {
+    "kind": "question",
+    "component": "LikertFiveQuestion",
+    "question": {
+      "question_name": "agreement",
+      "question_type": "likert_five",
+      "question_text": "I'd take this commute again.",
+      "question_options": [
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "likert_five_dropdown": {
+    "kind": "question",
+    "component": "LikertFiveQuestion",
+    "question": {
+      "question_name": "agreement",
+      "question_type": "likert_five",
+      "question_text": "I'd take this commute again.",
+      "question_options": [
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree"
+      ]
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  },
+  "yes_no_radio": {
+    "kind": "question",
+    "component": "YesNoQuestion",
+    "question": {
+      "question_name": "would_switch",
+      "question_type": "yes_no",
+      "question_text": "Would you switch if it didn't cost more?",
+      "question_options": [
+        "Yes",
+        "No"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "yes_no_dropdown": {
+    "kind": "question",
+    "component": "YesNoQuestion",
+    "question": {
+      "question_name": "would_switch",
+      "question_type": "yes_no",
+      "question_text": "Would you switch if it didn't cost more?",
+      "question_options": [
+        "Yes",
+        "No"
+      ]
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  },
+  "linear_scale_radio": {
+    "kind": "controlled_question",
+    "component": "ControlledLinearScaleQuestion",
+    "question": {
+      "question_name": "satisfaction",
+      "question_type": "linear_scale",
+      "question_text": "How is your commute, all things considered?",
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Couldn't be worse",
+        "5": "Couldn't be better"
+      }
+    },
+    "humanize_schema": null
+  },
+  "linear_scale_dropdown": {
+    "kind": "controlled_question",
+    "component": "ControlledLinearScaleQuestion",
+    "question": {
+      "question_name": "satisfaction",
+      "question_type": "linear_scale",
+      "question_text": "How is your commute, all things considered?",
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Couldn't be worse",
+        "5": "Couldn't be better"
+      }
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  },
+  "linear_scale_unlabelled": {
+    "kind": "controlled_question",
+    "component": "ControlledLinearScaleQuestion",
+    "question": {
+      "question_name": "satisfaction",
+      "question_type": "linear_scale",
+      "question_text": "How is your commute, all things considered?",
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": null
+    },
+    "humanize_schema": null
+  },
+  "question_block_with_comment": {
+    "kind": "question_block",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": {
+      "optional": false,
+      "comment": {
+        "label": "Why? Say as much or as little as you'd like."
+      }
+    }
+  },
+  "question_block_without_comment": {
+    "kind": "question_block",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": {
+      "optional": false,
+      "comment": null
+    }
+  },
+  "progress_bar_zero": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 0,
+      "label": {
+        "type": "percent"
+      }
+    }
+  },
+  "progress_bar_eighth": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 0.125,
+      "label": {
+        "type": "percent"
+      }
+    }
+  },
+  "progress_bar_third": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 0.3333333333333333,
+      "label": {
+        "type": "percent"
+      }
+    }
+  },
+  "progress_bar_two_thirds": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 0.6666666666666666,
+      "label": {
+        "type": "percent"
+      }
+    }
+  },
+  "progress_bar_complete": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 1,
+      "label": {
+        "type": "percent"
+      }
+    }
+  },
+  "progress_bar_unlabelled": {
+    "kind": "progress",
+    "progress": {
+      "type": "bar",
+      "fraction": 0.5,
+      "label": null
+    }
+  },
+  "progress_hidden": {
+    "kind": "progress",
+    "progress": {
+      "type": "hidden"
+    }
+  },
+  "progress_steps_number": {
+    "kind": "progress",
+    "progress": {
+      "type": "steps",
+      "marker": "number",
+      "steps": [
+        {
+          "label": "About you",
+          "status": "complete"
+        },
+        {
+          "label": "Your commute",
+          "status": "current"
+        },
+        {
+          "label": "Anything you'd add",
+          "status": "upcoming"
+        }
+      ]
+    }
+  },
+  "progress_steps_dot": {
+    "kind": "progress",
+    "progress": {
+      "type": "steps",
+      "marker": "dot",
+      "steps": [
+        {
+          "label": null,
+          "status": "current"
+        },
+        {
+          "label": null,
+          "status": "upcoming"
+        }
+      ]
+    }
+  },
+  "progress_steps_all_complete": {
+    "kind": "progress",
+    "progress": {
+      "type": "steps",
+      "marker": "number",
+      "steps": [
+        {
+          "label": "About you",
+          "status": "complete"
+        },
+        {
+          "label": "Your commute",
+          "status": "complete"
+        }
+      ]
+    }
+  },
+  "survey_shell": {
+    "kind": "shell",
+    "additional_classes": "edsl-survey-container min-h-screen pb-8 flex flex-col"
+  },
+  "markdown_text_emphasis": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Really **now**, or _later_?",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_link": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "See [our policy](https://example.com/a?b=1&c=2).",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_bare_url": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "See https://example.com for details.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_paragraphs": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "First para.\n\nSecond para.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_soft_break": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Line one\nline two.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_hard_break": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Line one  \nline two.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_bullet_list": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one:\n\n- Apples\n- Pears",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_ordered_list": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Steps:\n\n1. First\n2. Second",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_inline_code": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Type `SELECT *` exactly.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_fenced_code": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Run this:\n\n```py\nx = 1\n```",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_blockquote": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "> A quoted instruction.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_heading": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "## Section\n\nBody text.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_strikethrough": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "This is ~~wrong~~ right.",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_table": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "| a | b |\n| - | - |\n| 1 | 2 |",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_hr": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Above\n\n---\n\nBelow",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_image": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "![A chart](https://example.com/c.png)",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_raw_html": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "<div class=\"x\">hi</div>",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_entity": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "5 &lt; 6 &amp; 7",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_not_markdown": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "snake_case_word and 2 * 3 * 4 = 24",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_backslash": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "\\*not italic\\*",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_unicode": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Café ☕ — naïve",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_emphasis": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "**Strongly** agree",
+        "_Mildly_ agree"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_link": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "See [the terms](https://example.com/t?a=1&b=2)"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_bare_url": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Visit https://example.com now"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_code": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Run `git status` first"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_strikethrough": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "~~Discontinued~~ Replaced"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_escaped": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Don't \"say\" **bold** & <x>"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_list": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "- one\n- two"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_paragraphs": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "First.\n\nSecond."
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_unicode": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Café ☕",
+        "naïve — yes"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_not_markdown": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "snake_case stays",
+        "2 * 3 = 6"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_dropdown_stays_literal": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one",
+      "question_options": [
+        "**Strongly** agree"
+      ]
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  },
+  "markdown_option_fenced_code": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Run:\n\n```py\nx = 1\n```"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_image": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "![dot](https://example.com/d.png) Yes"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_hard_break": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "one  \ntwo"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_link_title": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "[a](https://example.com \"T\")",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_bare_fence": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Run:\n\n```\nx = 1\n```"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_bare_fence": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Run this:\n\n```\nx = 1\n```",
+      "question_options": [
+        "Option A"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_text_table_aligned": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "| Mode | Time | Cost |\n| :- | -: | :-: |\n| Train | 35 min | 4.80 |\n| Bus | 50 min | 2.10 |",
+      "question_options": [
+        "Option A",
+        "Option B"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "markdown_option_table": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "q",
+      "question_type": "multiple_choice",
+      "question_text": "Which?",
+      "question_options": [
+        "| a | b |\n| - | - |\n| 1 | 2 |"
+      ]
+    },
+    "humanize_schema": null
+  }
+}

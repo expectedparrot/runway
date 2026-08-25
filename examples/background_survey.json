@@ -1,0 +1,80 @@
+{
+  "questions": [
+    {
+      "question_name": "pet",
+      "question_text": "Which pet do you have at home?",
+      "question_options": [
+        "A dog",
+        "A cat",
+        "Something else",
+        "None"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "pet_category",
+      "question_text": "The respondent said: {{ pet.answer }}. Which category does that fall into?",
+      "question_options": [
+        "Common",
+        "Unusual",
+        "No pet"
+      ],
+      "thinking_model": {
+        "model": "test",
+        "parameters": {
+          "temperature": 0.5
+        },
+        "inference_service": "test",
+        "edsl_class_name": "TestServiceLanguageModel"
+      },
+      "thinking_system_prompt": "Classify tersely. Answer with the option only.",
+      "question_type": "multiple_choice",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "pet_portrait",
+      "question_text": "A warm watercolour portrait of {{ pet.answer }}, on a plain background.",
+      "model": "test-image",
+      "service_name": "test",
+      "generation_parameters": {},
+      "question_type": "image_generation",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "pet_word_count",
+      "question_text": "{{ pet.answer | length }}",
+      "question_type": "compute",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "pet_attachment",
+      "question_text": "How attached are you to your pet?",
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Not at all",
+        "5": "Completely"
+      },
+      "question_type": "linear_scale",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "pet_story",
+      "question_text": "Tell us about them.",
+      "question_type": "free_text",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "humanize_schema": {
+    "questions": {},
+    "survey": {
+      "custom_css": null
+    }
+  }
+}

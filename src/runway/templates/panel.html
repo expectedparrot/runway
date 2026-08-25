@@ -1,0 +1,9 @@
+{# One question's survey page inside a bundle.
+
+   `display: contents` when active, so the panel disappears from layout and its
+   child becomes a direct child of #root -- the survey shell is a chain of
+   full-height flex containers, and an ordinary wrapper div would break it.
+
+   The first panel carries `is-active` from the server, so a document opened
+   without JavaScript still shows a question rather than nothing. #}
+<div class="preview-panel{% if is_active %} is-active{% endif %}" data-question-name="{{ question_name }}">{{ body_html }}</div>

@@ -1,0 +1,11 @@
+# Normalize to LF in the repository. The recorded goldens and the templates
+# they are compared against are byte-sensitive, and CI runs on Linux; a
+# checkout that differed by line ending would be a parity failure with no
+# visible cause.
+* text=auto eol=lf
+
+# Generated, and large. Do not show it in diffs.
+src/runway/assets/questions.css linguist-generated=true -diff
+
+# Recorded, not authored.
+tests/react_goldens.json linguist-generated=true

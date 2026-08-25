@@ -1,0 +1,51 @@
+{
+  "questions": [
+    {
+      "question_name": "commute_mode",
+      "question_type": "multiple_choice",
+      "question_text": "How do you usually get to work?",
+      "question_options": [
+        "Drive alone",
+        "Carpool",
+        "Public transit",
+        "Walk or cycle",
+        "I work from home"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_enjoyment",
+      "question_type": "likert_five",
+      "question_text": "My commute is a good use of my time.",
+      "question_options": [
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_satisfaction",
+      "question_type": "linear_scale",
+      "question_text": "How is your commute, all things considered?",
+      "question_options": [1, 2, 3, 4, 5],
+      "option_labels": {
+        "1": "Couldn't be worse",
+        "5": "Couldn't be better"
+      },
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "humanize_schema": {
+    "questions": {
+      "commute_satisfaction": {
+        "comment": { "label": "Anything you'd add?" }
+      }
+    },
+    "survey": {
+      "custom_css": ".edsl-survey-container { background: #fbf7f0; font-family: Georgia, 'Times New Roman', serif }\n.edsl-question-text { color: #7c2d12; font-size: 1.35rem; letter-spacing: -0.01em }\n.edsl-option { border: 1px solid #e7d9c4; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background: #fffdf9 }\n.edsl-option:hover { border-color: #c2410c }\n.edsl-radio { accent-color: #c2410c }\n.edsl-progress-fill { background: #c2410c }\n.edsl-comment-field { border-color: #e7d9c4; background: #fffdf9 }"
+    }
+  }
+}

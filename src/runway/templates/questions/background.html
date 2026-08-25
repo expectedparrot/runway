@@ -1,0 +1,34 @@
+{# Stand-in for the questions a respondent is never shown.
+
+   Compute, image generation and thinking-wrapped questions are answered on the
+   server between pages and advanced straight past by the survey navigator, so
+   no page for one is ever served.
+
+   A third notice rather than one of the two in unsupported.html, because it is
+   a third situation. The note there means "this package is behind"; the warning
+   means "the survey needs fixing". Here nothing is wrong and nothing is
+   missing: there is no control because there is no respondent. So it is
+   informational blue, and it says what the question actually does instead of
+   apologising for a control it will never have.
+
+   No question text, for the same reason the hidden-text types have none: it is
+   a prompt for a model or an expression for the server, never something a
+   respondent reads, and putting it in the usual question-text markup would
+   imply a page the survey never shows. #}
+<div class="edsl-question mb-6">
+{#- -#}
+<div class="edsl-preview-background flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+{#- -#}
+{{ icon }}
+{#- -#}
+<div class="text-base text-blue-900">
+{#- -#}
+<p class="font-semibold">Answered automatically — no respondent sees this</p>
+{#- -#}
+<p class="mt-1">{{ reason }} The survey advances past it on its own, and the answer is recorded like any other, so later questions can pipe it.</p>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>

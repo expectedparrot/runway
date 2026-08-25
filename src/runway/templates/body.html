@@ -1,0 +1,49 @@
+{# The respondent-facing survey page, inside the app's layout container.
+
+   The inner container's class list is NOT a concatenation of the two sources
+   it comes from. The reference implementation merges the layout container's
+   base classes with the page's own through a class-merging helper (clsx +
+   tailwind-merge), which drops pb-16 in favour of the later pb-8 and
+   de-duplicates flex flex-col. The merged string below was captured from that
+   helper rather than assembled by hand. See README. #}
+<div class="h-full w-full flex flex-col grow items-stretch justify-start">
+{#- -#}
+<div class="h-full overflow-y-auto px-5 pt-3 sm:px-16 space-y-4 edsl-survey-container min-h-screen pb-8 flex flex-col">
+{#- -#}
+<form class="flex flex-col flex-grow">
+{#- -#}
+<div class="flex flex-col gap-4 px-4 md:px-12 w-full lg:w-3/4 mx-auto flex-grow">
+{#- -#}
+{%- if progress_html %}
+{{ progress_html }}
+{#- -#}
+{%- endif %}
+{{ question_html }}
+{#- -#}
+<div class="flex justify-start">
+{#- -#}
+<button class="flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 transition-colors rounded-md text-white font-medium disabled:opacity-50" type="submit">Next</button>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</form>
+{#- -#}
+<footer class="w-full lg:w-3/4 mx-auto px-4 md:px-12 mb-8 mt-auto">
+{#- -#}
+<div class="text-left space-y-1">
+{#- -#}
+<p class="text-xs font-semibold text-gray-600 dark:text-gray-400">Powered by Expected Parrot 🦜</p>
+{#- -#}
+<p class="text-xs text-gray-500 dark:text-gray-500">Open-source survey infrastructure for research with humans and AI</p>
+{#- -#}
+<a href="/" target="_blank" rel="noopener noreferrer" class="text-xs text-landing-green-600 hover:text-gray-900 underline">expectedparrot.com</a>
+{#- -#}
+</div>
+{#- -#}
+</footer>
+{#- -#}
+</div>
+{#- -#}
+</div>

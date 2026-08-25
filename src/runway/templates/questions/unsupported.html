@@ -1,0 +1,48 @@
+{# Stand-in for question types this package draws no control for.
+
+   The question text is rendered above it, in the same markup every other type
+   uses, so the page still shows what the question asks and pages stay
+   distinguishable from one another. Only the input control is missing.
+
+   It is omitted for question types whose text is never shown to a respondent
+   (see HIDDEN_TEXT_TYPES) -- displaying it there would misrepresent what the
+   survey does.
+
+   Two notices, because there are two situations. A type a human survey can be
+   configured for is one this package has yet to transcribe: the survey is fine
+   and the preview is behind, which is a note, styled like the notice the web
+   survey preview shows for a control it declines to draw. A type the humanize
+   schema has no configuration for cannot be put to a respondent at all, so no
+   preview could exist and the survey itself needs changing: that is a warning,
+   and it is louder on purpose -- solid border, amber, alert icon -- because it
+   is the one an author has to act on. #}
+<div class="edsl-question mb-6">
+{#- -#}
+{%- if question_text_html %}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+{%- endif %}
+{%- if humanized %}
+<div class="edsl-preview-note flex items-start gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
+{#- -#}
+{{ icon }}
+{#- -#}
+<p class="text-base text-gray-700">No preview is available for <code>{{ question_type }}</code> questions yet.</p>
+{#- -#}
+</div>
+{%- else %}
+<div class="edsl-preview-warning flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+{#- -#}
+{{ icon }}
+{#- -#}
+<div class="text-base text-amber-900">
+{#- -#}
+<p class="font-semibold">Not supported in human surveys</p>
+{#- -#}
+<p class="mt-1"><code>{{ question_type }}</code> questions have no rendering for a human respondent, so there is nothing to preview. A respondent served this page would find no control to answer with; replace the question or drop it before running this survey with people.</p>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{%- endif %}
+</div>

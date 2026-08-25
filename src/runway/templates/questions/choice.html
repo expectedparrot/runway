@@ -1,0 +1,68 @@
+{# Transcription of the reference implementation's choice questions -- multiple
+   choice, Likert five, yes/no and linear scale -- as the radio list, and the
+   dropdown variant selected by the humanize schema.
+
+   One template for the four because the reference is one implementation: its
+   four components differ only in the class on the outer div, and each hands
+   its options to the same pair of option renderers. The lookup below is that
+   difference, and the rest of this file is what they share.
+
+   An option is a value and a label. They are the same string for every type
+   but the linear scale, which answers with a number and shows "3 - Neutral",
+   and keeping them apart here is what lets one loop serve both.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side. That includes the lookup: a
+   class string in a .py file is invisible to the stylesheet build, which scans
+   templates and would drop the rules for it. The empty-comment separator lines
+   exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README.
+
+   (Do not write a literal whitespace-control comment inside a comment like
+   this one -- Jinja comments do not nest, and the inner closing brace ends the
+   outer comment early.)
+
+   The three nested spans around a radio's label are the reference's, not a
+   flourish: it wraps every option label the same way whether or not the option
+   carries media, so a stylesheet written against those hooks works on every
+   option. Only the innermost text differs, and previews never resolve media, so
+   the plain-text form is the only one this template can emit. A dropdown's
+   options stay bare strings -- the reference leaves them so too, since a select
+   holds text and nothing else. #}
+{%- set WRAPPER_CLASS = {
+      "multiple_choice": "edsl-question edsl-multiple-choice-question mb-6",
+      "likert_five": "edsl-question edsl-likert-question mb-6",
+      "yes_no": "edsl-question edsl-yes-no-question mb-6",
+      "linear_scale": "edsl-question edsl-linear-scale-question mb-6",
+    } -%}
+<div class="{{ WRAPPER_CLASS[question_type] }}">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+<div class="edsl-options space-y-1">
+{#- -#}
+{%- if is_dropdown %}
+<select name="{{ question_name }}" class="edsl-select w-full max-w-md px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+{#- -#}
+<option value="" selected="">Select...</option>
+{#- -#}
+{%- for option in options %}
+<option value="{{ option.value }}">{{ option.label }}</option>
+{#- -#}
+{%- endfor %}
+</select>
+{%- else %}
+{%- for option in options %}
+<label class="edsl-option flex items-center">
+{#- -#}
+<input type="radio" name="{{ question_name }}" class="edsl-radio w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" value="{{ option.value }}"/>
+{#- -#}
+<span class="edsl-option-label ml-2 py-1"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></span>
+{#- -#}
+</label>
+{%- endfor %}
+{%- endif %}
+</div>
+{#- -#}
+</div>
