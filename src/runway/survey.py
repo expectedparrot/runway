@@ -86,7 +86,7 @@ def render_survey(
     one survey.
     """
     humanize_schema = humanize_schema or {}
-    out_dir = Path(out_dir or "outputs")
+    out_dir = Path(out_dir or "previews")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     stem = _slug(name) if name else ""

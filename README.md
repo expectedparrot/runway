@@ -103,10 +103,10 @@ previewable. Nobody is ever asked it.
 ### render
 
 ```bash
-runway render examples/mixed_survey.json            # -> outputs/mixed_survey.html
+runway render examples/mixed_survey.json            # -> previews/mixed_survey.html
 runway render examples/mixed_survey.json --split    # -> one file per question
 runway render examples/*.json                       # -> one .html per survey
-runway render examples/*.json -o build/previews     # -> somewhere else
+runway render examples/*.json -o build/review       # -> somewhere else
 ```
 
 `--json` on `check`, `types` and `version` gives machine-readable output.
@@ -149,7 +149,7 @@ from runway import render_bundle, render_page, render_survey
 
 html  = render_bundle(questions, humanize_schema)                # one document
 html  = render_page(question, {"format": {"type": "dropdown"}})  # one question
-paths = render_survey(questions, humanize_schema, out_dir="outputs", split=False)
+paths = render_survey(questions, humanize_schema, out_dir="previews", split=False)
 paths = render_survey(questions, humanize_schema, name="my_survey")   # -> my_survey.html
 ```
 

@@ -26,7 +26,7 @@ from . import __version__, inspection
 from .question_types import RENDERERS, background, unsupported
 from .survey import iter_questions, load
 
-DEFAULT_OUT = Path("outputs")
+DEFAULT_OUT = Path("previews")
 
 # Aligns the status column in `check` output without a formatting library.
 _STATUS_WIDTH = max(len(status) for status in inspection.STATUSES)
@@ -293,7 +293,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--out",
         type=Path,
         default=DEFAULT_OUT,
-        help="Output directory (default: ./outputs, created if absent).",
+        help="Output directory (default: ./previews, created if absent).",
     )
     render.add_argument(
         "--split",

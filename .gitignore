@@ -11,4 +11,4 @@ node_modules/
 .DS_Store
 
 # Rendered previews are build output, not source.
-outputs/
+previews/
