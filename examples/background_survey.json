@@ -10,6 +10,7 @@
         "None"
       ],
       "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
@@ -26,10 +27,12 @@
           "temperature": 0.5
         },
         "inference_service": "test",
+        "edsl_version": "1.0.8.dev1",
         "edsl_class_name": "TestServiceLanguageModel"
       },
       "thinking_system_prompt": "Classify tersely. Answer with the option only.",
       "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
@@ -39,12 +42,14 @@
       "service_name": "test",
       "generation_parameters": {},
       "question_type": "image_generation",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "pet_word_count",
       "question_text": "{{ pet.answer | length }}",
       "question_type": "compute",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
@@ -62,19 +67,98 @@
         "5": "Completely"
       },
       "question_type": "linear_scale",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "pet_story",
       "question_text": "Tell us about them.",
       "question_type": "list",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "questions": {},
-    "survey": {
-      "custom_css": null
-    }
-  }
+  "memory_plan": {
+    "survey_question_names": [
+      "pet",
+      "pet_category",
+      "pet_portrait",
+      "pet_word_count",
+      "pet_attachment",
+      "pet_story"
+    ],
+    "survey_question_texts": [
+      "Which pet do you have at home?",
+      "The respondent said: {{ pet.answer }}. Which category does that fall into?",
+      "A warm watercolour portrait of {{ pet.answer }}, on a plain background.",
+      "{{ pet.answer | length }}",
+      "How attached are you to your pet?",
+      "Tell us about them."
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "pet": 0,
+      "pet_category": 1,
+      "pet_portrait": 2,
+      "pet_word_count": 3,
+      "pet_attachment": 4,
+      "pet_story": 5
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 5,
+        "expression": "True",
+        "next_q": 6,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 6
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

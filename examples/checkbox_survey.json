@@ -2,7 +2,6 @@
   "questions": [
     {
       "question_name": "modes_used",
-      "question_type": "checkbox",
       "question_text": "Which of these have you used to get to work in the past month?",
       "question_options": [
         "Drive alone",
@@ -11,12 +10,13 @@
         "Walk or cycle",
         "Something else"
       ],
+      "question_type": "checkbox",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "reasons",
       "question_text": "Why that one most often? Select all that apply.",
-      "question_type": "checkbox",
       "question_options": [
         "It's the fastest",
         "It's the cheapest",
@@ -24,53 +24,110 @@
         "I enjoy it",
         "None of the above"
       ],
+      "question_type": "checkbox",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "newsletter",
-      "question_type": "checkbox",
       "question_text": "Anything else?",
       "question_options": [
         "Send me the results when they're published"
       ],
+      "question_type": "checkbox",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "other_modes",
-      "question_type": "checkbox_with_other",
       "question_text": "Any other way you get to work that we missed?",
       "question_options": [
         "Motorbike",
         "Taxi or rideshare"
       ],
       "other_option_text": "Something else",
+      "question_type": "checkbox_with_other",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "comment",
-      "question_type": "free_text",
       "question_text": "Anything else about your commute we should know?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "survey": {
-      "progress": {
-        "style": "bar",
-        "show_label": true
-      }
+  "memory_plan": {
+    "survey_question_names": [
+      "modes_used",
+      "reasons",
+      "newsletter",
+      "other_modes",
+      "comment"
+    ],
+    "survey_question_texts": [
+      "Which of these have you used to get to work in the past month?",
+      "Why that one most often? Select all that apply.",
+      "Anything else?",
+      "Any other way you get to work that we missed?",
+      "Anything else about your commute we should know?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "modes_used": 0,
+      "reasons": 1,
+      "newsletter": 2,
+      "other_modes": 3,
+      "comment": 4
     },
-    "questions": {
-      "reasons": {
-        "exclusive_options": [
-          "None of the above"
-        ]
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
       },
-      "comment": {
-        "comment": {
-          "label": "Optional"
-        }
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
       }
-    }
-  }
+    ],
+    "num_questions": 5
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

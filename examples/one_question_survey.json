@@ -2,7 +2,6 @@
   "questions": [
     {
       "question_name": "commute_mode",
-      "question_type": "multiple_choice",
       "question_text": "How do you usually get to work?",
       "question_options": [
         "Drive alone",
@@ -11,13 +10,37 @@
         "Walk or cycle",
         "I work from home"
       ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "questions": {},
-    "survey": {
-      "custom_css": null
-    }
-  }
+  "memory_plan": {
+    "survey_question_names": [
+      "commute_mode"
+    ],
+    "survey_question_texts": [
+      "How do you usually get to work?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "commute_mode": 0
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 1
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

@@ -2,7 +2,6 @@
   "questions": [
     {
       "question_name": "commute_mode",
-      "question_type": "multiple_choice",
       "question_text": "How do you usually get to work?",
       "question_options": [
         "Drive alone",
@@ -11,11 +10,12 @@
         "Walk or cycle",
         "I work from home"
       ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_enjoyment",
-      "question_type": "likert_five",
       "question_text": "My commute is a good use of my time.",
       "question_options": [
         "Strongly disagree",
@@ -24,28 +24,77 @@
         "Agree",
         "Strongly agree"
       ],
+      "question_type": "likert_five",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_satisfaction",
-      "question_type": "linear_scale",
       "question_text": "How is your commute, all things considered?",
-      "question_options": [1, 2, 3, 4, 5],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "option_labels": {
         "1": "Couldn't be worse",
         "5": "Couldn't be better"
       },
+      "question_type": "linear_scale",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "questions": {
-      "commute_satisfaction": {
-        "comment": { "label": "Anything you'd add?" }
-      }
+  "memory_plan": {
+    "survey_question_names": [
+      "commute_mode",
+      "commute_enjoyment",
+      "commute_satisfaction"
+    ],
+    "survey_question_texts": [
+      "How do you usually get to work?",
+      "My commute is a good use of my time.",
+      "How is your commute, all things considered?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "commute_mode": 0,
+      "commute_enjoyment": 1,
+      "commute_satisfaction": 2
     },
-    "survey": {
-      "custom_css": ".edsl-survey-container { background: #fbf7f0; font-family: Georgia, 'Times New Roman', serif }\n.edsl-question-text { color: #7c2d12; font-size: 1.35rem; letter-spacing: -0.01em }\n.edsl-option { border: 1px solid #e7d9c4; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background: #fffdf9 }\n.edsl-option:hover { border-color: #c2410c }\n.edsl-radio { accent-color: #c2410c }\n.edsl-progress-fill { background: #c2410c }\n.edsl-comment-field { border-color: #e7d9c4; background: #fffdf9 }"
-    }
-  }
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 3
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

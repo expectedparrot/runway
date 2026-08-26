@@ -1,0 +1,20 @@
+{
+  "survey": {
+    "progress": {
+      "style": "bar",
+      "show_label": true
+    }
+  },
+  "questions": {
+    "agreement": {
+      "comment": {
+        "label": "Anything you'd add?"
+      }
+    },
+    "one_at_a_time": {
+      "format": {
+        "type": "carousel"
+      }
+    }
+  }
+}

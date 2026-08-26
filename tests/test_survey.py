@@ -16,18 +16,22 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import examples
 import goldens
 from runway.renderer import render_body, render_bundle
-from runway.survey import load, render_survey
+from runway.survey import render_survey
 
-EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "mixed_survey.json"
+EXAMPLE = examples.EXAMPLES / "mixed_survey.json"
 
 # Emitted once per inlined copy of the stylesheet.
 STYLESHEET_MARKER = "tailwindcss v"
 
 
 def _load() -> tuple[list[dict], dict]:
-    return load(EXAMPLE)
+    # Through the helper, so the schema beside the survey is applied: this
+    # example configures a dropdown and a comment box, and both are things
+    # several tests below are actually about.
+    return examples.load_example(EXAMPLE)
 
 
 def _write(**kwargs) -> list[tuple[Path, str]]:

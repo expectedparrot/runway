@@ -26,11 +26,42 @@ def load(path: Path) -> tuple[list[dict], dict]:
     Accepts either a bare list of question dicts, or an object with
     ``questions`` and an optional ``humanize_schema``. Returns the questions
     and the humanize schema (``{}`` when absent).
+
+    ``Survey.to_dict()`` is the second of those: it carries a top-level
+    ``questions`` list of question dicts, alongside keys about flow that a
+    preview has no use for. It has no ``humanize_schema`` -- that is configured
+    separately and saved separately -- so a survey dumped that way loads with an
+    empty one, and :func:`load_schema` is how the other file reaches it.
     """
     data = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(data, list):
         return data, {}
     return data.get("questions") or [], data.get("humanize_schema") or {}
+
+
+def load_schema(path: Path) -> dict:
+    """Read a humanize schema saved on its own.
+
+    The schema is the object with ``survey`` and ``questions`` keys -- the shape
+    ``Survey.humanize()`` takes. A file that wraps it under ``humanize_schema``
+    is accepted too, since that is what a survey document calls it and so the
+    natural thing to have saved.
+
+    The two are told apart without ambiguity: a schema's ``questions`` is an
+    object keyed by question name, where a survey document's is a list.
+    """
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("a humanize schema is an object, not a list")
+    wrapped = data.get("humanize_schema")
+    if isinstance(wrapped, dict):
+        return wrapped
+    if isinstance(data.get("questions"), list):
+        raise ValueError(
+            "this looks like a survey document rather than a humanize schema: "
+            "its 'questions' is a list of questions, not a table keyed by name"
+        )
+    return data
 
 
 def iter_questions(questions: list[dict]):

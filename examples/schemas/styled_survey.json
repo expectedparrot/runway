@@ -1,0 +1,12 @@
+{
+  "questions": {
+    "commute_satisfaction": {
+      "comment": {
+        "label": "Anything you'd add?"
+      }
+    }
+  },
+  "survey": {
+    "custom_css": ".edsl-survey-container {\n    background: #fbf7f0;\n    font-family: Georgia, 'Times New Roman', serif;\n}\n.edsl-question-text {\n    color: #7c2d12;\n    font-size: 1.35rem;\n    letter-spacing: -0.01em;\n}\n.edsl-option {\n    border: 1px solid #e7d9c4;\n    border-radius: 0.5rem;\n    padding: 0.5rem 0.75rem;\n    background: #fffdf9;\n}\n.edsl-option:hover { border-color: #c2410c }\n.edsl-radio { accent-color: #c2410c }\n.edsl-progress-fill { background: #c2410c }\n.edsl-comment-field {\n    border-color: #e7d9c4;\n    background: #fffdf9;\n}\n"
+  }
+}

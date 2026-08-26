@@ -24,7 +24,7 @@ from pathlib import Path
 
 from . import __version__, inspection
 from .question_types import RENDERERS, background, unsupported
-from .survey import iter_questions, load
+from .survey import iter_questions, load, load_schema
 
 DEFAULT_OUT = Path("previews")
 
@@ -41,10 +41,18 @@ is no project, no state and no session to resume.
   runway types                  which question types have a control
 
 A survey file is either a bare JSON list of question dicts -- the shape
-`question.to_dict()` produces -- or an object with `questions` and an optional
-`humanize_schema`, the same structure `Survey.humanize()` takes:
+`question.to_dict()` produces -- or an object with a `questions` list, which is
+what `Survey.to_dict()` writes. Its other keys describe survey flow and are
+ignored; a preview only needs the questions.
+
+A humanize schema may travel inside that object under `humanize_schema`:
 
   {"questions": [...], "humanize_schema": {"survey": {...}, "questions": {...}}}
+
+or in a file of its own, which is where `Survey.to_dict()` leaves it, since the
+two are configured separately:
+
+  runway render survey.json --schema schema.json
 
 Start with `check`. It writes nothing and tells you which questions preview
 with their real control, which fall back to a note because no control is
@@ -71,7 +79,7 @@ under skip logic, which is inferred from authored order. Add `--json` to
 
 
 def cmd_render(args: argparse.Namespace) -> int:
-    surveys = _load_all(args.survey)
+    surveys = _load_all(args.survey, args.schema)
     if surveys is None:
         return 1
 
@@ -95,7 +103,7 @@ def cmd_render(args: argparse.Namespace) -> int:
 
 def cmd_check(args: argparse.Namespace) -> int:
     """Report what each question will render as. Writes nothing."""
-    surveys = _load_all(args.survey)
+    surveys = _load_all(args.survey, args.schema)
     if surveys is None:
         return 1
 
@@ -202,12 +210,34 @@ def cmd_version(args: argparse.Namespace) -> int:
 # --------------------------------------------------------------------------
 
 
-def _load_all(paths: list[Path]) -> list[tuple[Path, list[dict], dict]] | None:
+def _load_all(
+    paths: list[Path], schema_path: Path | None = None
+) -> list[tuple[Path, list[dict], dict]] | None:
     """Read every survey before any is acted on, or report and return None.
 
     Reading first means a bad path among several leaves the output directory as
     it was, rather than half rewritten.
+
+    ``schema_path`` is a humanize schema saved on its own, which is how
+    ``Survey.to_dict()`` output reaches a preview: that dump has no schema in it,
+    because the schema is configured separately. It replaces whatever the survey
+    file carried, and applies to every survey given -- rendering a set of surveys
+    against one schema is the reason to pass several at once.
     """
+    schema: dict | None = None
+    if schema_path is not None:
+        if not schema_path.exists():
+            print(f"error: no such schema file: {schema_path}", file=sys.stderr)
+            return None
+        try:
+            schema = load_schema(schema_path)
+        except json.JSONDecodeError as exc:
+            print(f"error: {schema_path} is not valid JSON: {exc}", file=sys.stderr)
+            return None
+        except ValueError as exc:
+            print(f"error: {schema_path}: {exc}", file=sys.stderr)
+            return None
+
     surveys: list[tuple[Path, list[dict], dict]] = []
     for path in paths:
         if not path.exists():
@@ -221,7 +251,7 @@ def _load_all(paths: list[Path]) -> list[tuple[Path, list[dict], dict]] | None:
         if not questions:
             print(f"error: no questions found in {path}", file=sys.stderr)
             return None
-        surveys.append((path, questions, humanize_schema))
+        surveys.append((path, questions, schema if schema is not None else humanize_schema))
     return surveys
 
 
@@ -278,7 +308,17 @@ def _add_survey_argument(parser: argparse.ArgumentParser) -> None:
         type=Path,
         nargs="+",
         help="Survey JSON: a bare list of question dicts, or an object with "
-        "'questions' and an optional 'humanize_schema'. Several may be given.",
+        "'questions' and an optional 'humanize_schema' -- which is the shape "
+        "Survey.to_dict() produces. Several may be given.",
+    )
+    parser.add_argument(
+        "--schema",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Humanize schema saved on its own, as Survey.to_dict() output "
+        "has none. Replaces any the survey file carried, and applies to every "
+        "survey given.",
     )
 
 

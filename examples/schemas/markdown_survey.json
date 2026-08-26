@@ -1,0 +1,14 @@
+{
+  "questions": {
+    "md_dropdown": {
+      "format": {
+        "type": "dropdown"
+      }
+    },
+    "md_text": {
+      "comment": {
+        "label": "Anything to add about **how** you travel?"
+      }
+    }
+  }
+}

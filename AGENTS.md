@@ -41,6 +41,38 @@ that also means something against a built wheel — run the suite from an
 installed wheel when you have changed packaging, since a wheel that ships no
 templates still imports cleanly and fails only at render time.
 
+## Examples
+
+`examples/*.json` and `examples/schemas/*.json` are **generated** from
+`examples/src/*.py`, where each module builds a `Survey` and names a
+`humanize_schema` when the survey needs one. Edit the source, then:
+
+```bash
+uv run python examples/build.py            # rewrite the JSON
+uv run python examples/build.py --render   # and the previews, via the CLI
+```
+
+Do not hand-edit the JSON — the next build reverts it. CI runs
+`build.py --check`, which fails if anything no longer matches its source,
+including a schema left behind by a survey that stopped needing one.
+
+The survey file is `Survey.to_dict()` **verbatim**, so it carries `edsl_version`
+and an edsl upgrade will show up here as a diff. That is deliberate: an example
+that differed from what `to_dict()` writes would be demonstrating a format
+nobody produces.
+
+The output is committed all the same, because the tests read it: a suite that
+built its own fixtures would need edsl working to tell you anything at all,
+including that edsl had broken something.
+
+Read examples through `tests/examples.py`, never `load()` directly. The schema
+is a separate file now, and a test that forgot it would leave the cases that
+only exist *because* of a schema — the carousel note, a dropdown, an exclusive
+option — green and unexercised.
+
+`mixed_survey` is the one to leave alone. Several survey-level tests assert
+progress values that follow from it having exactly seven items.
+
 ## Goldens
 
 `tests/react_cases.json` and `tests/react_goldens.json` are **generated data**.

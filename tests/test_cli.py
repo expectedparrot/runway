@@ -18,10 +18,11 @@ import json
 import tempfile
 from pathlib import Path
 
+import examples
 from runway import inspection
 from runway.cli import main
 from runway.renderer import render_question
-from runway.survey import iter_questions, load
+from runway.survey import iter_questions
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 MIXED = EXAMPLES / "mixed_survey.json"
@@ -48,8 +49,8 @@ def test_check_agrees_with_what_render_produces():
     Rendering is the ground truth -- `check` is only useful because it saves
     you from doing it, so the two must not be able to disagree.
     """
-    for example in sorted(EXAMPLES.glob("*.json")):
-        questions, humanize_schema = load(example)
+    for example in examples.paths():
+        questions, humanize_schema = examples.load_example(example)
         # Passed to both halves, because it can change the answer: a layout this
         # package has not transcribed leaves a question undrawn however ordinary
         # its type is. Dropping it here would leave that path unchecked while
@@ -214,6 +215,122 @@ def test_nothing_is_written_when_one_of_several_surveys_is_bad(tmp_path):
     out = tmp_path / "out"
     assert main(["render", str(MIXED), str(tmp_path / "nope.json"), "-o", str(out)]) == 1
     assert not out.exists()
+
+
+# --------------------------------------------------------------------------
+# A humanize schema of its own
+# --------------------------------------------------------------------------
+#
+# `Survey.to_dict()` carries a top-level `questions` list and no schema, because
+# the schema is configured and saved separately. `--schema` is how the other
+# file reaches a preview.
+
+
+def _survey_dict(tmp_path):
+    """A survey in the shape `Survey.to_dict()` produces."""
+    path = tmp_path / "survey.json"
+    path.write_text(
+        json.dumps(
+            {
+                "questions": [
+                    {
+                        "question_name": "modes",
+                        "question_type": "checkbox",
+                        "question_text": "Which?",
+                        "question_options": ["Bus", "None of the above"],
+                    }
+                ],
+                "memory_plan": {},
+                "rule_collection": {},
+                "edsl_class_name": "Survey",
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+SCHEMA = {"questions": {"modes": {"exclusive_options": ["None of the above"]}}}
+
+
+def test_a_survey_to_dict_dump_loads_without_a_schema(tmp_path):
+    """Its extra keys are about flow, which a preview has no use for."""
+    assert main(["check", str(_survey_dict(tmp_path))]) == 0
+
+
+def test_a_schema_of_its_own_reaches_the_render(tmp_path):
+    """Two options with one exclusive leaves one selectable, so the Select all
+    row goes -- which is a visible difference the flag either makes or does
+    not."""
+    survey = _survey_dict(tmp_path)
+    schema = tmp_path / "schema.json"
+    schema.write_text(json.dumps(SCHEMA), encoding="utf-8")
+
+    plain, applied = tmp_path / "plain", tmp_path / "applied"
+    assert main(["render", str(survey), "-o", str(plain)]) == 0
+    assert main(["render", str(survey), "--schema", str(schema), "-o", str(applied)]) == 0
+    # On the id, not the class: the page script names the class in a selector
+    # whether or not a row is drawn, so asserting on the class would find it
+    # either way.
+    assert 'id="modes-select-all"' in (plain / "survey.html").read_text(encoding="utf-8")
+    assert 'id="modes-select-all"' not in (applied / "survey.html").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_a_schema_wrapped_under_its_own_name_is_accepted(tmp_path):
+    """What a survey document calls it, and so the natural thing to have
+    saved."""
+    survey = _survey_dict(tmp_path)
+    bare, wrapped = tmp_path / "bare.json", tmp_path / "wrapped.json"
+    bare.write_text(json.dumps(SCHEMA), encoding="utf-8")
+    wrapped.write_text(json.dumps({"humanize_schema": SCHEMA}), encoding="utf-8")
+
+    out_bare, out_wrapped = tmp_path / "a", tmp_path / "b"
+    main(["render", str(survey), "--schema", str(bare), "-o", str(out_bare)])
+    main(["render", str(survey), "--schema", str(wrapped), "-o", str(out_wrapped)])
+    assert (out_bare / "survey.html").read_text(encoding="utf-8") == (
+        out_wrapped / "survey.html"
+    ).read_text(encoding="utf-8")
+
+
+def test_a_survey_document_passed_as_a_schema_is_refused(tmp_path):
+    """The likeliest mistake, and silently ignorable: both files have a
+    `questions` key. A schema's is a table keyed by name, a survey's is a list,
+    so the two are told apart rather than guessed at."""
+    survey = _survey_dict(tmp_path)
+    assert main(["check", str(survey), "--schema", str(survey)]) == 1
+
+
+def test_a_missing_schema_is_an_error_not_a_traceback(tmp_path):
+    survey = _survey_dict(tmp_path)
+    assert main(["check", str(survey), "--schema", str(tmp_path / "nope.json")]) == 1
+
+
+def test_a_schema_replaces_the_one_in_the_survey_file(tmp_path):
+    """Passing one is asking for it to be used."""
+    survey = tmp_path / "both.json"
+    survey.write_text(
+        json.dumps(
+            {
+                "questions": [
+                    {
+                        "question_name": "modes",
+                        "question_type": "checkbox",
+                        "question_text": "Which?",
+                        "question_options": ["Bus", "None of the above"],
+                    }
+                ],
+                "humanize_schema": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    schema = tmp_path / "schema.json"
+    schema.write_text(json.dumps(SCHEMA), encoding="utf-8")
+    out = tmp_path / "out"
+    main(["render", str(survey), "--schema", str(schema), "-o", str(out)])
+    assert 'id="modes-select-all"' not in (out / "both.html").read_text(encoding="utf-8")
 
 
 def _main() -> int:

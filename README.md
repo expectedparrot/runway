@@ -240,6 +240,63 @@ emitted last in the page so it wins, exactly as the live survey applies it —
 `examples/styled_survey.json` is a survey that uses it, against the `edsl-`
 hooks the markup carries for exactly this.
 
+### From EDSL
+
+`Survey.to_dict()` writes the second shape above: a top-level `questions` list,
+alongside keys about survey flow that a preview ignores. It has **no**
+`humanize_schema`, because the schema is configured separately — so it travels
+as its own file:
+
+```bash
+runway render survey.json --schema schema.json
+```
+
+That schema file is the object with `survey` and `questions` keys; a file
+wrapping it under `humanize_schema` is accepted too, since that is what a
+survey document calls it. Passing `--schema` replaces whatever the survey file
+carried, and applies to every survey given.
+
+The two are told apart without guessing: a schema's `questions` is a table
+keyed by question name, where a survey's is a list — so handing `--schema` a
+survey document by mistake is an error rather than a preview with every setting
+silently missing.
+
+```python
+import json
+from pathlib import Path
+
+Path("survey.json").write_text(json.dumps(survey.to_dict(), indent=2))
+Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
+```
+
+### The examples
+
+Each example is a pair of files, which is what an author actually has:
+
+```
+examples/src/<name>.py        builds a Survey, names a humanize_schema
+examples/<name>.json          Survey.to_dict(), verbatim
+examples/schemas/<name>.json  the schema — only where the survey needs one
+```
+
+The survey JSON is `to_dict()` output unchanged rather than a shape invented for
+this repo, so an example demonstrates the format you have on disk. It has no
+room for a schema, which is why the schema is a file of its own. Sidecars live
+in a subdirectory so `examples/*.json` still means "the surveys".
+
+```bash
+uv run python examples/build.py            # rewrite the JSON
+uv run python examples/build.py --render   # and previews/*.html
+uv run python examples/build.py --check    # write nothing; fail if stale
+```
+
+`--render` drives the CLI — `runway render <survey> --schema <schema>` — so what
+produces the committed previews is the command a reader would type.
+
+The JSON is committed as well as generated, because the tests read it: a suite
+that built its own fixtures would need edsl working to report anything at all,
+including that edsl had broken something. CI runs `--check`.
+
 ## The toolbar
 
 Preview chrome, not survey chrome — every class on it is a Tailwind utility or

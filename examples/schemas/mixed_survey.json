@@ -1,0 +1,14 @@
+{
+  "questions": {
+    "commute_mode": {
+      "comment": {
+        "label": "Anything you'd add about how you get there?"
+      }
+    },
+    "commute_time": {
+      "format": {
+        "type": "dropdown"
+      }
+    }
+  }
+}

@@ -2,7 +2,6 @@
   "questions": [
     {
       "question_name": "commute_mode",
-      "question_type": "multiple_choice",
       "question_text": "How do you usually get to work?",
       "question_options": [
         "Drive alone",
@@ -11,11 +10,12 @@
         "Walk or cycle",
         "I work from home"
       ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_time",
-      "question_type": "multiple_choice",
       "question_text": "How long is your commute, door to door, one way?",
       "question_options": [
         "Under 10 minutes",
@@ -26,11 +26,12 @@
         "Over an hour",
         "It varies too much to say"
       ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_enjoyment",
-      "question_type": "likert_five",
       "question_text": "My commute is a good use of my time.",
       "question_options": [
         "Strongly disagree",
@@ -39,29 +40,41 @@
         "Agree",
         "Strongly agree"
       ],
+      "question_type": "likert_five",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_satisfaction",
-      "question_type": "linear_scale",
       "question_text": "How is your commute, all things considered?",
-      "question_options": [1, 2, 3, 4, 5],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "option_labels": {
         "1": "Couldn't be worse",
         "5": "Couldn't be better"
       },
+      "question_type": "linear_scale",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_switch",
-      "question_type": "yes_no",
       "question_text": "Would you switch if a better option existed?",
-      "question_options": ["Yes", "No"],
+      "question_options": [
+        "No",
+        "Yes"
+      ],
+      "question_type": "yes_no",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "commute_barriers",
-      "question_type": "rank",
       "question_text": "Rank these from most to least annoying.",
       "question_options": [
         "Traffic",
@@ -70,14 +83,25 @@
         "Unreliable timing"
       ],
       "num_selections": 4,
+      "use_code": true,
+      "question_type": "rank",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
-      "question_name": "commute_breakdown",
       "question_type": "dict",
+      "question_name": "commute_breakdown",
       "question_text": "Roughly how does a typical week's commuting break down?",
-      "answer_keys": ["days_in_office", "minutes_each_way", "usual_departure"],
-      "value_types": ["int", "int", "str"],
+      "answer_keys": [
+        "days_in_office",
+        "minutes_each_way",
+        "usual_departure"
+      ],
+      "value_types": [
+        "int",
+        "int",
+        "str"
+      ],
       "value_descriptions": [
         "Days per week you travel to a workplace",
         "Door-to-door minutes, one way",
@@ -85,20 +109,102 @@
       ],
       "include_comment": true,
       "permissive": false,
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "questions": {
-      "commute_mode": {
-        "comment": { "label": "Anything you'd add about how you get there?" }
-      },
-      "commute_time": {
-        "format": { "type": "dropdown" }
-      }
+  "memory_plan": {
+    "survey_question_names": [
+      "commute_mode",
+      "commute_time",
+      "commute_enjoyment",
+      "commute_satisfaction",
+      "commute_switch",
+      "commute_barriers",
+      "commute_breakdown"
+    ],
+    "survey_question_texts": [
+      "How do you usually get to work?",
+      "How long is your commute, door to door, one way?",
+      "My commute is a good use of my time.",
+      "How is your commute, all things considered?",
+      "Would you switch if a better option existed?",
+      "Rank these from most to least annoying.",
+      "Roughly how does a typical week's commuting break down?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "commute_mode": 0,
+      "commute_time": 1,
+      "commute_enjoyment": 2,
+      "commute_satisfaction": 3,
+      "commute_switch": 4,
+      "commute_barriers": 5,
+      "commute_breakdown": 6
     },
-    "survey": {
-      "custom_css": null
-    }
-  }
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 5,
+        "expression": "True",
+        "next_q": 6,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 6,
+        "expression": "True",
+        "next_q": 7,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 7
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

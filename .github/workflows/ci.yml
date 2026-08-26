@@ -22,3 +22,6 @@ jobs:
       - run: uv sync --extra dev --locked --python ${{ matrix.python-version }}
       - run: uv run ruff check .
       - run: uv run pytest -q
+      # The examples are generated from examples/src and committed, because the
+      # tests read them. This is what stops the two drifting apart.
+      - run: uv run python examples/build.py --check

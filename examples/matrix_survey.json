@@ -2,7 +2,6 @@
   "questions": [
     {
       "question_name": "service_ratings",
-      "question_type": "matrix",
       "question_text": "Rate each part of your visit.",
       "question_items": [
         "The food",
@@ -17,11 +16,13 @@
         "Excellent",
         "Couldn't say"
       ],
+      "option_labels": {},
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "agreement",
-      "question_type": "matrix",
       "question_text": "How much do you agree with each statement?",
       "question_items": [
         "It was easy to book a table",
@@ -39,11 +40,12 @@
         "1": "Strongly disagree",
         "5": "Strongly agree"
       },
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "one_at_a_time",
-      "question_type": "matrix",
       "question_text": "How often do you order each of these?",
       "question_items": [
         "Starters",
@@ -55,11 +57,13 @@
         "Sometimes",
         "Usually"
       ],
+      "option_labels": {},
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "likelihood_10pt",
-      "question_type": "matrix",
       "question_text": "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 is 'extremely likely', how likely are you to do each of the following in the next year? Choose 'I don't know / prefer not to answer' if you would rather not say.",
       "question_items": [
         "Recommend this company as a place to work",
@@ -80,37 +84,93 @@
         "10",
         "I don't know / prefer not to answer"
       ],
+      "option_labels": {},
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     },
     {
       "question_name": "recommend",
-      "question_type": "yes_no",
       "question_text": "Would you recommend us to a friend?",
       "question_options": [
-        "Yes",
-        "No"
+        "No",
+        "Yes"
       ],
+      "question_type": "yes_no",
+      "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
   ],
-  "humanize_schema": {
-    "survey": {
-      "progress": {
-        "style": "bar",
-        "show_label": true
-      }
+  "memory_plan": {
+    "survey_question_names": [
+      "service_ratings",
+      "agreement",
+      "one_at_a_time",
+      "likelihood_10pt",
+      "recommend"
+    ],
+    "survey_question_texts": [
+      "Rate each part of your visit.",
+      "How much do you agree with each statement?",
+      "How often do you order each of these?",
+      "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 is 'extremely likely', how likely are you to do each of the following in the next year? Choose 'I don't know / prefer not to answer' if you would rather not say.",
+      "Would you recommend us to a friend?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "service_ratings": 0,
+      "agreement": 1,
+      "one_at_a_time": 2,
+      "likelihood_10pt": 3,
+      "recommend": 4
     },
-    "questions": {
-      "agreement": {
-        "comment": {
-          "label": "Anything you'd add?"
-        }
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
       },
-      "one_at_a_time": {
-        "format": {
-          "type": "carousel"
-        }
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
       }
-    }
-  }
+    ],
+    "num_questions": 5
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
 }

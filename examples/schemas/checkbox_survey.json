@@ -1,0 +1,20 @@
+{
+  "survey": {
+    "progress": {
+      "style": "bar",
+      "show_label": true
+    }
+  },
+  "questions": {
+    "reasons": {
+      "exclusive_options": [
+        "None of the above"
+      ]
+    },
+    "comment": {
+      "comment": {
+        "label": "Optional"
+      }
+    }
+  }
+}
