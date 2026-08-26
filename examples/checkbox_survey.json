@@ -1,0 +1,63 @@
+{
+  "questions": [
+    {
+      "question_name": "modes_used",
+      "question_type": "checkbox",
+      "question_text": "Which of these have you used to get to work in the past month?",
+      "question_options": [
+        "Drive alone",
+        "Carpool",
+        "Public transit",
+        "Walk or cycle",
+        "Something else"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "reasons",
+      "question_text": "Why that one most often? Select all that apply.",
+      "question_type": "checkbox",
+      "question_options": [
+        "It's the fastest",
+        "It's the cheapest",
+        "It's the only option I have",
+        "I enjoy it",
+        "None of the above"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "newsletter",
+      "question_type": "checkbox",
+      "question_text": "Anything else?",
+      "question_options": [
+        "Send me the results when they're published"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "comment",
+      "question_type": "free_text",
+      "question_text": "Anything else about your commute we should know?",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "humanize_schema": {
+    "survey": {
+      "progress": {
+        "style": "bar",
+        "show_label": true
+      }
+    },
+    "questions": {
+      "reasons": {
+        "exclusive_options": ["None of the above"]
+      },
+      "comment": {
+        "comment": {
+          "label": "Optional"
+        }
+      }
+    }
+  }
+}

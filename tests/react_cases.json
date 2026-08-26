@@ -931,5 +931,61 @@
     },
     "value": {},
     "humanize_schema": null
+  },
+  "free_text": {
+    "kind": "controlled_question",
+    "component": "ControlledFreeTextQuestion",
+    "question": {
+      "question_name": "improve",
+      "question_type": "free_text",
+      "question_text": "What would you change about your visit?"
+    },
+    "humanize_schema": null
+  },
+  "checkbox": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "courses",
+      "question_type": "checkbox",
+      "question_text": "Which did you order?",
+      "question_options": [
+        "Starters",
+        "Dessert",
+        "Couldn't say"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "checkbox_single_option": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "newsletter",
+      "question_type": "checkbox",
+      "question_text": "Anything else?",
+      "question_options": [
+        "Sign me up"
+      ]
+    },
+    "humanize_schema": null
+  },
+  "checkbox_exclusive_leaves_one_selectable": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "extras",
+      "question_type": "checkbox",
+      "question_text": "Anything to add?",
+      "question_options": [
+        "A window seat",
+        "None of the above"
+      ]
+    },
+    "humanize_schema": {
+      "exclusive_options": [
+        "None of the above"
+      ]
+    }
   }
 }

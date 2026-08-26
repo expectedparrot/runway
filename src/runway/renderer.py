@@ -17,13 +17,14 @@ Two entry points:
 
 from __future__ import annotations
 
+import json
 import math
 from pathlib import Path
 
 from markupsafe import Markup
 
 from . import progress as progress_module
-from .question_types import background, declined, get_renderer, unsupported
+from .question_types import background, checkbox, declined, get_renderer, unsupported
 from .templating import render as render_template
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -202,12 +203,51 @@ def render_body(
     )
 
 
+def exclusive_options(
+    questions: list[dict], humanize_schema: dict | None = None
+) -> dict[str, list[int]]:
+    """Which options clear the rest when ticked, per checkbox question.
+
+    The one thing a checkbox's own markup cannot say. A preview's controls
+    respond to a click because the browser makes them, but "Select all" and
+    "None of the above" are rules rather than markup, and a rule needs to know
+    which options it must leave alone. Read from the same schema the renderer
+    reads, so the two cannot disagree about what is exclusive.
+
+    **Positions, not option text.** An option label on the page is rendered
+    markdown -- ``**Never**`` reaches the DOM as ``Never`` -- so a script
+    matching the schema's strings against what it can read there would quietly
+    stop recognising any option an author emphasised. The position is the same
+    on both sides whatever the label says.
+
+    Entries only for checkbox questions: no other type has the notion, and a map
+    with a key per question would invite a script that assumed otherwise.
+    """
+    per_question = (humanize_schema or {}).get("questions") or {}
+    found: dict[str, list[int]] = {}
+    for question in questions:
+        if question.get("question_type") != "checkbox":
+            continue
+        name = question.get("question_name") or ""
+        exclusive = checkbox.exclusive_options(per_question.get(name))
+        options = question.get("question_options") or []
+        if isinstance(options, str):
+            # Piped options resolve to one explanatory line, which nothing can
+            # be exclusive of.
+            options = []
+        found[name] = [
+            index for index, option in enumerate(options) if option in exclusive
+        ]
+    return found
+
+
 def _document(
     *,
     title: str,
     body_html: str,
     custom_css: str | None,
     toolbar_html: str = "",
+    exclusive: dict[str, list[str]] | None = None,
 ) -> str:
     """Wrap composed body markup in the standalone document shell."""
     custom = (custom_css or "").strip()
@@ -221,6 +261,9 @@ def _document(
         stylesheet=Markup(STYLESHEET.read_text(encoding="utf-8")),
         custom_css=Markup(custom) if custom else "",
         toolbar_html=Markup(toolbar_html) if toolbar_html else "",
+        # Emitted only when there is a checkbox on the page, so an ordinary
+        # survey carries no script it has no use for.
+        exclusive_json=Markup(json.dumps(exclusive)) if exclusive else "",
         body_html=Markup(body_html),
     )
 
@@ -245,6 +288,9 @@ def render_page(
         title=question.get("question_name") or "Survey preview",
         body_html=render_body(question, humanize_schema, progress),
         custom_css=custom_css,
+        exclusive=exclusive_options(
+            [question], {"questions": {question.get("question_name", ""): humanize_schema}}
+        ),
     )
 
 
@@ -337,4 +383,5 @@ def render_bundle(
         body_html="".join(panels),
         custom_css=custom_css,
         toolbar_html=toolbar,
+        exclusive=exclusive_options(questions, humanize_schema),
     )

@@ -8,8 +8,8 @@ respondent would see — same markup, same stylesheet, same font. No browser, no
 node, no server: a dict in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
-and `linear_scale` — plus `matrix`.** Every other question type renders a "No
-preview is available" notice. That is deliberate: the fidelity bar here is
+and `linear_scale` — plus `matrix`, `checkbox` and `free_text`.** Every other
+question type renders a "No preview is available" notice. That is deliberate: the fidelity bar here is
 byte-for-byte agreement with the live survey's own components, so types are
 added one at a time, each with a recorded parity test.
 
@@ -164,15 +164,22 @@ survey can be checked meanwhile.
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
 | `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
-| `checkbox`            | — not yet       |     | `list`                       | — not yet       |
+| `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
 | `checkbox_with_other` | — not yet       |     | `matrix`                     | **✅ available** |
 | `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
 | `file_upload`         | — not yet       |     | `multiple_choice_with_other` | — not yet       |
-| `free_text`           | — not yet       |     | `numerical`                  | — not yet       |
+| `free_text`           | **✅ available** |     | `numerical`                  | — not yet       |
 | `image_generation`    | **✅ automatic** |     | `rank`                       | — not yet       |
 | `interview`           | — not yet       |     | `top_k`                      | — not yet       |
 | `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
 
+
+`checkbox` draws a **Select all** row that nothing in the question asks for: the
+survey page mounts a wrapper whose default supplies it, and it appears whenever
+more than one option could be ticked by it. A humanize schema's
+`exclusive_options` are the one thing that changes that — an option clearing the
+rest when ticked is not part of "all", so a question of two options with one
+exclusive loses the row.
 
 `matrix` is available with one exception: a survey that configures it as a
 **carousel** — one row at a time, rather than the grid and stacked list it
@@ -524,6 +531,14 @@ does, or a newly supported type will keep reading as unsupportable.
   but has no `action`, so submitting reloads the page. Kept as-is because the
   button's classes and position are part of what the preview shows; use the
   toolbar to move between questions.
+- **Controls tick, they do not behave.** A radio or checkbox responds to a click
+  because the browser makes it, and the matrix's selected styling follows
+  because it is expressed in CSS. Anything needing the application's own logic
+  does not: **Select all** ticks only itself, an `exclusive_options` entry does
+  not clear the others, and selection limits are not enforced. The line is what
+  the DOM knows versus what the app knows — a preview has the first and none of
+  the second, and reproducing the second here would be transcribing behaviour
+  with no recording to hold it to.
 - **Piped values are not resolved.** `{{ agent.x }}`, `{{ scenario.x }}` and
   `{{ q_name.answer }}` render as written. Resolving them means binding a
   survey to agent and scenario data, which would be a per-binding rendering —
@@ -575,6 +590,8 @@ runway/
     │   ├── __init__.py           RENDERERS registry, and what each declines
     │   ├── choice.py             multiple_choice, likert_five, yes_no, linear_scale
     │   ├── matrix.py             matrix — the grid and the stacked list
+    │   ├── checkbox.py           checkbox — and whether Select all is drawn
+    │   ├── free_text.py          free_text — a textarea, and nothing else
     │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/image_generation/thinking: never shown
     │   └── unsupported.py        the stand-in: a note, or a warning
@@ -587,6 +604,8 @@ runway/
     │   └── questions/
     │       ├── choice.html
     │       ├── matrix.html
+    │       ├── checkbox.html
+    │       ├── free_text.html
     │       ├── background.html
     │       └── unsupported.html
     └── assets/

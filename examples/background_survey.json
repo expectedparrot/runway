@@ -67,7 +67,7 @@
     {
       "question_name": "pet_story",
       "question_text": "Tell us about them.",
-      "question_type": "free_text",
+      "question_type": "list",
       "edsl_class_name": "QuestionBase"
     }
   ],

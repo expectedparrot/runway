@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from . import background, choice, matrix, unsupported
+from . import background, checkbox, choice, free_text, matrix, unsupported
 
 Renderer = Callable[[dict, "dict | None"], str]
 
@@ -32,6 +32,8 @@ RENDERERS: dict[str, Renderer] = {
     "yes_no": choice.render,
     "linear_scale": choice.render,
     "matrix": matrix.render,
+    "checkbox": checkbox.render,
+    "free_text": free_text.render,
 }
 
 # Renderers that draw only some of what their type can be configured as. Each

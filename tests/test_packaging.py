@@ -34,7 +34,9 @@ TEMPLATES = (
     "progress.html",
     "toolbar.html",
     "questions/background.html",
+    "questions/checkbox.html",
     "questions/choice.html",
+    "questions/free_text.html",
     "questions/matrix.html",
     "questions/unsupported.html",
 )

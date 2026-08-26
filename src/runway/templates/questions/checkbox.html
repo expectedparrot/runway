@@ -1,0 +1,47 @@
+{# Transcription of the reference implementation's checkbox question.
+
+   Unlike the choice family, an option here is a div holding a sibling input and
+   label rather than a label wrapping its input -- the label carries `grow` so a
+   long option fills the row, which it could not do as a wrapper. Ids are
+   `{question_name}-{index}`, and there is no `name`: a checkbox group is not a
+   radio group and the reference gives it none.
+
+   The Select all row is drawn by the wrapper the survey page mounts, whose
+   default is the opposite of the presentational component's, so it belongs on
+   the page even though nothing in the question asks for it. Whether it appears
+   is worked out in checkbox.py, because it depends on the humanize schema's
+   exclusive options as well as on the option count.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-checkbox-question mb-6">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+<div class="edsl-options space-y-1">
+{#- -#}
+{%- for option in options %}
+<div class="edsl-option flex items-center">
+{#- -#}
+<input type="checkbox" id="{{ question_name }}-{{ loop.index0 }}" class="edsl-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+{#- -#}
+<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option-label grow ml-2 py-1"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></label>
+{#- -#}
+</div>
+{%- endfor %}
+</div>
+{#- -#}
+{%- if show_select_all %}
+<div class="edsl-select-all mt-3 flex items-center">
+{#- -#}
+<input type="checkbox" id="{{ question_name }}-select-all" class="edsl-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+{#- -#}
+<label for="{{ question_name }}-select-all" class="edsl-option-label grow ml-2 py-1">Select all</label>
+{#- -#}
+</div>
+{%- endif %}
+</div>
