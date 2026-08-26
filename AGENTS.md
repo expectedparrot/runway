@@ -17,6 +17,13 @@ Byte equality is the assertion everywhere. Do not normalize, pretty-print, or
 tree-compare. If a template has to become uglier to emit exactly what React
 emits, make it uglier.
 
+The single exception is `assets/base.css`, which carries one hand-written rule
+for the selected state of a stacked matrix option — state the reference
+expresses by swapping classes on re-render, which a static page cannot do. It is
+CSS, not markup, so parity is untouched. Anything else that wants to be
+hand-written should be a recorded case instead; read that file's comment first,
+including why `:where()` is load-bearing there.
+
 ## Development checks
 
 ```bash

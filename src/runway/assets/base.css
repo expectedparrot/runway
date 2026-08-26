@@ -8,3 +8,61 @@
  * component classes, so it would emit nothing. */
 @tailwind base;
 @tailwind utilities;
+
+/* ------------------------------------------------------------------------
+ * Selected-state feedback, which is the one thing here the reference does not
+ * hand us as markup.
+ *
+ * Everything else in this stylesheet is generated from classes the components
+ * emit. This block is hand-written, and it exists because a preview is static:
+ * the reference swaps an option's classes when React re-renders, and there is
+ * no React here, so a clicked radio fills in -- the browser does that -- while
+ * its box keeps the unselected classes forever. Half the feedback is worse than
+ * none: the page invites a click and then looks broken.
+ *
+ * Restated as the state the DOM actually has, so the markup stays byte-identical
+ * to the recording and every parity test stays as strict as it was.
+ *
+ * Two rules govern how this is written.
+ *
+ * `@apply` rather than literal colors: they then come from the reference
+ * application's own Tailwind theme, the same source the component reads, so a
+ * palette change reaches both together.
+ *
+ * `:where()` rather than a plain descendant selector, which is the part that
+ * matters for a survey carrying its own CSS. `:where()` contributes nothing to
+ * specificity, leaving this at exactly one class -- the same weight as the
+ * utility it overrides, winning only because it is emitted afterwards. That is
+ * the cascade the live page has, where the selected classes replace the
+ * unselected ones at equal weight. Written as an ordinary descendant selector
+ * this would be three classes and would quietly outrank a survey's own
+ * `.edsl-option` rule, which the live page's styling never does.
+ *
+ * Scoped to the stacked list on purpose. The choice family's options carry
+ * `.edsl-option` too and have no selected styling at all in the reference --
+ * their radio alone shows the answer -- so an unscoped rule would draw a
+ * highlight the live survey never draws. The matrix table needs nothing either:
+ * its cells hold a bare radio with no label styling to swap, so it already
+ * behaves correctly on a click.
+ * --------------------------------------------------------------------- */
+:where(.edsl-matrix-stack) .edsl-option:where(:has(:checked)) {
+    @apply border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20;
+}
+
+/* The hover rule an unselected option carries would otherwise grey out a
+ * selected option under the pointer. The reference has no such conflict: a
+ * selected option is never given the hover class at all.
+ *
+ * This one cannot be won on order, so it is won on weight -- the ancestor is
+ * spelled out rather than wrapped in `:where()`. Tailwind sorts custom rules
+ * into the utilities stream *after* the plain utilities but *before* the
+ * variant ones, so `.hover\:bg-gray-50:hover` is emitted later than anything
+ * written here and would take a matched-weight rule regardless of order.
+ *
+ * The cost is stated rather than hidden: at three classes this outranks a
+ * survey's own `.edsl-option:hover`, where the live page's styling would not.
+ * It buys the pointer not greying out an answer the respondent just gave, which
+ * is the more visible of the two. */
+.edsl-matrix-stack .edsl-option:where(:has(:checked)):hover {
+    @apply bg-blue-50 dark:bg-blue-900/20;
+}

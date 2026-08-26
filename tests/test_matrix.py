@@ -22,9 +22,11 @@ Runs under pytest, or directly: python tests/test_matrix.py
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import goldens
 from runway import inspection, render_question
+from runway import renderer as runway_renderer
 from runway.question_types import RENDERERS, matrix
 
 CASES = goldens.load_cases()
@@ -265,6 +267,90 @@ def test_a_matrix_with_no_rows_still_renders_a_page():
     html = render_question(a_matrix(question_items=[]))
     assert "edsl-matrix-table" in html
     assert "<tbody></tbody>" in html
+
+
+# --------------------------------------------------------------------------
+# The one hand-written stylesheet rule
+# --------------------------------------------------------------------------
+#
+# Everything else in questions.css is generated from classes a component emits,
+# so the parity tests cover it. This rule is authored, and its whole design is
+# about how it loses -- to a survey's own CSS -- and how it wins -- over the
+# utility it replaces. Neither is visible from the markup, so it is asserted
+# here or nowhere.
+
+STYLESHEET = (Path(runway_renderer.__file__).parent / "assets/questions.css").read_text(
+    encoding="utf-8"
+)
+SELECTED_RULE = ":where(.edsl-matrix-stack) .edsl-option:where(:has(:checked)){"
+
+
+def _without_where(selector: str) -> str:
+    """Drop every ``:where(...)`` and its contents, nesting included.
+
+    A regex cannot: ``:where(:has(:checked))`` nests, and one that stopped at
+    the first closing paren would leave the second behind and quietly report
+    the wrong weight.
+    """
+    out, index = [], 0
+    while index < len(selector):
+        if selector.startswith(":where(", index):
+            depth, index = 1, index + len(":where(")
+            while depth:
+                depth += {"(": 1, ")": -1}.get(selector[index], 0)
+                index += 1
+            continue
+        out.append(selector[index])
+        index += 1
+    return "".join(out)
+
+
+def test_the_selected_state_rule_ships():
+    assert SELECTED_RULE in STYLESHEET
+
+
+def test_the_selected_rule_carries_one_class_of_weight():
+    """`:where()` is load-bearing, not decoration.
+
+    At one class this ties with the utility it overrides and wins on order --
+    which is the cascade the live page has, where the selected classes simply
+    replace the unselected ones. Spelled as a plain descendant selector it would
+    be three classes and would outrank a survey's own `.edsl-option` rule, where
+    the live page's styling never does.
+    """
+    # Everything outside :where() is what counts, and it is one class.
+    assert _without_where(SELECTED_RULE.rstrip("{")).strip() == ".edsl-option"
+
+
+def test_the_selected_rule_is_emitted_after_what_it_overrides():
+    """Winning on order only works if the order is that way round."""
+    at = STYLESHEET.index(SELECTED_RULE)
+    for utility in (".border-gray-200{", ".bg-blue-50{"):
+        assert STYLESHEET.index(utility) < at, utility
+
+
+def test_the_selected_rule_is_scoped_to_the_stacked_list():
+    """The choice family's options carry `.edsl-option` too and have no selected
+    styling at all in the reference -- their radio alone shows the answer. An
+    unscoped rule would draw a highlight the live survey never draws."""
+    assert SELECTED_RULE.startswith(":where(.edsl-matrix-stack) ")
+    choice = render_question(
+        {
+            "question_name": "q",
+            "question_type": "multiple_choice",
+            "question_text": "T",
+            "question_options": ["a", "b"],
+        }
+    )
+    assert "edsl-option" in choice and "edsl-matrix-stack" not in choice
+
+
+def test_a_surveys_own_css_is_still_emitted_last():
+    """What lets a matched-weight rule be overridden at all."""
+    page = runway_renderer.render_page(
+        a_matrix(), custom_css=".edsl-option{background:red}"
+    )
+    assert page.index(SELECTED_RULE) < page.index(".edsl-option{background:red}")
 
 
 def _main() -> int:

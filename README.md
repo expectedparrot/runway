@@ -426,6 +426,13 @@ It covers the whole respondent component tree, so adding most question types
 needs no regeneration. A *template* that starts emitting utilities nothing
 emitted before does; the stepped progress markers were one.
 
+`assets/base.css` is the build input. It is `@tailwind base` + `@tailwind
+utilities` plus **one hand-written block**, which is the only styling in this
+package not derived from a component: the selected state of a stacked matrix
+option. See *A clicked option only half responds* under Known gaps for why it
+has to be hand-written, and read the comment in that file before changing it —
+the `:where()` wrapping is what keeps it from outranking a survey's own CSS.
+
 `assets/tailwind.config.cjs` extends the live application's own Tailwind config
 rather than redeclaring a theme, so fonts, colors, screens and the
 `darkMode: ['selector', '.dark']` setting are identical by construction. It
@@ -494,6 +501,18 @@ does, or a newly supported type will keep reading as unsupportable.
   question gets the note rather than a grid it will not be shown as. `check`
   reports it as a note and names the reason, so it is a stated gap rather than a
   silent substitution.
+- **A clicked option only half responds.** Radios in a preview are real, so
+  clicking one fills it in — the browser does that. The *box* around it is a
+  different matter: the live page swaps an option's classes when React
+  re-renders, and a static page has no React, so the label keeps the unselected
+  classes. For the stacked matrix view, where that swap is the whole selected
+  state, `base.css` restates it as a `:has(:checked)` rule so a click looks like
+  a click. That rule is written at one class of weight, the same as the utility
+  it overrides, so a survey's own `custom_css` still wins exactly as it does on
+  the live page — with one exception, noted in the file: the hover rule needs
+  three classes to beat the `hover:` utility Tailwind emits after it. Everywhere
+  else the class swap is not reproduced, because everywhere else the reference
+  shows selection through the radio alone.
 - **Option randomization.** Not applied. A survey that randomizes options shows
   the authored order.
 - **The Next button does nothing.** The `<form>` is rendered for layout parity
@@ -567,7 +586,7 @@ runway/
     │       └── unsupported.html
     └── assets/
         ├── questions.css         generated, vendored — what ships
-        ├── base.css              build input
+        ├── base.css              build input + the one hand-written rule
         └── tailwind.config.cjs   build config
 ```
 
