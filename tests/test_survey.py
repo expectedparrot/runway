@@ -228,6 +228,23 @@ def test_toolbar_layout_is_reasserted_after_custom_css():
     assert html.index(".preview-toolbar { display: none }") < guard
 
 
+def test_the_survey_column_is_shortened_by_the_toolbar():
+    """Otherwise the page carries two scrollbars.
+
+    The survey asks for a viewport-tall column that scrolls inside itself --
+    `h-full overflow-y-auto min-h-screen`. The toolbar takes 2.75rem of that
+    viewport, so an unadjusted 100vh is exactly that much taller than the room
+    left for it: enough for the document to scroll as well as the column. It
+    needs a page long enough to notice, which is why it went unseen for a while.
+    """
+    assert "#root .edsl-survey-container{min-height:calc(100vh - 2.75rem)}" in _bundle()
+
+
+def test_a_page_with_no_toolbar_pays_for_none_of_it():
+    """A split page is the survey and nothing else, so 100vh is simply right."""
+    assert "min-height:calc(100vh" not in render_bundle([_load()[0][0]], {})
+
+
 def test_single_question_bundle_has_no_toolbar():
     html = render_bundle([_load()[0][0]], {})
     assert "preview-toolbar" not in html

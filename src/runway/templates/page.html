@@ -27,6 +27,14 @@
 <style>
 .preview-toolbar{position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;background:#fff;visibility:visible;opacity:1}
 #root{padding-top:2.75rem}
+/* What the survey asks for is a viewport-tall column that scrolls inside
+   itself. The toolbar takes 2.75rem of that viewport away, so an unadjusted
+   100vh is exactly that much taller than the room left for it -- enough for the
+   document to scroll as well as the column, which is the second scrollbar. The
+   live page has no toolbar and no such gap; this is the preview paying for its
+   own chrome, and only where it has any: a split page carries no toolbar and
+   100vh is simply right there. */
+#root .edsl-survey-container{min-height:calc(100vh - 2.75rem)}
 .preview-panel{display:none}
 .preview-panel.is-active{display:contents}
 </style>

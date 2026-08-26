@@ -236,6 +236,11 @@ The survey's own **Next button stays inert**. It is part of the page being
 previewed, so it is rendered exactly as a respondent would see it; navigation
 lives in the toolbar instead.
 
+The survey shell is a viewport-tall column that scrolls inside itself, so the
+toolbar's 2.75rem is subtracted from its `min-height` — without that the column
+is taller than the room left for it and the document scrolls too, giving the
+page two scrollbars. A split page has no toolbar and no such adjustment.
+
 Panels use `display: contents` when active, so the wrapper drops out of layout
 and the survey shell's full-height flex chain still resolves. Without
 JavaScript the first panel stays visible and the rest stay hidden, so the
