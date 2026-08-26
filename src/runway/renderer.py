@@ -23,7 +23,7 @@ from pathlib import Path
 from markupsafe import Markup
 
 from . import progress as progress_module
-from .question_types import background, get_renderer
+from .question_types import background, declined, get_renderer, unsupported
 from .templating import render as render_template
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -84,13 +84,21 @@ def _js_round(value: float) -> int:
 def render_question(question: dict, humanize_schema: dict | None = None) -> str:
     """Render one question's own markup to an HTML fragment.
 
-    A question the survey answers on its own is intercepted before the type
-    registry: whether it is drawn at all is a property of the question, not of
-    its type, and a thinking-wrapped ``multiple_choice`` would otherwise be
-    drawn with the radio list of a page no respondent is ever served.
+    Two things are asked before the type registry, because both are properties
+    of the question rather than of its type. A question the survey answers on
+    its own is never drawn -- a thinking-wrapped ``multiple_choice`` would
+    otherwise get the radio list of a page no respondent is served. And a
+    question whose renderer declines it, for a layout its humanize schema asks
+    for that is not transcribed yet, gets the same stand-in an undrawn type
+    would.
     """
     if background.is_background_question(question):
         return background.render(question, humanize_schema)
+    # A type whose renderer draws only some of what it can be configured as: the
+    # stand-in says the layout is not transcribed, which is true, where drawing
+    # the transcribed one would show a page this respondent is not served.
+    if declined(question, humanize_schema):
+        return unsupported.render(question, humanize_schema)
     renderer = get_renderer(question.get("question_type", ""))
     return renderer(question, humanize_schema)
 

@@ -1,0 +1,116 @@
+{
+  "questions": [
+    {
+      "question_name": "service_ratings",
+      "question_type": "matrix",
+      "question_text": "Rate each part of your visit.",
+      "question_items": [
+        "The food",
+        "The staff's attention",
+        "Value for money",
+        "How long you waited"
+      ],
+      "question_options": [
+        "Poor",
+        "Fair",
+        "Good",
+        "Excellent",
+        "Couldn't say"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "agreement",
+      "question_type": "matrix",
+      "question_text": "How much do you agree with each statement?",
+      "question_items": [
+        "It was easy to book a table",
+        "The menu described the dishes well",
+        "I'd come again"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Strongly disagree",
+        "5": "Strongly agree"
+      },
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "one_at_a_time",
+      "question_type": "matrix",
+      "question_text": "How often do you order each of these?",
+      "question_items": [
+        "Starters",
+        "Dessert",
+        "Wine"
+      ],
+      "question_options": [
+        "Never",
+        "Sometimes",
+        "Usually"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "likelihood_10pt",
+      "question_type": "matrix",
+      "question_text": "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 is 'extremely likely', how likely are you to do each of the following in the next year? Choose 'I don't know / prefer not to answer' if you would rather not say.",
+      "question_items": [
+        "Recommend this company as a place to work",
+        "Apply for an internal transfer",
+        "Take on a leadership role",
+        "Still be working here twelve months from now"
+      ],
+      "question_options": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "I don't know / prefer not to answer"
+      ],
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "recommend",
+      "question_type": "yes_no",
+      "question_text": "Would you recommend us to a friend?",
+      "question_options": [
+        "Yes",
+        "No"
+      ],
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "humanize_schema": {
+    "survey": {
+      "progress": {
+        "style": "bar",
+        "show_label": true
+      }
+    },
+    "questions": {
+      "agreement": {
+        "comment": {
+          "label": "Anything you'd add?"
+        }
+      },
+      "one_at_a_time": {
+        "format": {
+          "type": "carousel"
+        }
+      }
+    }
+  }
+}

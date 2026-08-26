@@ -49,10 +49,16 @@ def test_check_agrees_with_what_render_produces():
     you from doing it, so the two must not be able to disagree.
     """
     for example in sorted(EXAMPLES.glob("*.json")):
-        questions, _ = load(example)
+        questions, humanize_schema = load(example)
+        # Passed to both halves, because it can change the answer: a layout this
+        # package has not transcribed leaves a question undrawn however ordinary
+        # its type is. Dropping it here would leave that path unchecked while
+        # still looking like a thorough test.
+        per_question = humanize_schema.get("questions") or {}
         for position, question in iter_questions(questions):
-            status = inspection.classify(question)
-            html = render_question(question)
+            schema = per_question.get(question.get("question_name") or "")
+            status = inspection.classify(question, schema)
+            html = render_question(question, schema)
             if status == "drawn":
                 assert not any(m in html for m in MARKERS.values()), (
                     example.name,

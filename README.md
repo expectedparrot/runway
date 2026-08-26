@@ -8,10 +8,10 @@ respondent would see — same markup, same stylesheet, same font. No browser, no
 node, no server: a dict in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
-and `linear_scale`.** Every other question type renders a "No preview is
-available" notice. That is deliberate: the fidelity bar here is byte-for-byte
-agreement with the live survey's own components, so types are added one at a
-time, each with a recorded parity test.
+and `linear_scale` — plus `matrix`.** Every other question type renders a "No
+preview is available" notice. That is deliberate: the fidelity bar here is
+byte-for-byte agreement with the live survey's own components, so types are
+added one at a time, each with a recorded parity test.
 
 ## Install
 
@@ -165,7 +165,7 @@ survey can be checked meanwhile.
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
 | `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
 | `checkbox`            | — not yet       |     | `list`                       | — not yet       |
-| `checkbox_with_other` | — not yet       |     | `matrix`                     | — not yet       |
+| `checkbox_with_other` | — not yet       |     | `matrix`                     | **✅ available** |
 | `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
 | `file_upload`         | — not yet       |     | `multiple_choice_with_other` | — not yet       |
 | `free_text`           | — not yet       |     | `numerical`                  | — not yet       |
@@ -173,6 +173,13 @@ survey can be checked meanwhile.
 | `interview`           | — not yet       |     | `top_k`                      | — not yet       |
 | `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
 
+
+`matrix` is available with one exception: a survey that configures it as a
+**carousel** — one row at a time, rather than the grid and stacked list it
+serves by default — gets a note, not a grid. That layout is a third, quite
+different component and is not transcribed yet. Showing the default views for a
+question configured that way would be a preview of a page nobody is served, so
+the renderer declines it and `check` reports the same thing, naming the reason.
 
 A type **outside** this table — `dict`, for instance — is a different matter. It
 has no rendering for a human respondent anywhere, so no preview could exist and
@@ -481,6 +488,12 @@ does, or a newly supported type will keep reading as unsupportable.
   file previews as the reference text it was written as. The label markup is
   the live one either way — the wrapper spans an option label carries do not
   depend on whether it resolved to media — so only the innermost text differs.
+- **The matrix carousel.** A humanize schema can ask a matrix to show one row
+  at a time instead of the grid and stacked list it serves by default. That is a
+  third layout, with its own component, and it is not transcribed yet: such a
+  question gets the note rather than a grid it will not be shown as. `check`
+  reports it as a note and names the reason, so it is a stated gap rather than a
+  silent substitution.
 - **Option randomization.** Not applied. A survey that randomizes options shows
   the authored order.
 - **The Next button does nothing.** The `<form>` is rendered for layout parity
@@ -535,8 +548,10 @@ runway/
     ├── markdown.py               question and option text, serialized as React does
     ├── icons.py                  inline lucide SVGs
     ├── question_types/           context preparation only; markup lives in templates/
-    │   ├── __init__.py           RENDERERS registry
+    │   ├── __init__.py           RENDERERS registry, and what each declines
     │   ├── choice.py             multiple_choice, likert_five, yes_no, linear_scale
+    │   ├── matrix.py             matrix — the grid and the stacked list
+    │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/image_generation/thinking: never shown
     │   └── unsupported.py        the stand-in: a note, or a warning
     ├── templates/
@@ -547,6 +562,7 @@ runway/
     │   ├── progress.html         the bar and the stepped indicator
     │   └── questions/
     │       ├── choice.html
+    │       ├── matrix.html
     │       ├── background.html
     │       └── unsupported.html
     └── assets/

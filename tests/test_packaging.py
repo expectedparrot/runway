@@ -35,6 +35,7 @@ TEMPLATES = (
     "toolbar.html",
     "questions/background.html",
     "questions/choice.html",
+    "questions/matrix.html",
     "questions/unsupported.html",
 )
 

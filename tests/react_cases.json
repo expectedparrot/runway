@@ -884,5 +884,52 @@
       ]
     },
     "humanize_schema": null
+  },
+  "matrix_grid": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "visit",
+      "question_type": "matrix",
+      "question_text": "Rate each part of your visit.",
+      "question_items": [
+        "The food",
+        "The staff's attention",
+        "Value for money"
+      ],
+      "question_options": [
+        "Poor",
+        "Fair",
+        "Couldn't say"
+      ]
+    },
+    "value": {},
+    "humanize_schema": null
+  },
+  "matrix_labelled": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "agreement",
+      "question_type": "matrix",
+      "question_text": "How much do you agree?",
+      "question_items": [
+        "It was easy to book",
+        "I'd come again"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Strongly disagree",
+        "5": "Strongly agree"
+      }
+    },
+    "value": {},
+    "humanize_schema": null
   }
 }

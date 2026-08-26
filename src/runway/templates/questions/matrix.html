@@ -1,0 +1,162 @@
+{# Transcription of the reference implementation's matrix question: the two
+   views it mounts by default, in the order it mounts them.
+
+   Both are emitted, because both are served. The reference does not choose
+   between a table and a stacked list on the server -- it renders both and lets
+   a breakpoint decide, so a respondent turning a phone sideways mid-question
+   keeps their answer. `.edsl-matrix-stack-view` and `.edsl-matrix-table-view`
+   are the two halves, and a survey's own CSS flips them.
+
+   The two views therefore cannot share radio names: one name is one group, and
+   the hidden view's radio would uncheck the one on screen. The stacked list
+   scopes both its ids and its group names under `_stack`, and every id on both
+   sides is built from indices rather than from row and column text -- a row
+   piped from a scenario file reads "<see file dog>", and an id may not contain
+   whitespace.
+
+   The empty header cell is empty in the reference too: the row-label column has
+   no heading, and that space is what lets the option headings sit over their
+   own columns.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README.
+
+   (Do not write a literal whitespace-control comment inside a comment like this
+   one -- Jinja comments do not nest, and the inner closing brace ends the outer
+   comment early.) #}
+<div class="edsl-question edsl-matrix-question mb-6">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+{# The gap under the question text is set here, once, so the two views open
+   alike -- and it is the same gap the stacked list keeps between its rows,
+   which is the only rhythm either view has. The wrapper is what takes focus
+   when a submit finds the question unanswered, because a radio in the hidden
+   view cannot. #}
+<div tabindex="-1" class="edsl-matrix-views pt-7 focus:outline-none">
+{#- -#}
+<div class="edsl-matrix-stack-view md:hidden">
+{#- -#}
+<div class="edsl-matrix-stack">
+{#- -#}
+{%- for item in items %}
+{%- set row = loop.index0 %}
+<div class="edsl-matrix-stack-row mt-7 border-t border-gray-200 pt-7 first:mt-0 first:border-t-0 first:pt-0 dark:border-gray-700">
+{#- -#}
+<div id="{{ question_name }}_stack_{{ row }}_label" class="edsl-matrix-stack-item mb-3 text-base text-gray-900 dark:text-white"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></div>
+{#- -#}
+<div role="radiogroup" aria-labelledby="{{ question_name }}_stack_{{ row }}_label" class="edsl-options space-y-1.5">
+{#- -#}
+{%- for option in options %}
+<label for="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" class="edsl-option flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+{#- -#}
+<span class="inline-flex shrink-0 rounded-full has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
+{#- -#}
+<input type="radio" id="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" name="{{ question_name }}_stack_{{ row }}" class="edsl-radio h-5 w-5 cursor-pointer text-blue-600 border-gray-300 focus-visible:outline-none" value="{{ option.value }}"/>
+{#- -#}
+</span>
+{#- -#}
+<span class="edsl-option-label min-w-0 text-sm text-gray-900 dark:text-gray-100"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.stack_label_html }}</span></span></span>
+{#- -#}
+</label>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
+{#- -#}
+<div class="edsl-matrix-table-view hidden md:block">
+{#- -#}
+<div class="overflow-x-auto -mx-4 sm:mx-0">
+{#- -#}
+<table class="edsl-matrix-table w-full border-separate border-spacing-0" style="--edsl-matrix-option-count:{{ option_count }}">
+{#- -#}
+{# The row labels take a share of the grid and the options divide the rest, both
+   halves off one custom property -- so custom CSS rebalances a grid by setting
+   that property and nothing else, with no per-question share to work out. #}
+<colgroup>
+{#- -#}
+<col class="edsl-matrix-item-column w-[var(--edsl-matrix-item-column,25%)]"/>
+{#- -#}
+{%- for option in options %}
+<col class="edsl-matrix-option-column w-[calc((100%_-_var(--edsl-matrix-item-column,25%))_/_var(--edsl-matrix-option-count))]"/>
+{%- endfor %}
+</colgroup>
+{#- -#}
+<thead>
+{#- -#}
+{# Separate borders rather than collapsed ones, set on the table above: a
+   collapsed border belongs to the table and not to the cell, so the line beside
+   the sticky column slides out from under it on a sideways scroll. Rows carry
+   no border in this model, so each cell draws its own. #}
+<tr class="edsl-matrix-header-row">
+{#- -#}
+<th class="sticky left-0 z-10 px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"></th>
+{#- -#}
+{%- for option in options %}
+<th class="px-2 py-3 text-center text-sm font-normal text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 align-bottom min-h-[3.5rem]">
+{#- -#}
+<div class="flex flex-col items-center justify-end gap-1 min-h-[2.5rem]">
+{#- -#}
+{%- if option.header_label %}
+<span class="break-words text-center">{{ option.header_label }}</span>
+{#- -#}
+{%- endif %}
+<span><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></span>
+{#- -#}
+</div>
+{#- -#}
+</th>
+{%- endfor %}
+</tr>
+{#- -#}
+</thead>
+{#- -#}
+<tbody>
+{#- -#}
+{%- for item in items %}
+{%- set row = loop.index0 %}
+<tr class="edsl-matrix-row group transition-colors">
+{#- -#}
+<td class="edsl-matrix-label-cell sticky left-0 z-10 px-4 py-3 text-sm text-gray-900 dark:text-white align-middle bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30 border-b border-r border-gray-200 dark:border-gray-700"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></td>
+{#- -#}
+{%- for option in options %}
+<td class="edsl-matrix-cell px-2 py-3 text-center align-middle border-b border-gray-200 dark:border-gray-700 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30">
+{#- -#}
+<label for="{{ question_name }}_{{ row }}_{{ loop.index0 }}" class="group/bubble flex items-center justify-center cursor-pointer w-full h-full min-h-[2rem]">
+{#- -#}
+{# The ring rides on the wrapper rather than the radio: a ring is a box-shadow
+   and follows the CSS radius, and a radio left with its native look ignores
+   `border-radius`, so a ring set on the input itself is drawn as a square
+   around the circle. The hover halo is a shadow and not a second ring, so the
+   two compose instead of overwriting each other. #}
+<span class="inline-flex rounded-full group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.200)] dark:group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.700)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
+{#- -#}
+<input type="radio" id="{{ question_name }}_{{ row }}_{{ loop.index0 }}" name="{{ question_name }}_{{ row }}" class="edsl-radio w-5 h-5 cursor-pointer text-blue-600 border-gray-300 focus-visible:outline-none" value="{{ option.value }}"/>
+{#- -#}
+</span>
+{#- -#}
+</label>
+{#- -#}
+</td>
+{%- endfor %}
+</tr>
+{%- endfor %}
+</tbody>
+{#- -#}
+</table>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>

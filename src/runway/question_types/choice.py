@@ -25,6 +25,7 @@ from markupsafe import Markup
 
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
+from .values import as_text, option_labels
 
 TEMPLATE = "questions/choice.html"
 
@@ -32,20 +33,6 @@ TEMPLATE = "questions/choice.html"
 # class lookup. A question arriving with anything else is rendered as a plain
 # multiple choice -- see render().
 TYPES = ("multiple_choice", "likert_five", "yes_no", "linear_scale")
-
-
-def _as_text(value: object) -> str:
-    """A question option as text, the way JavaScript would write it.
-
-    Linear scale options are numbers, and the reference turns them into strings
-    by interpolating them. JavaScript has one number type, so a scale point that
-    arrives as ``1.0`` -- from a survey serialized by a tool that writes whole
-    numbers as floats -- reads there as ``1`` and would read here as ``1.0``:
-    every option value and label off by a suffix, with nothing to notice it.
-    """
-    if isinstance(value, float) and value.is_integer():
-        return str(int(value))
-    return str(value)
 
 
 def _option(value: object, label: str | None = None) -> dict[str, str]:
@@ -57,7 +44,7 @@ def _option(value: object, label: str | None = None) -> dict[str, str]:
     untouched, markers and all, rather than quietly rendering markup a
     ``<select>`` cannot hold.
     """
-    text = _as_text(value)
+    text = as_text(value)
     label = text if label is None else label
     return {
         "value": text,
@@ -82,26 +69,6 @@ def _piped_options_message(template: str) -> list[dict[str, str]]:
     ]
 
 
-def _scale_labels(question: dict) -> dict[str, str]:
-    """``option_labels`` keyed the way an option will be looked up.
-
-    The reference reads this with ``option in labels``, and JavaScript property
-    access turns the number into its text form -- so a live question's integer
-    keys and a JSON round-tripped question's string keys behave identically over
-    there. Normalizing to text is how that holds here too.
-
-    A missing table means an unlabelled scale, as does an explicit null. The
-    reference only tolerates the null: reading ``option in undefined`` throws,
-    so a question with no ``option_labels`` at all cannot be served to a
-    respondent. Previewing it as a bare scale says more about the question than
-    failing to draw it would.
-    """
-    labels = question.get("option_labels") or {}
-    if not isinstance(labels, dict):
-        return {}
-    return {_as_text(key): str(value) for key, value in labels.items()}
-
-
 def _options(question: dict) -> list[dict[str, str]]:
     options = question.get("question_options") or []
     if isinstance(options, str):
@@ -110,10 +77,10 @@ def _options(question: dict) -> list[dict[str, str]]:
     if question.get("question_type") != "linear_scale":
         return [_option(option) for option in options]
 
-    labels = _scale_labels(question)
+    labels = option_labels(question)
     scale = []
     for option in options:
-        text = _as_text(option)
+        text = as_text(option)
         # The reference's own format, spaces included. An unlabelled point on a
         # labelled scale shows its number alone -- the ends of a scale are
         # usually the only points named.

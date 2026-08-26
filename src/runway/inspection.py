@@ -28,7 +28,7 @@ the registry first would report a radio list for a page no respondent is served.
 
 from __future__ import annotations
 
-from .question_types import RENDERERS, background, unsupported
+from .question_types import RENDERERS, background, declined, unsupported
 
 # Ordered worst-news-last, which is also the order a summary reads best in.
 STATUSES = ("drawn", "automatic", "note", "warning")
@@ -41,26 +41,33 @@ EXPLANATIONS = {
 }
 
 
-def classify(question: dict) -> str:
-    """Which of :data:`STATUSES` this question will render as."""
+def classify(question: dict, humanize_schema: dict | None = None) -> str:
+    """Which of :data:`STATUSES` this question will render as.
+
+    The schema is part of the answer, not decoration: it can ask for a layout
+    this package has not transcribed, and a renderer that declines the question
+    on those grounds leaves it as undrawn as an unregistered type would.
+    """
     if background.is_background_question(question):
         return "automatic"
     question_type = question.get("question_type") or ""
-    if question_type in RENDERERS:
+    if question_type in RENDERERS and not declined(question, humanize_schema):
         return "drawn"
     if question_type in unsupported.HUMANIZED_TYPES:
         return "note"
     return "warning"
 
 
-def describe(question: dict, position: int) -> dict:
+def describe(
+    question: dict, position: int, humanize_schema: dict | None = None
+) -> dict:
     """A question's classification as plain data, for reporting.
 
     ``position`` is its 1-based place in the survey's item list, which is what
     the progress indicator counts against -- not its index among the questions
     alone.
     """
-    status = classify(question)
+    status = classify(question, humanize_schema)
     entry = {
         "position": position,
         "name": question.get("question_name") or f"question-{position}",
@@ -72,6 +79,12 @@ def describe(question: dict, position: int) -> dict:
         # Which of the three, since "automatic" alone does not say whether a
         # model was involved -- and a thinking wrapper is the surprising one.
         entry["kind"] = background.kind_of(question)
+    reason = declined(question, humanize_schema)
+    if reason:
+        # A type this package draws, on a question it cannot: worth saying
+        # exactly, because "no preview built for this type yet" would be a
+        # puzzle next to the same type drawn two questions earlier.
+        entry["reason"] = reason
     return entry
 
 

@@ -100,9 +100,17 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 1
 
     reports = []
-    for path, questions, _ in surveys:
+    for path, questions, humanize_schema in surveys:
+        # The schema is read here rather than ignored because it can change the
+        # answer: a layout this package has not transcribed leaves a question
+        # undrawn however ordinary its type is.
+        per_question = humanize_schema.get("questions") or {}
         entries = [
-            inspection.describe(question, position)
+            inspection.describe(
+                question,
+                position,
+                per_question.get(question.get("question_name") or ""),
+            )
             for position, question in iter_questions(questions)
         ]
         reports.append(
@@ -238,7 +246,9 @@ def _print_check(report: dict) -> None:
     type_width = max(len(entry["type"]) for entry in entries)
     for entry in entries:
         detail = ""
-        if entry["status"] == "note":
+        if entry.get("reason"):
+            detail = f"  ({entry['reason']})"
+        elif entry["status"] == "note":
             detail = "  (no preview built for this type yet)"
         elif entry["status"] == "warning":
             detail = "  (never shown to a respondent)"
