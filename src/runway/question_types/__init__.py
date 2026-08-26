@@ -22,7 +22,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from . import background, checkbox, choice, free_text, matrix, unsupported
+from . import (
+    background,
+    checkbox,
+    checkbox_with_other,
+    choice,
+    free_text,
+    matrix,
+    unsupported,
+)
 
 Renderer = Callable[[dict, "dict | None"], str]
 
@@ -33,6 +41,7 @@ RENDERERS: dict[str, Renderer] = {
     "linear_scale": choice.render,
     "matrix": matrix.render,
     "checkbox": checkbox.render,
+    "checkbox_with_other": checkbox_with_other.render,
     "free_text": free_text.render,
 }
 

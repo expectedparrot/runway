@@ -8,7 +8,8 @@ respondent would see — same markup, same stylesheet, same font. No browser, no
 node, no server: a dict in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
-and `linear_scale` — plus `matrix`, `checkbox` and `free_text`.** Every other
+and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other` and
+`free_text`.** Every other
 question type renders a "No preview is available" notice. That is deliberate: the fidelity bar here is
 byte-for-byte agreement with the live survey's own components, so types are
 added one at a time, each with a recorded parity test.
@@ -165,7 +166,7 @@ survey can be checked meanwhile.
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
 | `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
 | `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
-| `checkbox_with_other` | — not yet       |     | `matrix`                     | **✅ available** |
+| `checkbox_with_other` | **✅ available** |     | `matrix`                     | **✅ available** |
 | `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
 | `file_upload`         | — not yet       |     | `multiple_choice_with_other` | — not yet       |
 | `free_text`           | **✅ available** |     | `numerical`                  | — not yet       |
@@ -180,6 +181,13 @@ more than one option could be ticked by it. A humanize schema's
 `exclusive_options` are the one thing that changes that — an option clearing the
 rest when ticked is not part of "all", so a question of two options with one
 exclusive loses the row.
+
+`checkbox_with_other` does **not** draw that row, however many options it has:
+its wrapper defaults the same setting the other way, and the survey page
+overrides neither. `exclusive_options` therefore changes nothing in its markup
+at all — the row was the only thing they reached. Reasoning by analogy from
+plain checkbox gets both of these wrong, which is why each is a recorded case
+rather than an assumption.
 
 `matrix` is available with one exception: a survey that configures it as a
 **carousel** — one row at a time, rather than the grid and stacked list it
@@ -531,14 +539,29 @@ does, or a newly supported type will keep reading as unsupportable.
   but has no `action`, so submitting reloads the page. Kept as-is because the
   button's classes and position are part of what the preview shows; use the
   toolbar to move between questions.
-- **Controls tick, they do not behave.** A radio or checkbox responds to a click
-  because the browser makes it, and the matrix's selected styling follows
-  because it is expressed in CSS. Anything needing the application's own logic
-  does not: **Select all** ticks only itself, an `exclusive_options` entry does
-  not clear the others, and selection limits are not enforced. The line is what
-  the DOM knows versus what the app knows — a preview has the first and none of
-  the second, and reproducing the second here would be transcribing behaviour
-  with no recording to hold it to.
+- **Two checkbox rules are reimplemented, and nothing else is.** Most of a
+  preview is live for free: a radio group settles because the markup names it
+  correctly, a checkbox ticks because that is what a checkbox does, and the
+  matrix's selected styling follows because it is expressed in CSS. **Select
+  all** and `exclusive_options` are rules rather than markup, so a page holding
+  a checkbox question ships ~40 lines of script for them — the one place here
+  that reimplements behaviour instead of transcribing markup, and deliberately
+  the last. There is no recording to hold a behaviour to, so it is kept to those
+  two: selection limits, validation and submission are all absent, none of them
+  is visible on a page, and each would be another uncheckable copy of the
+  application. Exclusive options reach the script as *positions*, not option
+  text — a label on the page is rendered markdown, so matching strings would
+  quietly stop recognising any option an author emphasised.
+
+  `checkbox_with_other` carries the same script, plus the rules its typed
+  answers need: typing ticks the box above and adds a row on Enter, **Add
+  another** appears once a row holds something, remove buttons become reachable
+  once there is more than one row, and an exclusive option clears the lot. The
+  markup for the states a preview does not open in — a second row, a visible
+  remove button, the Add another button — is **not** written in JavaScript.
+  It is recorded from the reference like everything else, rendered from
+  `questions/_other_add.html`, parked in a `<template>` and cloned; a test holds
+  the parked copy to the recorded one byte for byte.
 - **Piped values are not resolved.** `{{ agent.x }}`, `{{ scenario.x }}` and
   `{{ q_name.answer }}` render as written. Resolving them means binding a
   survey to agent and scenario data, which would be a per-binding rendering —
@@ -591,6 +614,7 @@ runway/
     │   ├── choice.py             multiple_choice, likert_five, yes_no, linear_scale
     │   ├── matrix.py             matrix — the grid and the stacked list
     │   ├── checkbox.py           checkbox — and whether Select all is drawn
+    │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
     │   ├── free_text.py          free_text — a textarea, and nothing else
     │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/image_generation/thinking: never shown
@@ -605,6 +629,7 @@ runway/
     │       ├── choice.html
     │       ├── matrix.html
     │       ├── checkbox.html
+    │       ├── checkbox_with_other.html
     │       ├── free_text.html
     │       ├── background.html
     │       └── unsupported.html

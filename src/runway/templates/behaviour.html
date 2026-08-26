@@ -1,0 +1,243 @@
+{# Checkbox behaviour: the part of these two types that is neither markup nor
+   browser default.
+
+   Most of a preview is live for free. A radio group settles because the markup
+   names it correctly; a checkbox ticks because that is what a checkbox does.
+   What is left over are rules -- what "all" means, that "None of the above"
+   clears the rest, that typing an answer of one's own ticks the box above it --
+   and a rule has no markup to be recorded from. So this file is a
+   reimplementation, and the only one in the package.
+
+   Two things keep that from being a second, unchecked copy of the application.
+
+   Markup is never written here. New rows are cloned from the row already on the
+   page, and the "Add another" button is cloned from a `<template>` rendered by
+   `questions/_other_add.html` -- the same file the answered-state golden is
+   compared against. A `document.createElement` in this file would be markup no
+   test could reach.
+
+   The exclusive lists arrive as *positions*, from the same humanize schema the
+   renderer reads. Not option text: a label on the page is rendered markdown, so
+   `**Never**` reaches the DOM as `Never`, and matching strings would quietly
+   stop recognising any option an author emphasised.
+
+   Nothing about limits, validation or submission belongs here. None of it is
+   visible on a page, and each addition would be another copy with nothing
+   checking it. #}
+<script>
+(function () {
+    var EXCLUSIVE = {{ exclusive_json }};
+
+    function hasAnswer(texts) {
+        return texts.some(function (text) { return text.trim() !== ''; });
+    }
+
+    function setUp(question) {
+        // The "other" block's own checkbox is not one of the options: it sits in
+        // the same column so the list reads unbroken, but "all" never meant it
+        // and an exclusive option is not it either.
+        var other = question.querySelector('.edsl-other-option input[type="checkbox"]');
+        var boxes = Array.prototype.filter.call(
+            question.querySelectorAll('.edsl-option input[type="checkbox"]'),
+            function (box) { return box !== other; });
+        if (!boxes.length && !other) return;
+
+        var selectAll = question.querySelector(
+            '.edsl-select-all input[type="checkbox"]');
+        var name = selectAll
+            ? selectAll.id.replace(/-select-all$/, '')
+            : (boxes[0] || other).id.replace(/-(?:\d+|other)$/, '');
+        var exclusive = EXCLUSIVE[name] || [];
+
+        // By position, not by label text -- see the note above.
+        function isExclusive(box) {
+            return exclusive.indexOf(boxes.indexOf(box)) !== -1;
+        }
+        var selectable = boxes.filter(function (box) { return !isExclusive(box); });
+
+        var list = question.querySelector('.edsl-other-option ul');
+        var addSlot = question.querySelector('.edsl-other-option .max-w-md');
+        var addTemplate = document.getElementById('preview-other-add');
+        // The author's word for "other", which names each row for a screen
+        // reader. Read off the label rather than passed in: it is plain text
+        // there, and the page already has it.
+        var otherLabel = other
+            ? (question.querySelector('label[for="' + other.id + '"]') || {}).textContent || ''
+            : '';
+
+        function rows() {
+            return list
+                ? Array.prototype.slice.call(list.querySelectorAll('li'))
+                : [];
+        }
+        function texts() {
+            return rows().map(function (row) {
+                return row.querySelector('.edsl-other-input').value;
+            });
+        }
+
+        /* Everything that follows from the rows: how each is named, whether it
+         * can be removed, and whether there is anything to add another to. */
+        function refresh() {
+            var current = rows();
+            var removable = current.length > 1;
+            current.forEach(function (row, index) {
+                var input = row.querySelector('.edsl-other-input');
+                var remove = row.querySelector('.edsl-other-remove');
+                var answer = input.value.trim();
+                input.setAttribute(
+                    'aria-label', otherLabel + ', answer ' + (index + 1));
+                remove.setAttribute(
+                    'aria-label',
+                    answer ? 'Remove ' + answer
+                           : 'Remove empty answer ' + (index + 1));
+                remove.classList.toggle('invisible', !removable);
+                if (removable) remove.removeAttribute('tabindex');
+                else remove.setAttribute('tabindex', '-1');
+            });
+
+            if (!addSlot || !addTemplate) return;
+            var existing = addSlot.querySelector('.edsl-other-add');
+            var wanted = hasAnswer(texts());
+            if (wanted && !existing) {
+                addSlot.appendChild(addTemplate.content.cloneNode(true));
+                addSlot.querySelector('.edsl-other-add')
+                    .addEventListener('click', addRow);
+            } else if (!wanted && existing) {
+                existing.parentNode.remove();
+            }
+        }
+
+        function clearExclusive() {
+            boxes.filter(isExclusive).forEach(function (box) {
+                box.checked = false;
+            });
+        }
+
+        function settleSelectAll() {
+            if (!selectAll) return;
+            selectAll.checked = selectable.length > 0 &&
+                selectable.every(function (box) { return box.checked; });
+        }
+
+        /* Unticking throws the rows away rather than hiding them: text the
+         * respondent can no longer see must not still look like an answer. */
+        function resetRows() {
+            var current = rows();
+            current.slice(1).forEach(function (row) { row.remove(); });
+            if (current[0]) current[0].querySelector('.edsl-other-input').value = '';
+        }
+
+        function addRow() {
+            var current = rows();
+            var last = current[current.length - 1];
+            // A blank trailing row is already the row this would create, so
+            // rather than disable the button -- a control whose first impression
+            // is greyed out reads as broken -- the click moves the caret to the
+            // row that is already waiting.
+            if (last && last.querySelector('.edsl-other-input').value.trim() === '') {
+                last.querySelector('.edsl-other-input').focus();
+                return;
+            }
+            var fresh = last.cloneNode(true);
+            fresh.querySelector('.edsl-other-input').value = '';
+            list.appendChild(fresh);
+            bindRow(fresh);
+            refresh();
+            fresh.querySelector('.edsl-other-input').focus();
+        }
+
+        function removeRow(row) {
+            var index = rows().indexOf(row);
+            row.remove();
+            // Removing the last row leaves an empty one rather than nothing, so
+            // there is still somewhere to type.
+            if (!rows().length) {
+                var fresh = row.cloneNode(true);
+                fresh.querySelector('.edsl-other-input').value = '';
+                list.appendChild(fresh);
+                bindRow(fresh);
+            }
+            if (other) other.checked = hasAnswer(texts());
+            refresh();
+            var remaining = rows();
+            var landing = remaining[Math.min(index, remaining.length - 1)];
+            if (landing) landing.querySelector('.edsl-other-input').focus();
+        }
+
+        function bindRow(row) {
+            var input = row.querySelector('.edsl-other-input');
+            input.addEventListener('input', function () {
+                // Typing an answer of one's own contradicts an exclusive
+                // selection, and ticks the box above without being asked --
+                // nobody should type something and have it ignored for want of
+                // a tick.
+                clearExclusive();
+                settleSelectAll();
+                if (other) other.checked = hasAnswer(texts());
+                refresh();
+            });
+            input.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter') return;
+                // The surrounding form submits on Enter, and here Enter means
+                // "on to the next answer", so it must never reach it.
+                event.preventDefault();
+                var current = rows();
+                var index = current.indexOf(row);
+                if (index < current.length - 1) {
+                    current[index + 1].querySelector('.edsl-other-input').focus();
+                    return;
+                }
+                addRow();
+            });
+            row.querySelector('.edsl-other-remove')
+                .addEventListener('click', function () { removeRow(row); });
+        }
+
+        boxes.forEach(function (box) {
+            box.addEventListener('change', function () {
+                // An exclusive option is the whole answer: it clears the other
+                // options, the respondent's own entries, and any other exclusive
+                // option.
+                if (box.checked && isExclusive(box)) {
+                    boxes.forEach(function (o) { if (o !== box) o.checked = false; });
+                    if (other) { other.checked = false; resetRows(); }
+                } else if (box.checked) {
+                    clearExclusive();
+                }
+                settleSelectAll();
+                refresh();
+            });
+        });
+
+        if (other) {
+            other.addEventListener('change', function () {
+                if (other.checked) clearExclusive();
+                else resetRows();
+                settleSelectAll();
+                refresh();
+            });
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                // Exclusive options are not part of "all" -- ticking one clears
+                // everything else, so counting them would leave this box unable
+                // to settle. A typed answer is not part of it either: it exists
+                // only because the respondent wrote it.
+                selectable.forEach(function (box) { box.checked = selectAll.checked; });
+                if (selectAll.checked) clearExclusive();
+                refresh();
+            });
+        }
+
+        rows().forEach(bindRow);
+        refresh();
+    }
+
+    Array.prototype.forEach.call(
+        document.querySelectorAll(
+            '.edsl-checkbox-question, .edsl-checkbox-with-other-question'),
+        setUp);
+})();
+</script>

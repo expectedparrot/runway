@@ -46,94 +46,15 @@
 {% endif %}
 <div id="root" class="{{ root_class }}">{{ body_html }}</div>
 {% if exclusive_json %}
-{# Checkbox behaviour, which is the one thing on the page that is neither markup
-   nor browser default.
+{# The "Add another" button, parked where the page script can clone it.
 
-   A preview's controls already respond to a click: a radio group settles because
-   the markup names it correctly, and a checkbox ticks because that is what a
-   checkbox does. Two things sit outside that and would otherwise be dead
-   controls in a page that is otherwise live -- Select all, and an option that
-   clears the rest when ticked.
-
-   This is a *reimplementation*, not a transcription: there is no recording to
-   hold it to, which is why it is kept to those two rules and no further. Nothing
-   about limits, validation or submission belongs here -- none of it is visible
-   on a page, and each addition would be another copy of the application with
-   nothing checking it. The exclusive lists come from the same humanize schema
-   the renderer reads, so the two cannot disagree about which options they are.
-#}
-<script>
-(function () {
-    var EXCLUSIVE = {{ exclusive_json }};
-
-    Array.prototype.forEach.call(
-        document.querySelectorAll('.edsl-checkbox-question'),
-        function (question) {
-            var boxes = Array.prototype.slice.call(
-                question.querySelectorAll('.edsl-option input[type="checkbox"]'));
-            if (!boxes.length) return;
-
-            // The question's name is the id prefix its own boxes carry, which is
-            // how a bundle keeps several questions' rules apart.
-            var selectAll = question.querySelector(
-                '.edsl-select-all input[type="checkbox"]');
-            var name = selectAll
-                ? selectAll.id.replace(/-select-all$/, '')
-                : boxes[0].id.replace(/-\d+$/, '');
-            var exclusive = EXCLUSIVE[name] || [];
-
-            // By position, not by label text: an option label on the page is
-            // rendered markdown, so `**Never**` reads there as `Never` and a
-            // script comparing strings would stop recognising it. The boxes are
-            // in option order, so the index is the option.
-            function isExclusive(box) {
-                return exclusive.indexOf(boxes.indexOf(box)) !== -1;
-            }
-            var selectable = boxes.filter(function (box) {
-                return !isExclusive(box);
-            });
-
-            boxes.forEach(function (box) {
-                box.addEventListener('change', function () {
-                    // An exclusive option is the whole answer: ticking it clears
-                    // the rest, and ticking anything else clears it.
-                    if (box.checked && isExclusive(box)) {
-                        boxes.forEach(function (other) {
-                            if (other !== box) other.checked = false;
-                        });
-                    } else if (box.checked) {
-                        boxes.filter(isExclusive).forEach(function (other) {
-                            other.checked = false;
-                        });
-                    }
-                    if (selectAll) {
-                        selectAll.checked = selectable.length > 0 &&
-                            selectable.every(function (other) {
-                                return other.checked;
-                            });
-                    }
-                });
-            });
-
-            if (selectAll) {
-                selectAll.addEventListener('change', function () {
-                    // Exclusive options are not part of "all" -- ticking one
-                    // clears everything else, so counting them would leave this
-                    // box unable to settle.
-                    selectable.forEach(function (box) {
-                        box.checked = selectAll.checked;
-                    });
-                    if (selectAll.checked) {
-                        boxes.filter(isExclusive).forEach(function (box) {
-                            box.checked = false;
-                        });
-                    }
-                });
-            }
-        }
-    );
-})();
-</script>
+   It is absent from an unanswered question, so a script that built one would be
+   creating markup nothing had recorded. Rendering it from the same file the
+   answered-state golden is compared against means what the script inserts is
+   the reference's markup, byte for byte. Preview chrome, outside #root, so it
+   is not part of any question. #}
+<template id="preview-other-add">{% include "questions/_other_add.html" %}</template>
+{% include "behaviour.html" %}
 {% endif %}
 {% if toolbar_html %}
 <script>

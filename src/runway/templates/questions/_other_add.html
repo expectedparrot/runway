@@ -1,0 +1,12 @@
+{# The "Add another" button, on its own so the page script can clone it.
+
+   It is absent from an unanswered question -- the reference holds it back until
+   a row has something in it -- so a script that revealed one would be creating
+   markup nothing had recorded. Rendering it from here into a `<template>`
+   instead means the button the script inserts is the same markup the answered
+   golden is compared against, byte for byte.
+
+   Left-aligned with the inputs. A solid surface with the same hairline and
+   radius as them, rather than a tint: on this page blue means "selected" and
+   nothing else. #}
+<div class="flex pt-1"><button type="button" class="edsl-other-add inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-gray-100">{{ add_icon }}Add another</button></div>

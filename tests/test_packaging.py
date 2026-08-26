@@ -35,6 +35,7 @@ TEMPLATES = (
     "toolbar.html",
     "questions/background.html",
     "questions/checkbox.html",
+    "questions/checkbox_with_other.html",
     "questions/choice.html",
     "questions/free_text.html",
     "questions/matrix.html",

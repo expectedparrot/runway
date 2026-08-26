@@ -23,6 +23,7 @@ from pathlib import Path
 
 from markupsafe import Markup
 
+from . import icons
 from . import progress as progress_module
 from .question_types import background, checkbox, declined, get_renderer, unsupported
 from .templating import render as render_template
@@ -32,6 +33,10 @@ STYLESHEET = ASSETS_DIR / "questions.css"
 
 # Marker styles the stepped indicator has a shape for.
 MARKERS = ("number", "dot")
+
+# The types whose rules the page script implements. Both carry options that a
+# humanize schema can mark exclusive, and one of them draws a Select all row.
+CHECKBOX_TYPES = ("checkbox", "checkbox_with_other")
 
 # The web survey loads this font, and Tailwind's preflight sets it as the html
 # font-family from theme.fontFamily.sans. Without it every metric shifts --
@@ -220,13 +225,15 @@ def exclusive_options(
     stop recognising any option an author emphasised. The position is the same
     on both sides whatever the label says.
 
-    Entries only for checkbox questions: no other type has the notion, and a map
-    with a key per question would invite a script that assumed otherwise.
+    Entries only for the two checkbox types: no other has the notion, and a map
+    with a key per question would invite a script that assumed otherwise. An
+    entry with an empty list still matters -- it is how the page knows there is a
+    checkbox question to give behaviour to at all.
     """
     per_question = (humanize_schema or {}).get("questions") or {}
     found: dict[str, list[int]] = {}
     for question in questions:
-        if question.get("question_type") != "checkbox":
+        if question.get("question_type") not in CHECKBOX_TYPES:
             continue
         name = question.get("question_name") or ""
         exclusive = checkbox.exclusive_options(per_question.get(name))
@@ -264,6 +271,7 @@ def _document(
         # Emitted only when there is a checkbox on the page, so an ordinary
         # survey carries no script it has no use for.
         exclusive_json=Markup(json.dumps(exclusive)) if exclusive else "",
+        add_icon=Markup(icons.render("plus", class_name="w-4 h-4")),
         body_html=Markup(body_html),
     )
 

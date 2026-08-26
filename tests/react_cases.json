@@ -987,5 +987,66 @@
         "None of the above"
       ]
     }
+  },
+  "checkbox_with_other": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxWithOtherQuestion",
+    "question": {
+      "question_name": "allergies",
+      "question_type": "checkbox_with_other",
+      "question_text": "Any dietary requirements?",
+      "question_options": [
+        "Vegetarian",
+        "Vegan",
+        "Couldn't say"
+      ],
+      "other_option_text": "Other"
+    },
+    "humanize_schema": null
+  },
+  "checkbox_with_other_exclusive": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxWithOtherQuestion",
+    "question": {
+      "question_name": "allergies",
+      "question_type": "checkbox_with_other",
+      "question_text": "Any dietary requirements?",
+      "question_options": [
+        "Vegetarian",
+        "Vegan",
+        "Couldn't say"
+      ],
+      "other_option_text": "Other"
+    },
+    "humanize_schema": {
+      "exclusive_options": [
+        "Couldn't say"
+      ]
+    }
+  },
+  "checkbox_with_other_answered": {
+    "kind": "question",
+    "component": "CheckBoxWithOtherQuestion",
+    "question": {
+      "question_name": "allergies",
+      "question_type": "checkbox_with_other",
+      "question_text": "Any dietary requirements?",
+      "question_options": [
+        "Vegetarian",
+        "Vegan"
+      ],
+      "other_option_text": "Other"
+    },
+    "value": {
+      "options": [
+        "Vegan"
+      ],
+      "other_texts": [
+        "Coeliac",
+        ""
+      ],
+      "other_selected": true
+    },
+    "humanize_schema": null
   }
 }

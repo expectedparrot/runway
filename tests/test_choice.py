@@ -33,22 +33,15 @@ from runway.question_types import RENDERERS, choice, get_renderer, unsupported
 CASES = goldens.load_cases()
 GOLDENS = goldens.load_goldens()
 
-# The renderer each recorded case is compared against. "question" and
-# "controlled_question" cases record a question on its own -- they differ only
-# in which component was rendered to get it -- while "question_block"
-# cases record what the survey page puts on the page, which is the question plus
-# any comment box.
-RENDER_BY_KIND = {
-    "question": render_question,
-    "controlled_question": render_question,
-    "question_block": render_question_with_comment,
-}
+# Which kinds this file's sweep covers, and how each is rendered, both live in
+# goldens.py -- so a new kind is taught to every parity test at once rather than
+# to whichever one its author remembered.
+RENDER_BY_KIND = goldens.RENDER_BY_KIND
 
 
 def question_case(name: str) -> str:
     """This package's markup for a recorded question case."""
-    case = CASES[name]
-    return RENDER_BY_KIND[case["kind"]](case["question"], case["humanize_schema"])
+    return goldens.render_case(CASES[name])
 
 
 # --------------------------------------------------------------------------

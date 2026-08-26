@@ -36,6 +36,17 @@
       "edsl_class_name": "QuestionBase"
     },
     {
+      "question_name": "other_modes",
+      "question_type": "checkbox_with_other",
+      "question_text": "Any other way you get to work that we missed?",
+      "question_options": [
+        "Motorbike",
+        "Taxi or rideshare"
+      ],
+      "other_option_text": "Something else",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
       "question_name": "comment",
       "question_type": "free_text",
       "question_text": "Anything else about your commute we should know?",
@@ -51,7 +62,9 @@
     },
     "questions": {
       "reasons": {
-        "exclusive_options": ["None of the above"]
+        "exclusive_options": [
+          "None of the above"
+        ]
       },
       "comment": {
         "comment": {

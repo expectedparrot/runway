@@ -1,0 +1,91 @@
+{# Transcription of the reference implementation's checkbox-with-other question.
+
+   The option rows are byte-identical to checkbox.html's, and duplicated here
+   rather than shared, because the reference duplicates them: two components
+   with their own copies of the loop. A shared partial would be a third thing
+   neither of them has, and would hide the day the two drift apart — which the
+   recorded goldens would catch and this file should not pre-empt.
+
+   No Select all row. The wrapper the survey page mounts defaults `showSelectAll`
+   to *false* here, the opposite of the plain checkbox's wrapper, so the row is
+   never drawn — and `exclusive_options`, whose only effect on plain checkbox
+   markup is to take that row away, therefore changes nothing here.
+
+   The "other" block opens with exactly one empty row. Its remove button is
+   rendered rather than omitted, so the inputs do not resize as rows come and
+   go, but it is `invisible` and out of the tab order while it is the only row.
+   The "Add another" button is held back until a row holds something, so an
+   unanswered page — which is what a preview shows — has none.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-checkbox-with-other-question mb-6">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+<div class="edsl-options space-y-1">
+{#- -#}
+{%- for option in options %}
+<div class="edsl-option flex items-center">
+{#- -#}
+<input type="checkbox" id="{{ question_name }}-{{ loop.index0 }}" class="edsl-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"{% if option.checked %} checked=""{% endif %}/>
+{#- -#}
+<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option-label grow ml-2 py-1"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></label>
+{#- -#}
+</div>
+{%- endfor %}
+<div class="edsl-other-option flex flex-col">
+{#- -#}
+{# A row like any other, so the column of checkboxes runs unbroken: "other" is
+   one of the things you can pick. #}
+<div class="edsl-option flex items-center">
+{#- -#}
+<input type="checkbox" id="{{ question_name }}-other" class="edsl-checkbox w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"{% if other_selected %} checked=""{% endif %}/>
+{#- -#}
+<label for="{{ question_name }}-other" class="edsl-option-label grow ml-2 py-1">{{ other_option_text }}</label>
+{#- -#}
+</div>
+{#- -#}
+{# Capped rather than full-bleed: these hold a word or two, and a page-wide
+   input reads as though an essay is wanted. #}
+<div class="ml-6 mt-1 max-w-md space-y-1.5">
+{#- -#}
+<p id="{{ question_name }}-other-hint" class="edsl-other-hint text-sm text-gray-500 dark:text-gray-400">Please enter one item per box.</p>
+{#- -#}
+{# A real list, so a screen reader announces how many answers there are and
+   which one the caret is in. #}
+<ul class="space-y-1.5">
+{#- -#}
+{%- for row in rows %}
+<li class="flex items-stretch gap-1">
+{#- -#}
+<input type="text" placeholder="Enter an item" aria-label="{{ row.aria_label }}" aria-describedby="{{ question_name }}-other-hint" class="edsl-other-input grow px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" value="{{ row.value }}"/>
+{#- -#}
+{# Kept in the layout at all times -- reserving the slot stops the inputs
+   resizing as rows come and go, and a hover-only control is unreachable on
+   touch. `invisible` and out of the tab order while there is only one row,
+   since there is nothing a removal could leave behind. The trailing space
+   before the class ends is the reference's own: it interpolates an empty string
+   there rather than dropping the separator. #}
+<button type="button" aria-label="{{ row.remove_label }}"{% if not row.removable %} tabindex="-1"{% endif %} class="edsl-other-remove flex w-10 shrink-0 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-500 dark:hover:text-gray-200 dark:hover:bg-gray-700 {% if not row.removable %}invisible{% endif %}">{{ remove_icon }}</button>
+{#- -#}
+</li>
+{#- -#}
+{%- endfor %}
+</ul>
+{#- -#}
+{%- if show_add %}
+{% include "questions/_other_add.html" %}
+{#- -#}
+{%- endif %}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
