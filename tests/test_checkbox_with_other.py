@@ -19,7 +19,7 @@ held back until something is typed — so an unanswered page, which is what a
 preview shows, has neither an extra row nor a button.
 
 The markup to match is recorded from the reference component, not written here.
-See ``test_choice.py`` and the README under "The goldens".
+See ``test_choice.py`` and SPEC.md under "The goldens".
 
 Runs under pytest, or directly: python tests/test_checkbox_with_other.py
 """

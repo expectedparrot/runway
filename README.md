@@ -2,49 +2,123 @@
 
 Static HTML previews of EDSL human-survey questions.
 
-Runway takes the question dict that `edsl`'s `question.to_dict()` produces and
-writes a self-contained HTML page that looks like the live web survey a
-respondent would see — same markup, same stylesheet, same font. No browser, no
-node, no server: a dict in, a file out.
+Runway turns a saved EDSL survey into a self-contained HTML page that looks like
+the live web survey a respondent would see — same markup, same stylesheet, same
+font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
 and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other` and
-`free_text`.** Every other
-question type renders a "No preview is available" notice. That is deliberate: the fidelity bar here is
-byte-for-byte agreement with the live survey's own components, so types are
-added one at a time, each with a recorded parity test.
+`free_text`.** Every other type renders a "No preview is available" notice.
+Types are added one at a time because each is held to byte-for-byte agreement
+with the live survey's own components — see [SPEC.md](SPEC.md).
+
+## Copy and paste into a coding agent
+
+```text
+# runway — static HTML previews of EDSL human surveys
+
+Turns an EDSL survey into a self-contained HTML page that looks like the live
+web survey a respondent would see. No browser, no node, no server.
+
+Install
+  Not on PyPI (it pins edsl to a git branch, which PyPI rejects), so install
+  from git. Needs Python 3.10+, git, and network access.
+
+  uv tool install git+https://github.com/expectedparrot/runway.git   # CLI
+  uv add git+https://github.com/expectedparrot/runway.git            # as a dep
+  pip install git+https://github.com/expectedparrot/runway.git
+
+Input
+  A survey saved by edsl. .ep, .json.gz and .json all work and all give the
+  same preview. The humanize schema, if there is one, is a separate file — a
+  survey carries none.
+
+  survey.save("survey")                                    # -> survey.ep
+  Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
+
+  Do not hand-write a survey file. A bare list of question dicts, or a document
+  that stubs memory_plan or rule_collection, is refused.
+
+Commands
+  A verb is always required.
+
+  runway check  survey.ep --schema schema.json   # what each question will render as
+  runway render survey.ep --schema schema.json   # write the HTML
+  runway types                                   # which types have a control
+  runway guide                                   # what it does and cannot do
+  runway version
+
+  render writes ./previews/<survey>.html — one file, all questions, with a
+  toolbar to move between them. -o DIR to change it, --split for one file per
+  question (much larger; the stylesheet is re-inlined each time).
+
+  check writes nothing and is the fast way to see what you'll get:
+
+    mixed_survey.json  -  7 items
+
+      drawn      commute_mode          multiple_choice
+      drawn      commute_time          multiple_choice
+      drawn      commute_enjoyment     likert_five
+      drawn      commute_satisfaction  linear_scale
+      drawn      commute_switch        yes_no
+      note       commute_barriers      rank    (no preview built for this type yet)
+      warning    commute_breakdown     dict    (never shown to a respondent)
+
+    5 drawn, 1 note, 1 warning
+
+  Four outcomes, and they mean different things:
+
+    drawn      the real control; the preview is accurate.
+    automatic  compute, image_generation, or any type wrapped by
+               thinking_question(). Nobody is ever asked it; nothing is missing.
+    note       a type a human survey supports but runway hasn't transcribed
+               yet. The survey is fine; the tool is behind — do not change the
+               survey to work around it.
+    warning    no human-survey rendering exists anywhere. Fix the survey.
+
+  check exits 1 on warning, and on a file it cannot read. --json on check,
+  types and version.
+
+Drawn today (8)
+  multiple_choice, yes_no, likert_five, linear_scale, matrix, checkbox,
+  checkbox_with_other, free_text. Everything else renders a complete page with
+  a note where the control would be — so wording and position are still
+  checkable.
+
+Caveats
+  Piped values are not resolved. {{ agent.x }}, {{ scenario.x }} render as
+    written.
+  A matrix carousel (format: {type: carousel}) is not drawn; it previews as a
+    note naming the reason.
+  Position is inferred from authored order, so skip logic will differ.
+  Controls tick but mostly don't behave. Checkbox Select-all and exclusive
+    options do work; validation, limits and Next do not.
+  Media is not resolved — an option referencing a file previews as its
+    reference text.
+```
 
 ## Install
+
+**Not on PyPI** — it pins `edsl` to a git branch, which PyPI rejects — so
+install from git. Needs Python 3.10+, git, and network access.
+
+```bash
+uv tool install git+https://github.com/expectedparrot/runway.git   # the CLI
+uv add git+https://github.com/expectedparrot/runway.git            # as a dependency
+pip install git+https://github.com/expectedparrot/runway.git
+```
+
+Or from a checkout, which is also how to work on it:
 
 ```bash
 git clone https://github.com/expectedparrot/runway.git
 cd runway
-uv sync
+uv sync                 # --extra dev adds pytest and ruff
 uv run runway check examples/mixed_survey.json
 ```
 
-Or install it as a tool, so `runway` is on your PATH anywhere:
-
-```bash
-uv tool install git+https://github.com/expectedparrot/runway.git
-```
-
-To work on it, `uv sync --extra dev` adds pytest and ruff. `pip install -e
-".[dev]"` works too, and resolves fresh rather than from `uv.lock`.
-
-Python 3.10+ and three runtime dependencies: **Jinja2** (which brings
-MarkupSafe), **`markdown-it-py[linkify]`** for question and option text — see
-[Markdown](#markdown) — and **`edsl`** itself. The `linkify` extra is not
-optional: the `gfm-like` preset raises `ModuleNotFoundError` without it rather
-than quietly leaving bare URLs unlinked.
-
-**`edsl` is tracked from git `main`, not from a release**, which has two
-consequences worth knowing before you install. Installing needs git and network
-access, so this is not a package you can vendor into an air-gapped build. And a
-direct URL reference in the dependency list is something PyPI rejects outright,
-so runway is installable from a checkout or a git URL but cannot be published to
-PyPI while that line stands. `uv.lock` pins the exact commit, so a locked
-install is still reproducible.
+Three runtime dependencies: **Jinja2**, **`markdown-it-py[linkify]`** and
+**`edsl`**.
 
 ## Usage
 
@@ -57,17 +131,14 @@ runway version                # version, and the types it draws
 ```
 
 The survey file is `.ep`, `.json.gz` or `.json` — see
-[Input format](#input-format).
-
-A verb is always required — `runway survey.json` is not a shortcut for
-`runway render survey.json`, so what a command does never depends on what its
-argument happens to be named. `python -m runway` is the same entry point if you
-would rather not rely on the script being on `PATH`.
+[Input format](#input-format). A verb is always required: `runway survey.ep` is
+not a shortcut for `runway render survey.ep`, so what a command does never
+depends on what its argument happens to be named. `python -m runway` is the same
+entry point if you would rather not rely on the script being on `PATH`.
 
 ### check
 
-Start here. It writes nothing, and tells you what each question will actually
-become:
+Start here. It writes nothing, and tells you what each question will become:
 
 ```
 $ runway check examples/mixed_survey.json
@@ -83,26 +154,25 @@ mixed_survey.json  -  7 items
 5 drawn, 1 note, 1 warning
 ```
 
-Four verdicts, and they are genuinely different news. **drawn** previews with
-its real control. **automatic** is answered on the server, so nobody is ever
-shown it and nothing is missing. **note** means this package has not
-transcribed a control for the type yet — the survey is fine, the preview is
-behind. **warning** means the type has no human-survey rendering anywhere, so
-no preview could exist; that one is about the survey rather than about this
-tool, and it is the only one `check` exits non-zero for.
+Four verdicts, and they are genuinely different news:
 
-The verdict is the page's verdict — `test_check_agrees_with_what_render_produces`
-renders every example and confirms the two cannot disagree.
+| verdict | meaning |
+| --- | --- |
+| **drawn** | previews with its real control |
+| **automatic** | answered on the server, so nobody is ever shown it and nothing is missing |
+| **note** | no control transcribed for the type yet — the survey is fine, the preview is behind |
+| **warning** | the type has no human-survey rendering anywhere, so no preview could exist |
 
-`check` is also where the thinking wrapper shows up, which is the case worth
-having a command for at all:
+Only **warning** exits non-zero, and it is the only one that is about the survey
+rather than about this package.
+
+`check` is also where the thinking wrapper shows up — a `multiple_choice` that
+would otherwise look perfectly previewable, and that nobody is ever asked. It is
+the case worth having a command for at all:
 
 ```
   automatic  pet_category    multiple_choice   (thinking)
 ```
-
-That question is a `multiple_choice` and would otherwise look perfectly
-previewable. Nobody is ever asked it.
 
 ### render
 
@@ -114,57 +184,23 @@ runway render examples/*.json                       # -> one .html per survey
 runway render examples/*.json -o build/review       # -> somewhere else
 ```
 
-`--json` on `check`, `types` and `version` gives machine-readable output.
-
 Each survey is written under its own name — the file's, with the format suffix
 taken off — so several can be rendered into one output directory and sit side by
-side. The library call keeps its own
-default of `index.html` unless you pass `name=`.
-
-By default the whole survey lands in **one HTML file**: every question rendered
-into its own copy of the survey page, one shown at a time, with a toolbar
-across the top to jump between them (arrows, a dropdown, and left/right arrow
-keys). Bundling is both more convenient and smaller — the stylesheet is most of
-a page's weight and a bundle inlines it once:
-
-
-| survey       | `--split` | bundled |
-| ------------ | --------- | ------- |
-| 2 questions  | ~103 KB   | ~58 KB  |
-| 20 questions | ~1.0 MB   | ~90 KB  |
-
-
-`--split` writes `<survey>-01-<question>.html`, `<survey>-02-<question>.html`, …
-instead. Useful for handing someone a single question; each file carries its own
-stylesheet copy.
+side. By default the whole survey lands in **one HTML file**, with a toolbar
+across the top to jump between questions (arrows, a dropdown, arrow keys).
+`--split` writes one file per question instead, which is far larger for anything
+but a short survey because each file re-inlines the stylesheet. `--json` on
+`check`, `types` and `version` gives machine-readable output.
 
 Questions with no control here still get a full page — same shell, same progress
 indicator, and **their question text rendered in the usual markup** — with a note
-or a warning standing in for the input. So a mixed survey previews end to end,
-and you can still read and check the wording of a question whose control isn't
-built yet. The exception is questions whose text a respondent never sees — an
-`interview`'s, which instructs the interviewer rather than the respondent, and
-every automatic question's, which is a prompt for a model or an expression for
-the server: there the text is suppressed, since showing it would imply the
-survey displays something it doesn't.
+or a warning standing in for the input, so a mixed survey previews end to end and
+wording can still be checked. The exception is questions whose text a respondent
+never sees, where it is suppressed rather than implying the survey shows it.
 
-As a library:
-
-```python
-from pathlib import Path
-from runway import load, load_schema, render_bundle, render_page, render_survey
-
-questions       = load(Path("survey.ep"))            # or .json.gz, or .json
-humanize_schema = load_schema(Path("schema.json"))   # always its own file
-
-html  = render_bundle(questions, humanize_schema)                # one document
-html  = render_page(question, {"format": {"type": "dropdown"}})  # one question
-paths = render_survey(questions, humanize_schema, out_dir="previews", split=False)
-paths = render_survey(questions, humanize_schema, name="my_survey")   # -> my_survey.html
-```
-
-`load` raises `SurveyLoadError` for a file it cannot read, whichever format it
-was — one exception to catch rather than one per format.
+Runway is importable too: `load`, `load_schema`, `render_bundle`, `render_page`
+and `render_survey` are the public surface — see
+[SPEC.md](SPEC.md#python-api).
 
 ## Question types
 
@@ -187,106 +223,41 @@ survey can be checked meanwhile.
 | `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
 
 
-`checkbox` draws a **Select all** row that nothing in the question asks for: the
-survey page mounts a wrapper whose default supplies it, and it appears whenever
-more than one option could be ticked by it. A humanize schema's
-`exclusive_options` are the one thing that changes that — an option clearing the
-rest when ticked is not part of "all", so a question of two options with one
-exclusive loses the row.
+Three results are worth expecting: `checkbox` draws a **Select all** row nothing
+in the question asked for, `checkbox_with_other` never draws it, and a `matrix`
+configured as a carousel gets the note instead of a grid.
+[SPEC.md](SPEC.md#what-a-preview-reproduces) has why.
 
-`checkbox_with_other` does **not** draw that row, however many options it has:
-its wrapper defaults the same setting the other way, and the survey page
-overrides neither. `exclusive_options` therefore changes nothing in its markup
-at all — the row was the only thing they reached. Reasoning by analogy from
-plain checkbox gets both of these wrong, which is why each is a recorded case
-rather than an assumption.
+A type **outside** this table — `dict`, for instance — cannot be shown to a
+respondent at all, so its page carries a warning rather than a note: what needs
+changing is the survey.
 
-`matrix` is available with one exception: a survey that configures it as a
-**carousel** — one row at a time, rather than the grid and stacked list it
-serves by default — gets a note, not a grid. That layout is a third, quite
-different component and is not transcribed yet. Showing the default views for a
-question configured that way would be a preview of a page nobody is served, so
-the renderer declines it and `check` reports the same thing, naming the reason.
-
-A type **outside** this table — `dict`, for instance — is a different matter. It
-has no rendering for a human respondent anywhere, so no preview could exist and
-nothing here will make one appear. Those pages carry a warning rather than a
-note, because what needs changing is the survey rather than this package.
-
-### Questions answered without a respondent
-
-`compute` and `image_generation` are marked *automatic* above because nobody is
-ever asked them: the survey evaluates the one and sends the other to an image
-model between pages, then advances past both. The same is true of a question of
-**any** type wrapped by `thinking_question()`, which answers it with its own
-model and system prompt. All three are run by the survey navigator, and their
-pages carry a third notice saying so — neither "no preview yet" nor "not
-supported", since nothing is missing and nothing is wrong.
-
-The thinking wrapper is the one to watch: it leaves the question's type alone,
-so a wrapped `multiple_choice` is still `multiple_choice` and would otherwise be
-drawn with a radio list for a page no respondent is ever served. It is detected
-on the question rather than its type (the `thinking_model` key `to_dict()`
-leaves behind) and intercepted ahead of the type registry. The toolbar marks
-these pages *(automatic)* too, since the type alone cannot tell them apart from
-the questions that are shown. `examples/background_survey.json` has all three
-kinds next to shown questions of the same types.
+`compute`, `image_generation` and anything wrapped by `thinking_question()` are
+marked *automatic* — the survey answers them itself and no respondent ever sees
+them. `examples/background_survey.json` has all three.
 
 ## Input format
 
-Whatever edsl saves a survey as — all three of these are the same input:
+Save the survey, then point runway at it. `.ep`, `.json.gz` and `.json` all
+work, and all give the same preview:
 
-| file       | what it is                                              |
-| ---------- | ------------------------------------------------------- |
-| `.ep`      | the package `Survey.save("survey")` writes by default    |
-| `.json.gz` | the compressed dump `Survey.save("survey.json.gz")` writes |
-| `.json`    | the plain dump `Survey.save("survey.json")` writes        |
+```python
+survey.save("survey")            # -> survey.ep
+survey.save("survey.json")       # -> survey.json
+```
 
-**All three are opened by `Survey.load()`** and then flattened with `to_dict()`,
-so the questions that reach the renderer are the same dicts however the file was
-written. That is the point of loading through edsl rather than reading the JSON
-here: a survey does not survive JSON unchanged — integer `option_labels` keys
-come back as strings, among other things — so a lookalike reader would
-eventually make the same survey preview differently depending on which file it
-came out of. `tests/test_formats.py` holds all three to byte-identical output.
+A humanize schema is saved separately, so pass it separately:
 
-Two consequences follow, and they are the price of the single path:
-
-- **A survey file is a survey**, not a list of questions. A bare JSON list of
-  question dicts is no longer accepted — edsl cannot build a `Survey` from one.
-  Wrap it in `{"questions": [...]}`, or save the survey with `Survey.save()`.
-  The library keeps `render_page(question, …)` for previewing a lone question
-  dict, which is the case the bare list served.
-- **`memory_plan` and `rule_collection` have to be real.** A hand-written survey
-  document that stubs them as `{}` will load as far as edsl and fail there. Dump
-  a real `Survey` rather than approximating one.
-
-Both of those fail with a message about the file rather than edsl's own, which
-is otherwise a `ValueError` about sequence lengths or a bare `KeyError`.
-
-A `.ep` is a git repository in a zip, so opening one shells out to `git` — the
-one runtime requirement beyond the Python dependencies, and only for that
-format. One caveat comes with it: a package that has been pushed to or pulled
-from Coop records that, and `Survey.load()` syncs such a package against the
-remote before handing it over. That is the only thing this tool does that can
-reach the network, and the only way `check`, which writes nothing of its own,
-can leave a file changed. A package saved locally carries no such record and is
-neither read from nor written to beyond being unzipped.
-
-### The humanize schema
-
-**A humanize schema is not part of an EDSL survey.** edsl neither writes one nor
-reads one, so no survey file has one to give, whatever its format — and a
-`humanize_schema` key written into a survey document is ignored, exactly as edsl
-ignores it. It travels in a file of its own:
+```python
+Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
+```
 
 ```bash
 runway render survey.ep --schema schema.json
 ```
 
-That file is the object with `survey` and `questions` keys — the same structure
-you would pass to `Survey.humanize()`, so a schema written for a real deployment
-works here unchanged:
+The schema file is the same object you would pass to `Survey.humanize()`, so one
+written for a real deployment works here unchanged:
 
 ```json
 {
@@ -295,467 +266,55 @@ works here unchanged:
 }
 ```
 
-A file wrapping that under `humanize_schema` is accepted too, that being what
-the parameter is called and so a natural thing to have saved it as. `custom_css`
-is emitted last in the page so it wins, exactly as the live survey applies it —
-`examples/styled_survey.json` is a survey that uses it, against the `edsl-` hooks
-the markup carries for exactly this.
-
-Hand `--schema` a survey document by mistake and it is refused rather than read
-for what it does not have: a schema's `questions` is a table keyed by question
-name, where a survey's is a list. That is the difference between an error and a
-preview with every setting silently missing.
-
-### From EDSL
-
-The survey and its schema are saved separately, because that is how they are
-configured:
-
-```python
-import json
-from pathlib import Path
-
-survey.save("survey")                                    # -> survey.ep
-Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
-```
-
-```bash
-runway render survey.ep --schema schema.json
-```
-
-### The examples
-
-Each example is a pair of files, which is what an author actually has:
-
-```
-examples/src/<name>.py        builds a Survey, names a humanize_schema
-examples/<name>.json          Survey.to_dict(), verbatim
-examples/schemas/<name>.json  the schema — only where the survey needs one
-```
-
-The survey JSON is `to_dict()` output unchanged rather than a shape invented for
-this repo, so an example demonstrates the format you have on disk. It has no
-room for a schema, which is why the schema is a file of its own. Sidecars live
-in a subdirectory so `examples/*.json` still means "the surveys".
-
-```bash
-uv run python examples/build.py            # rewrite the JSON
-uv run python examples/build.py --render   # and previews/*.html
-uv run python examples/build.py --check    # write nothing; fail if stale
-```
-
-`--render` drives the CLI — `runway render <survey> --schema <schema>` — so what
-produces the committed previews is the command a reader would type.
-
-The JSON is committed as well as generated, because the tests read it: a suite
-that built its own fixtures would need edsl working to report anything at all,
-including that edsl had broken something. CI runs `--check`.
-
-## The toolbar
-
-Preview chrome, not survey chrome — every class on it is a Tailwind utility or
-a `preview-` hook, never `edsl-`, so a survey's custom CSS cannot style it by
-accident. Its essential layout is also re-asserted *after* the custom CSS, so a
-stylesheet with broad selectors can't leave the preview unnavigable.
-
-The survey's own **Next button stays inert**. It is part of the page being
-previewed, so it is rendered exactly as a respondent would see it; navigation
-lives in the toolbar instead.
-
-The survey shell is a viewport-tall column that scrolls inside itself, so the
-toolbar's 2.75rem is subtracted from its `min-height` — without that the column
-is taller than the room left for it and the document scrolls too, giving the
-page two scrollbars. A split page has no toolbar and no such adjustment.
-
-Panels use `display: contents` when active, so the wrapper drops out of layout
-and the survey shell's full-height flex chain still resolves. Without
-JavaScript the first panel stays visible and the rest stay hidden, so the
-document degrades to "the first question" rather than to every question at
-once.
-
-## The progress indicator
-
-`humanize_schema["survey"]["progress"]` selects one of three renderings, and the
-preview draws whichever the survey is configured for. Absent means the bar, so a
-survey written before the setting existed previews as it renders.
-
-```json
-{"type": "bar", "label": {"type": "percent"}}
-{"type": "bar", "label": null}
-{"type": "hidden"}
-{"type": "steps", "marker": "number",
- "steps": [{"label": "About you",    "complete_after": "age"},
-           {"label": "Your commute", "complete_after": null}]}
-```
-
-A step is a *boundary*, not a bucket: it covers every survey item through
-`complete_after`, and the last step runs to the end. The two readings measure the
-same position from opposite ends — the bar says how much is **done**, so page one
-reads 0%, while the stepper says where the respondent **is**, so page one already
-sits on step one. A step naming an item the survey no longer has is dropped, and
-if fewer than two survive the indicator falls back to the bar, exactly as the
-live survey resolves it.
-
-## Markdown
-
-Question text and option text are both markdown on the live page, so both are
-markdown here. An author writing `**Strongly** agree` sees emphasis, not
-asterisks.
-
-The parse is the easy half: `markdown-it-py` and `remark` are both CommonMark
-implementations and agree on the tree. What differs is the serialization —
-`react-markdown` hands its tree to React, so what reaches the page is
-`renderToStaticMarkup`'s output rather than a markdown library's. `markdown.py`
-is therefore a pair of renderers over markdown-it's token stream, not a call to
-`md.render()`: `'` escapes to `&#x27;`, void elements are `<br/>` with no space,
-`~~x~~` is `<del>` rather than `<s>`, table cells carry no newlines between
-them, and a raw HTML block is escaped text with **no** paragraph around it
-(there is no `rehype-raw` over there).
-
-**Two surfaces, one parse.** Question text renders into a `<div>` and may emit
-anything. An option label renders inside the `<label>` around a radio, which
-admits phrasing content only, so the live survey's option-label component
-remaps paragraphs to spans and gives links and inline code classes of their own:
-
-| | question text | option text |
-| --- | --- | --- |
-| `p` | `<p>` | `<span>` |
-| `a` | `<a href>` | `+ class`, `target="_blank"`, `rel="noreferrer"` |
-| inline `code` | `<code>` | `+ class` |
-| a list, a heading | as written | as written — a block in a label is how an author learns it doesn't belong there |
-
-A **dropdown shows its options literally**, markers and all. A `<select>` holds
-text and nothing else, and quietly changing the layout to render markup would
-hide the fact that the two settings don't combine.
-
-One rule is invisible in the reference JSX and worth knowing: the component
-writes `<code className="…" {...props}/>` with the spread **last**, so a fenced
-block — whose props carry `className="language-py"` — keeps the language class
-and loses the styled one, while inline code keeps the styled one. A fence with
-no language takes the styled class. Both branches are recorded.
-
-**Not handled: GFM footnotes.** `remark-gfm` implements them and markdown-it's
-`gfm-like` preset does not, and the markup is deeply remark-specific
-(`user-content-fn-1`, `data-footnote-ref`, a screen-reader heading, a `↩`
-backref). A footnote previews as its literal source.
-`test_footnotes_are_the_known_gap` pins that so it is not mistaken for a bug in
-a survey.
-
-`examples/markdown_survey.json` exercises the lot in one page: emphasis and a
-link in question text, styled links and inline code in options, a heading, a
-list, a blockquote and an aligned table, markdown inside linear-scale labels, a
-dropdown keeping its options literal, text that only looks like markdown, an
-undrawn type whose wording still renders, and the footnote gap.
-
-## Design constraints
-
-These are the rules that make the output trustworthy. Please read them before
-changing a template.
-
-**The markup is copied, not invented.** Class strings in the templates are
-verbatim from the live survey's components. Both the semantic `edsl-…` classes
-and the Tailwind utilities matter: the utilities are what actually paint the
-control, and `assets/questions.css` is compiled from those same components. If
-you change a class string, change it because the reference component changed.
-
-**Byte parity is the contract.** Tests assert exact string equality with
-recorded output from the reference components, not a normalized or
-tree-compared approximation. It is strict enough to catch whitespace and
-attribute changes, and it is worth some awkwardness in the templates. If a
-template becomes hard to read as a result, make the template uglier rather than
-the assertion weaker.
-
-That is why the templates are dotted with `{#- -#}` separator lines. JSX
-discards whitespace between elements, so the reference output has none; Jinja
-emits every newline and indent it sees. `trim_blocks` and `lstrip_blocks` (set
-in `templating.py`) handle whitespace around `{% %}` tags, but boundaries
-between two *literal* elements need the explicit empty comment. One trap worth
-knowing: **Jinja comments do not nest**, so a `{#` … `#}` block that quotes a
-whitespace-control comment inside it terminates early and leaks its remaining
-text into the page.
-
-**Escaping must match the reference, not MarkupSafe.** The reference escapes
-`"` as `&quot;` and `'` as `&#x27;`, *including in text content*. MarkupSafe
-emits `&#34;` and `&#39;`. Python's `html.escape(s, quote=True)` is an exact
-match, so `templating.py` routes every interpolation through `html.escape` via
-Jinja's `finalize` hook and marks the result safe; `autoescape` stays on purely
-as a backstop. Do not disable `finalize` — an option like `Don't know` will
-silently stop matching.
-
-**Light mode.** Every `dark:` variant is inert unless a `.dark` ancestor
-exists, and previews never emit one.
-
-**The shell is the respondent page.** `renderer.py` reproduces the page someone
-taking the survey sees — containers, progress bar, Next button, footer — not
-the authoring-side preview. Two values in it cannot be derived by reading the
-reference source and were captured from its runtime output instead: the merged
-container class list (a class-merging helper resolves conflicting Tailwind
-utilities, so it is not a concatenation), and the progress bar's ARIA and
-`data-…` attributes (generated by Radix).
-
-## Tests
-
-```bash
-uv run pytest                       # everything
-uv run python tests/test_choice.py  # or a standalone runner, which needs no pytest
-```
-
-The standalone runners exist so a single file can be run and read on its own;
-they need `runway` importable, so run them through `uv run` or with the package
-installed.
-
-`test_choice` holds the question byte-parity tests and the goldens' own
-contract; `test_progress` covers the indicator — its markup against the
-recording, and the resolver that decides which rendering a config draws at a
-position; `test_survey` covers the survey level — page naming, progress
-advancing, and drawn and undrawn question types side by side via
-`examples/mixed_survey.json`; `test_background` covers the questions no
-respondent is shown — compute, image generation and the `thinking_question()`
-wrapper, which keeps the type it wrapped and so has to be intercepted ahead of
-the type registry — via `examples/background_survey.json`; `test_markdown`
-covers the two markdown surfaces — question text and option labels, which
-serialize differently — and what is deliberately not rendered.
-
-### The goldens
-
-The markup the tests compare against is **recorded, not transcribed**. The live
-survey's own React components are rendered with `renderToStaticMarkup` and the
-output is committed here as two files:
-
-| file | role |
-| --- | --- |
-| `tests/react_cases.json` | what was rendered — question dicts, progress values |
-| `tests/react_goldens.json` | the recorded markup, keyed by the same names |
-
-`tests/goldens.py` reads them and nothing else, which is the point: the contract
-is checkable on any checkout with Python alone — no node, no copy of the web
-application. `test_every_case_has_a_golden` holds the two files to being a
-matched pair, and `test_every_recorded_question_case_matches` compares *every*
-recorded question case against this package — so a case that is recorded is
-always a case that is checked, and there is no need to hand-write an assertion
-per case.
-
-**Recording happens in the repository that owns those components, not here.**
-When they change, the re-recorded pair lands in this repo as an ordinary
-commit, and the diff says exactly what the templates have to be updated to
-match. Two conventions over there make that work: every recorded component is
-*imported* by the recorder rather than transcribed into it — a transcription is
-a second copy of the markup, and a copy drifts silently — and every case
-includes an option with an apostrophe. React escapes `'` as `&#x27;` and `"` as
-`&quot;`, including in text content, where MarkupSafe would emit
-`&#39;`/`&#34;`; a golden with no quotes in it passes while the escaping path is
-silently broken. That happened once already.
-
-`react_goldens.json` also holds one shell case, recorded around a literal
-content marker so the markup before and after a question can be checked without
-the recording knowing what a question looks like.
-
-## Regenerating the stylesheet
-
-`assets/questions.css` is vendored, generated output — ~50 KB, ~9 KB gzipped.
-It covers the whole respondent component tree, so adding most question types
-needs no regeneration. A *template* that starts emitting utilities nothing
-emitted before does; the stepped progress markers were one.
-
-`assets/base.css` is the build input. It is `@tailwind base` + `@tailwind
-utilities` plus **one hand-written block**, which is the only styling in this
-package not derived from a component: the selected state of a stacked matrix
-option. See *A clicked option only half responds* under Known gaps for why it
-has to be hand-written, and read the comment in that file before changing it —
-the `:where()` wrapping is what keeps it from outranking a survey's own CSS.
-
-`assets/tailwind.config.cjs` extends the live application's own Tailwind config
-rather than redeclaring a theme, so fonts, colors, screens and the
-`darkMode: ['selector', '.dark']` setting are identical by construction. It
-therefore needs a checkout of that application:
-
-```bash
-RUNWAY_REFERENCE_APP=/path/to/the/web/app \
-npx tailwindcss \
-  -c src/runway/assets/tailwind.config.cjs \
-  -i src/runway/assets/base.css \
-  -o src/runway/assets/questions.css --minify
-```
-
-`RUNWAY_REFERENCE_COMPONENTS` narrows the component glob if the default
-(`src/components/**/*.{ts,tsx}` under that checkout) is wider than you want.
-The content globs point at the templates — where class strings actually live —
-and at the reference components; never at rendered output, which would keep
-dead classes alive in the stylesheet after a template changed.
-
-## Adding a question type
-
-1. Record the reference component's output for the type, with a representative
-   question — include one option containing an apostrophe, so the escaping path
-   is covered. Recording happens in the repository that owns the components; a
-   new `react_cases.json` / `react_goldens.json` pair lands here.
-2. Add `src/runway/templates/questions/<type>.html`, transcribing the reference
-   markup. Class strings go inline so the template can be diffed against it.
-3. Add `src/runway/question_types/<type>.py` exposing
-   `render(question, humanize_schema)` that prepares context and renders the
-   template.
-4. Register it in `src/runway/question_types/__init__.py`. Anything
-   unregistered falls through to the stand-in, so an unregistered type is never
-   an error.
-5. Add a test asserting equality with the recording.
-6. Mark it available in the table above.
-7. Regenerate `assets/questions.css`.
-
-Where the reference implements several types as one thing, follow it rather
-than the file naming: `choice.html` serves multiple choice, Likert five, yes/no
-and the linear scale because over there they are four components with one body
-and four wrapper classes, and four transcriptions of one component would be
-four copies to keep in step by hand. Record each type separately even so — the
-sharing is the reference's to undo, and the recordings are how that would be
-noticed.
-
-A type that is not in the table above needs no work here — it needs a humanize
-configuration first, and the warning says so on the page. The set of types that
-have one lives in `question_types/unsupported.py`; extend it when the schema
-does, or a newly supported type will keep reading as unsupportable.
+Writing the schema into the survey file instead does nothing — pass it with
+`--schema`. Anything that is not a saved survey is refused with a message saying
+what to do about it. [SPEC.md](SPEC.md#loading-a-survey) has the reasoning behind
+both.
 
 ## Known gaps
 
-- **Fonts.** The page links Plus Jakarta Sans from Google Fonts, matching the
-  live survey. This is the one external request it makes, so the page is not
-  truly self-contained and renders with fallback metrics offline. Embedding the
-  woff2 as base64 would fix both.
+What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
+
+- **Fonts.** Plus Jakarta Sans is linked from Google Fonts, matching the live
+  survey — the one external request a page makes, so it renders with fallback
+  metrics offline.
 - **Rich question text and option labels.** Images, video and PDFs referenced
-  from question text or from an option are resolved server-side during a live
-  run; only the plain text path is handled here. An option that references a
-  file previews as the reference text it was written as. The label markup is
-  the live one either way — the wrapper spans an option label carries do not
-  depend on whether it resolved to media — so only the innermost text differs.
-- **The matrix carousel.** A humanize schema can ask a matrix to show one row
-  at a time instead of the grid and stacked list it serves by default. That is a
-  third layout, with its own component, and it is not transcribed yet: such a
-  question gets the note rather than a grid it will not be shown as. `check`
-  reports it as a note and names the reason, so it is a stated gap rather than a
-  silent substitution.
-- **A clicked option only half responds.** Radios in a preview are real, so
-  clicking one fills it in — the browser does that. The *box* around it is a
-  different matter: the live page swaps an option's classes when React
-  re-renders, and a static page has no React, so the label keeps the unselected
-  classes. For the stacked matrix view, where that swap is the whole selected
-  state, `base.css` restates it as a `:has(:checked)` rule so a click looks like
-  a click. That rule is written at one class of weight, the same as the utility
-  it overrides, so a survey's own `custom_css` still wins exactly as it does on
-  the live page — with one exception, noted in the file: the hover rule needs
-  three classes to beat the `hover:` utility Tailwind emits after it. Everywhere
-  else the class swap is not reproduced, because everywhere else the reference
-  shows selection through the radio alone.
-- **A Coop-linked `.ep` syncs when it is opened.** Reading one goes through
-  `Survey.load()`, and edsl pulls a package that Coop holds a newer version of
-  before returning it — so that one input, unlike every other, can reach the
-  network and can rewrite the file it was read from. It is edsl's behaviour
-  rather than this tool's, and it is what "load" means there; noted because
-  nothing else here does either thing, and `check` otherwise writes nothing at
-  all. Dump the survey to JSON first if a preview must not touch it.
-- **Option randomization.** Not applied. A survey that randomizes options shows
-  the authored order.
-- **The Next button does nothing.** The `<form>` is rendered for layout parity
-  but has no `action`, so submitting reloads the page. Kept as-is because the
-  button's classes and position are part of what the preview shows; use the
-  toolbar to move between questions.
-- **Two checkbox rules are reimplemented, and nothing else is.** Most of a
-  preview is live for free: a radio group settles because the markup names it
-  correctly, a checkbox ticks because that is what a checkbox does, and the
-  matrix's selected styling follows because it is expressed in CSS. **Select
-  all** and `exclusive_options` are rules rather than markup, so a page holding
-  a checkbox question ships ~40 lines of script for them — the one place here
-  that reimplements behaviour instead of transcribing markup, and deliberately
-  the last. There is no recording to hold a behaviour to, so it is kept to those
-  two: selection limits, validation and submission are all absent, none of them
-  is visible on a page, and each would be another uncheckable copy of the
-  application. Exclusive options reach the script as *positions*, not option
-  text — a label on the page is rendered markdown, so matching strings would
-  quietly stop recognising any option an author emphasised.
-
-  `checkbox_with_other` carries the same script, plus the rules its typed
-  answers need: typing ticks the box above and adds a row on Enter, **Add
-  another** appears once a row holds something, remove buttons become reachable
-  once there is more than one row, and an exclusive option clears the lot. The
-  markup for the states a preview does not open in — a second row, a visible
-  remove button, the Add another button — is **not** written in JavaScript.
-  It is recorded from the reference like everything else, rendered from
-  `questions/_other_add.html`, parked in a `<template>` and cloned; a test holds
-  the parked copy to the recorded one byte for byte.
-- **Piped values are not resolved.** `{{ agent.x }}`, `{{ scenario.x }}` and
-  `{{ q_name.answer }}` render as written. Resolving them means binding a
-  survey to agent and scenario data, which would be a per-binding rendering —
-  the reason to do that substitution in the page rather than by multiplying out
-  files.
-- **Position is inferred.** Every page is placed by where it sits in the
-  authored item list: the bar fills to the share of items before it, and a
-  stepper's markers advance on the same reading. The live page resolves position
-  from survey flow, so a survey with skip logic will differ — the further a
-  respondent skips, the more it differs. The renderings themselves are exact;
-  only the position feeding them is inferred.
+  from question or option text are resolved server-side during a live run; here
+  such an option previews as the reference text it was written as.
+- **The matrix carousel.** The one-row-at-a-time layout is not transcribed yet,
+  so a matrix configured for it gets the note. `check` names the reason rather
+  than silently substituting a grid.
+- **Option randomization.** Not applied; the authored order is shown.
+- **Piped values.** `{{ agent.x }}`, `{{ scenario.x }}` and `{{ q_name.answer }}`
+  render as written. Resolving them means binding a survey to agent and scenario
+  data, which would be a per-binding rendering.
+- **Position is inferred** from the authored item list, where the live page
+  resolves it from survey flow — so a survey with skip logic will differ, the
+  further a respondent skips the more so. The renderings themselves are exact.
 - **Settings that govern submission, not markup.** `optional`,
-  `custom_validation`, `submitting_indicator` and attention checks are all
-  accepted in the schema and ignored in the output — each governs validation or
-  what happens on submit, none of which a static page can show. The schema's
-  `comment` and `progress` *are* rendered — they are the settings that put
-  something visible on the page.
+  `custom_validation`, `submitting_indicator` and attention checks are accepted
+  and ignored — none is visible on a static page. `comment` and `progress` *are*
+  rendered.
+- **The Next button does nothing.** The `<form>` is rendered for layout parity
+  but has no `action`. Use the toolbar to move between questions.
+- **A clicked option only half responds.** Clicking a radio fills it in, but the
+  box around it does not light up the way the live page's does. The stacked
+  matrix view is the exception.
+- **Only two checkbox rules work.** **Select all** and `exclusive_options` do;
+  selection limits and validation do not.
+- **A Coop-linked `.ep` can change when you open it.** Previewing one may fetch a
+  newer version from Coop and rewrite the file, which is edsl's behaviour for
+  any `load()`.
 
-## Layout
+## Documentation
 
-```
-runway/
-├── pyproject.toml
-├── uv.lock
-├── examples/                     surveys to render
-│   ├── one_question_survey.json  one multiple choice question
-│   ├── mixed_survey.json         one of every type, drawn and undrawn
-│   ├── background_survey.json    questions answered without a respondent
-│   ├── markdown_survey.json      markdown in question and option text
-│   └── styled_survey.json        a survey with custom_css
-├── tests/
-│   ├── goldens.py                reads the two recorded files
-│   ├── react_cases.json          what was rendered
-│   ├── react_goldens.json        what came out
-│   └── test_*.py                 parity, survey, markdown, packaging, cli
-└── src/runway/
-    ├── __init__.py               public API
-    ├── cli.py                    the `runway` command: render/check/types/guide/version
-    ├── inspection.py             what a question will render as, without rendering
-    ├── __main__.py               `python -m runway`
-    ├── renderer.py               page/body/progress composition
-    ├── progress.py               which indicator a config draws at a position
-    ├── survey.py                 input parsing, one-page-per-question output
-    ├── templating.py             the Jinja environment (escaping + whitespace)
-    ├── html.py                   escaping matched to the reference
-    ├── markdown.py               question and option text, serialized as React does
-    ├── icons.py                  inline lucide SVGs
-    ├── question_types/           context preparation only; markup lives in templates/
-    │   ├── __init__.py           RENDERERS registry, and what each declines
-    │   ├── choice.py             multiple_choice, likert_five, yes_no, linear_scale
-    │   ├── matrix.py             matrix — the grid and the stacked list
-    │   ├── checkbox.py           checkbox — and whether Select all is drawn
-    │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
-    │   ├── free_text.py          free_text — a textarea, and nothing else
-    │   ├── values.py             how a question's own values are spelled
-    │   ├── background.py         compute/image_generation/thinking: never shown
-    │   └── unsupported.py        the stand-in: a note, or a warning
-    ├── templates/
-    │   ├── page.html             document shell + toolbar script
-    │   ├── toolbar.html          preview chrome: jump between questions
-    │   ├── panel.html            one question's page inside a bundle
-    │   ├── body.html             the respondent page
-    │   ├── progress.html         the bar and the stepped indicator
-    │   └── questions/
-    │       ├── choice.html
-    │       ├── matrix.html
-    │       ├── checkbox.html
-    │       ├── checkbox_with_other.html
-    │       ├── free_text.html
-    │       ├── background.html
-    │       └── unsupported.html
-    └── assets/
-        ├── questions.css         generated, vendored — what ships
-        ├── base.css              build input + the one hand-written rule
-        └── tailwind.config.cjs   build config
-```
+[SPEC.md](SPEC.md) is how a preview is built and why its output can be trusted:
+the design constraints the markup is held to, the recorded goldens that hold it
+there, how a survey is loaded, the two markdown surfaces, the toolbar and
+progress indicator, the behaviour a preview reproduces, how to add a question
+type, how to regenerate the stylesheet, and the file layout.
+
+[AGENTS.md](AGENTS.md) is the operating contract for changing this repository.
 
 ## License
 

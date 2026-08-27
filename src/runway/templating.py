@@ -17,7 +17,7 @@ and JSX discards whitespace between elements. Jinja does not: it emits every
 newline and indent it sees. ``trim_blocks`` and ``lstrip_blocks`` handle
 newlines around
 ``{% %}`` tags; boundaries between two literal HTML elements need an explicit
-``{#- -#}`` separator line. That is the deliberate ugliness -- see README.
+``{#- -#}`` separator line. That is the deliberate ugliness -- see SPEC.md.
 """
 
 from __future__ import annotations

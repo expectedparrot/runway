@@ -1,9 +1,10 @@
 # Runway repository operating contract
 
-Read `README.md` before changing anything under `src/runway/templates/`. The
+Read `SPEC.md` before changing anything under `src/runway/templates/`. The
 sections that matter most are **Design constraints** and **The goldens**; the
 rules there are the reason the output is trustworthy, and none of them is
-obvious from the code alone.
+obvious from the code alone. `README.md` is the user-facing half: what runway
+is, how to run it, and which question types it draws.
 
 ## The one rule
 
@@ -141,7 +142,7 @@ new partial renderer belongs there rather than in either caller.
 ## Scope
 
 Question types are added one at a time, each with a recorded parity test — see
-**Adding a question type** in the README. A type with no renderer is not a bug:
+**Adding a question type** in SPEC.md. A type with no renderer is not a bug:
 it falls through to a stand-in that renders a complete page with a note in
 place of the control, and that is the intended behavior for everything outside
 the supported table.

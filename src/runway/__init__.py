@@ -11,7 +11,7 @@ table.
 
 Markup lives in ``templates/`` and is rendered with Jinja. Two constraints
 shape it: byte parity with the reference implementation's server-rendered
-output, and escaping that matches it exactly. Both are documented in README.md.
+output, and escaping that matches it exactly. Both are documented in SPEC.md.
 
     from runway import load, render_page
     questions = load(Path("survey.ep"))

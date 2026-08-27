@@ -40,6 +40,8 @@ is no project, no state and no session to resume.
   runway check  survey.ep       what each question will render as
   runway render survey.ep       write the HTML
   runway types                  which question types have a control
+  runway guide                  this text
+  runway version                the version, and the types it draws
 
 A survey file is anything edsl saves a survey as: a `.ep` package -- what
 `Survey.save()` writes by default -- or a `.json.gz` or `.json` dump. All three
@@ -51,8 +53,9 @@ A bare list of question dicts is not a survey and is not accepted -- wrap it in
 
 A humanize schema is not part of an EDSL survey -- edsl neither writes one nor
 reads one -- so it travels in a file of its own, whatever format the survey is
-in:
+in. Both commands take it, since it can change what a question renders as:
 
+  runway check  survey.ep --schema schema.json
   runway render survey.ep --schema schema.json
 
 Start with `check`. It writes nothing and tells you which questions preview
@@ -62,15 +65,20 @@ respondent, and which cannot be shown to a person at all. Only the last is a
 problem with the survey; the rest are a problem with this tool, or with
 nothing.
 
-Then `render`. By default the whole survey lands in one file with a toolbar to
-move between questions, which is both smaller and easier to hand to someone
-than the `--split` alternative of one file per question -- the stylesheet is
-most of a page's weight and a bundle inlines it once.
+Then `render`. It writes ./previews/<survey>.html unless `-o DIR` says
+otherwise: one file holding every question, with a toolbar to move between them.
+`--split` writes one file per question instead, which is much larger -- the
+stylesheet is most of a page's weight and a bundle inlines it once.
 
-What a preview cannot show: piped values (`{{ agent.x }}` renders as written),
-option randomization, anything resolved server-side from a file, and position
-under skip logic, which is inferred from authored order. Add `--json` to
-`check` and `types` for machine-readable output.\
+What a preview cannot show: piped values (`{{ agent.x }}` and `{{ scenario.x }}`
+render as written), option randomization, media resolved server-side from a file
+(an option referencing one previews as its reference text), a matrix configured
+as a carousel (it previews as a note naming the reason), and position under skip
+logic, which is inferred from authored order. Controls tick but mostly do not
+behave: checkbox Select all and exclusive options work; validation, selection
+limits and the Next button do not.
+
+Add `--json` to `check`, `types` and `version` for machine-readable output.\
 """
 
 
