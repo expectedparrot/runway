@@ -7,12 +7,12 @@ are an implementation detail of how the page is built rather than a promise to
 authors.
 """
 
-from edsl import Survey
 from edsl.questions import (
     QuestionLikertFive,
     QuestionLinearScale,
     QuestionMultipleChoice,
 )
+from edsl.surveys import Survey
 
 CUSTOM_CSS = """.edsl-survey-container {
     background: #fbf7f0;

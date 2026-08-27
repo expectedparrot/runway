@@ -1,6 +1,7 @@
 """The ``runway`` command line.
 
     runway render examples/mixed_survey.json
+    runway render survey.ep
     runway check  examples/mixed_survey.json
     runway types
     runway guide
@@ -24,7 +25,14 @@ from pathlib import Path
 
 from . import __version__, inspection
 from .question_types import RENDERERS, background, unsupported
-from .survey import iter_questions, load, load_schema
+from .survey import (
+    SurveyLoadError,
+    iter_questions,
+    load,
+    load_schema,
+    name_for,
+    output_paths,
+)
 
 DEFAULT_OUT = Path("previews")
 
@@ -36,23 +44,26 @@ runway renders EDSL human-survey questions as static HTML that looks like the
 page a respondent is served. It is one-shot: a survey file in, HTML out. There
 is no project, no state and no session to resume.
 
-  runway check  survey.json     what each question will render as
-  runway render survey.json     write the HTML
+  runway check  survey.ep       what each question will render as
+  runway render survey.ep       write the HTML
   runway types                  which question types have a control
+  runway guide                  this text
+  runway version                the version, and the types it draws
 
-A survey file is either a bare JSON list of question dicts -- the shape
-`question.to_dict()` produces -- or an object with a `questions` list, which is
-what `Survey.to_dict()` writes. Its other keys describe survey flow and are
-ignored; a preview only needs the questions.
+A survey file is anything edsl saves a survey as: a `.ep` package -- what
+`Survey.save()` writes by default -- or a `.json.gz` or `.json` dump. All three
+are opened by `Survey.load()`, so all three describe the same survey the same
+way. Its keys about survey flow are ignored; a preview only needs the questions.
 
-A humanize schema may travel inside that object under `humanize_schema`:
+A bare list of question dicts is not a survey and is not accepted -- wrap it in
+{"questions": [...]}, or save the survey with Survey.save().
 
-  {"questions": [...], "humanize_schema": {"survey": {...}, "questions": {...}}}
+A humanize schema is not part of an EDSL survey -- edsl neither writes one nor
+reads one -- so it travels in a file of its own, whatever format the survey is
+in. Both commands take it, since it can change what a question renders as:
 
-or in a file of its own, which is where `Survey.to_dict()` leaves it, since the
-two are configured separately:
-
-  runway render survey.json --schema schema.json
+  runway check  survey.ep --schema schema.json
+  runway render survey.ep --schema schema.json
 
 Start with `check`. It writes nothing and tells you which questions preview
 with their real control, which fall back to a note because no control is
@@ -61,15 +72,20 @@ respondent, and which cannot be shown to a person at all. Only the last is a
 problem with the survey; the rest are a problem with this tool, or with
 nothing.
 
-Then `render`. By default the whole survey lands in one file with a toolbar to
-move between questions, which is both smaller and easier to hand to someone
-than the `--split` alternative of one file per question -- the stylesheet is
-most of a page's weight and a bundle inlines it once.
+Then `render`. It writes ./previews/<survey>.html unless `-o DIR` says
+otherwise: one file holding every question, with a toolbar to move between them.
+`--split` writes one file per question instead, which is much larger -- the
+stylesheet is most of a page's weight and a bundle inlines it once.
 
-What a preview cannot show: piped values (`{{ agent.x }}` renders as written),
-option randomization, anything resolved server-side from a file, and position
-under skip logic, which is inferred from authored order. Add `--json` to
-`check` and `types` for machine-readable output.\
+What a preview cannot show: piped values (`{{ agent.x }}` and `{{ scenario.x }}`
+render as written), option randomization, media resolved server-side from a file
+(an option referencing one previews as its reference text), a matrix configured
+as a carousel (it previews as a note naming the reason), and position under skip
+logic, which is inferred from authored order. Controls tick but mostly do not
+behave: checkbox Select all and exclusive options work; validation, selection
+limits and the Next button do not.
+
+Add `--json` to `check`, `types` and `version` for machine-readable output.\
 """
 
 
@@ -82,17 +98,21 @@ def cmd_render(args: argparse.Namespace) -> int:
     surveys = _load_all(args.survey, args.schema)
     if surveys is None:
         return 1
+    surveys = _without_repeats(surveys)
+    if _colliding(surveys, args.out, args.split):
+        return 1
 
     written: list[Path] = []
     for path, questions, humanize_schema in surveys:
+        name = name_for(path)
         written.extend(
             _render_survey(
                 questions,
                 humanize_schema,
                 args.out,
                 split=args.split,
-                title=args.title or path.stem,
-                name=path.stem,
+                title=args.title or name,
+                name=name,
             )
         )
     for path in written:
@@ -218,24 +238,20 @@ def _load_all(
     Reading first means a bad path among several leaves the output directory as
     it was, rather than half rewritten.
 
-    ``schema_path`` is a humanize schema saved on its own, which is how
-    ``Survey.to_dict()`` output reaches a preview: that dump has no schema in it,
-    because the schema is configured separately. It replaces whatever the survey
-    file carried, and applies to every survey given -- rendering a set of surveys
-    against one schema is the reason to pass several at once.
+    ``schema_path`` is a humanize schema saved on its own, which is the only way
+    one reaches a preview: it is not part of an EDSL survey, so no survey file
+    of any format has one to give. It applies to every survey given -- rendering
+    a set of surveys against one schema is the reason to pass several at once.
     """
-    schema: dict | None = None
+    schema: dict = {}
     if schema_path is not None:
         if not schema_path.exists():
             print(f"error: no such schema file: {schema_path}", file=sys.stderr)
             return None
         try:
             schema = load_schema(schema_path)
-        except json.JSONDecodeError as exc:
-            print(f"error: {schema_path} is not valid JSON: {exc}", file=sys.stderr)
-            return None
-        except ValueError as exc:
-            print(f"error: {schema_path}: {exc}", file=sys.stderr)
+        except SurveyLoadError as exc:
+            print(f"error: {exc}", file=sys.stderr)
             return None
 
     surveys: list[tuple[Path, list[dict], dict]] = []
@@ -244,15 +260,79 @@ def _load_all(
             print(f"error: no such survey file: {path}", file=sys.stderr)
             return None
         try:
-            questions, humanize_schema = load(path)
-        except json.JSONDecodeError as exc:
-            print(f"error: {path} is not valid JSON: {exc}", file=sys.stderr)
+            questions = load(path)
+        except SurveyLoadError as exc:
+            print(f"error: {exc}", file=sys.stderr)
             return None
         if not questions:
             print(f"error: no questions found in {path}", file=sys.stderr)
             return None
-        surveys.append((path, questions, schema if schema is not None else humanize_schema))
+        surveys.append((path, questions, schema))
     return surveys
+
+
+def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
+    """Drop repeats of the same file, keeping the first.
+
+    Naming one survey twice is not a collision -- it is a list with something
+    said twice, and rendering it once is what was meant. Compared on the
+    resolved path so that `survey.ep` and `./survey.ep` count as one.
+    """
+    seen: set[Path] = set()
+    unique = []
+    for entry in surveys:
+        try:
+            resolved = entry[0].resolve()
+        except OSError:  # pragma: no cover - a path the OS will not resolve
+            resolved = entry[0]
+        if resolved not in seen:
+            seen.add(resolved)
+            unique.append(entry)
+    return unique
+
+
+def _colliding(
+    surveys: list[tuple[Path, list[dict], dict]], out_dir: Path, split: bool
+) -> bool:
+    """Report and return True if two surveys would write the same file.
+
+    Compared on the paths a render would actually produce, which is not the
+    survey's name alone: bundled, each survey writes one `<name>.html`, so two
+    surveys sharing a name collide; `--split` names pages after the questions,
+    so the same two may not overlap at all. Asking :func:`output_paths` is what
+    keeps this answer and the writer's the same.
+
+    Refused rather than renamed: a made-up name would no longer match the
+    survey it came from, and working out which was which is worse than being
+    told to render them apart.
+
+    *Every* clash is reported, in the order the surveys were given, so that a
+    caller fixing them -- an agent especially -- can fix the lot in one pass
+    rather than discovering the next on each re-run. Checked before anything is
+    written, so a set that cannot all be rendered leaves the output directory
+    as it was, the same way an unreadable one does.
+    """
+    claimed: dict[Path, Path] = {}
+    clashes: dict[Path, list[Path]] = {}
+    for source, questions, _ in surveys:
+        for target in output_paths(questions, out_dir, split=split, name=name_for(source)):
+            first = claimed.setdefault(target, source)
+            if first != source:
+                clashes.setdefault(target, [first]).append(source)
+    if not clashes:
+        return False
+
+    print("error: these surveys would be written to the same file:", file=sys.stderr)
+    width = max(len(target.name) for target in clashes)
+    for target, sources in clashes.items():
+        listed = ", ".join(str(source) for source in sources)
+        print(f"  {target.name:<{width}}  <- {listed}", file=sys.stderr)
+    print(
+        "Rename them, render them separately, or write into different "
+        "directories with -o.",
+        file=sys.stderr,
+    )
+    return True
 
 
 def _render_survey(*args, **kwargs) -> list[Path]:
@@ -307,18 +387,19 @@ def _add_survey_argument(parser: argparse.ArgumentParser) -> None:
         "survey",
         type=Path,
         nargs="+",
-        help="Survey JSON: a bare list of question dicts, or an object with "
-        "'questions' and an optional 'humanize_schema' -- which is the shape "
-        "Survey.to_dict() produces. Several may be given.",
+        help="Survey file: a .ep package, or a .json.gz or .json dump. All "
+        "three are opened by Survey.load(). Several may be given; for `render` "
+        "their names must differ, since each is written to a file named after "
+        "its survey.",
     )
     parser.add_argument(
         "--schema",
         type=Path,
         default=None,
         metavar="PATH",
-        help="Humanize schema saved on its own, as Survey.to_dict() output "
-        "has none. Replaces any the survey file carried, and applies to every "
-        "survey given.",
+        help="Humanize schema, which is configured and saved separately from "
+        "the survey and is the only way one reaches a preview. Applies to "
+        "every survey given.",
     )
 
 
@@ -355,7 +436,8 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument(
         "--title",
         default=None,
-        help="Document title for the bundled page (default: the survey file's name).",
+        help="Document title for the bundled page (default: the survey's own "
+        "name -- its file name with the format suffix taken off).",
     )
     render.set_defaults(func=cmd_render)
 

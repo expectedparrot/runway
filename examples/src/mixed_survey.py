@@ -7,7 +7,6 @@ why its shape is worth leaving alone: several of them assert progress values
 that follow from there being seven items.
 """
 
-from edsl import Survey
 from edsl.questions import (
     QuestionDict,
     QuestionLikertFive,
@@ -16,6 +15,7 @@ from edsl.questions import (
     QuestionRank,
     QuestionYesNo,
 )
+from edsl.surveys import Survey
 
 survey = Survey(
     [

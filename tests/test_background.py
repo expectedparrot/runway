@@ -29,7 +29,7 @@ NOTICE = "Answered automatically"
 
 
 def _questions() -> dict[str, dict]:
-    questions, _ = load(EXAMPLE)
+    questions = load(EXAMPLE)
     return {question["question_name"]: question for question in questions}
 
 
@@ -140,8 +140,8 @@ def test_an_undrawn_type_that_is_shown_still_gets_the_plain_note():
 def test_the_toolbar_marks_the_pages_no_respondent_sees():
     # A thinking question keeps the type it wrapped, so the type alone cannot
     # tell the two multiple_choice entries apart.
-    questions, humanize_schema = load(EXAMPLE)
-    html = render_bundle(questions, humanize_schema)
+    questions = load(EXAMPLE)
+    html = render_bundle(questions, {})
     assert ">1. pet — Multiple Choice</option>" in html
     assert ">2. pet_category — Multiple Choice (automatic)</option>" in html
     assert ">3. pet_portrait — Image Generation (automatic)</option>" in html
@@ -152,8 +152,8 @@ def test_the_toolbar_marks_the_pages_no_respondent_sees():
 def test_every_background_question_gets_its_own_panel():
     # They are survey items like any other: they count for progress and they
     # are worth looking at, they just have nothing to answer.
-    questions, humanize_schema = load(EXAMPLE)
-    html = render_bundle(questions, humanize_schema)
+    questions = load(EXAMPLE)
+    html = render_bundle(questions, {})
     assert html.count("edsl-preview-background") == 3
     assert html.count('class="preview-panel') == 6
 

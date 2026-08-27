@@ -8,7 +8,7 @@ only the table would be a different page from the one served, and would lose the
 property that turning a phone mid-question keeps the answer.
 
 The markup to match is recorded from the reference component, not written here.
-See ``test_choice.py`` and the README under "The goldens".
+See ``test_choice.py`` and SPEC.md under "The goldens".
 
 One layout is deliberately *not* drawn: the carousel a humanize schema can ask
 for. Rather than showing the default views for a question configured that way,

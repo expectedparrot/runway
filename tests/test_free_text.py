@@ -7,7 +7,7 @@ a `value` attribute, and no schema-driven anything, because the schema has
 nothing to say to this control.
 
 The markup to match is recorded from the reference component, not written here.
-See ``test_choice.py`` and the README under "The goldens".
+See ``test_choice.py`` and SPEC.md under "The goldens".
 
 Runs under pytest, or directly: python tests/test_free_text.py
 """

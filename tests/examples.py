@@ -1,8 +1,8 @@
 """The example surveys, and the schemas that sit beside them.
 
 An example is two files, because that is what an author has: the survey is
-``Survey.to_dict()`` verbatim, which has no room for a humanize schema since the
-two are configured separately, and the schema — where the survey needs one —
+``Survey.to_dict()`` verbatim, which carries no humanize schema because a schema
+is not part of an EDSL survey, and the schema — where the survey needs one —
 lives under ``examples/schemas`` with the same name.
 
 Tests read them through here rather than calling ``load`` directly, so that a
@@ -34,8 +34,6 @@ def schema_path(survey: Path) -> Path:
 
 def load_example(survey: Path) -> tuple[list[dict], dict]:
     """A survey's questions and its schema, from the two files."""
-    questions, schema = load(survey)
+    questions = load(survey)
     sidecar = schema_path(survey)
-    if sidecar.is_file():
-        schema = load_schema(sidecar)
-    return questions, schema
+    return questions, load_schema(sidecar) if sidecar.is_file() else {}

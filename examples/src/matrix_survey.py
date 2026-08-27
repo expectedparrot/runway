@@ -15,8 +15,8 @@ would be shown. `likelihood_10pt` is the width stress case: eleven columns is
 where a table stops being readable and the stacked list earns its place.
 """
 
-from edsl import Survey
 from edsl.questions import QuestionMatrix, QuestionYesNo
+from edsl.surveys import Survey
 
 survey = Survey(
     [

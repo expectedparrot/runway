@@ -8,7 +8,7 @@ contract has to be checkable with Python alone, on any checkout, with no
 node and no copy of the reference application.
 
 Re-recording lives with the reference implementation, not here; see
-``README.md`` under "The goldens". A recording that no longer matches this
+``SPEC.md`` under "The goldens". A recording that no longer matches this
 package shows up as a failing parity test after the new file lands.
 
 The two files are a matched pair, and :func:`check_pairing` is what says so --

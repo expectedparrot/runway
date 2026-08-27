@@ -15,7 +15,7 @@ byte-for-byte equality.
 Recording rather than transcribing is what makes this a contract rather than a
 snapshot of somebody's best guess: when a reference component changes, the
 re-recorded file lands here and the diff says exactly what to change. See
-README under "The goldens".
+SPEC.md under "The goldens".
 
 Runs under pytest, or directly: python tests/test_choice.py
 """
