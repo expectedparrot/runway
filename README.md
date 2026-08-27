@@ -14,88 +14,104 @@ with the live survey's own components — see [SPEC.md](SPEC.md).
 
 ## Copy and paste into a coding agent
 
-```text
+````text
 # runway — static HTML previews of EDSL human surveys
 
 Turns an EDSL survey into a self-contained HTML page that looks like the live
 web survey a respondent would see. No browser, no node, no server.
 
-Install
-  Not on PyPI (it pins edsl to a git branch, which PyPI rejects), so install
-  from git. Needs Python 3.10+, git, and network access.
+## Install
 
-  uv tool install git+https://github.com/expectedparrot/runway.git   # CLI
-  uv add git+https://github.com/expectedparrot/runway.git            # as a dep
-  pip install git+https://github.com/expectedparrot/runway.git
+Not on PyPI (it pins edsl to a git branch, which PyPI rejects), so install from
+git. Needs Python >=3.10, git, and network access.
 
-Input
-  A survey saved by edsl. .ep, .json.gz and .json all work and all give the
-  same preview. The humanize schema, if there is one, is a separate file — a
-  survey carries none.
-
-  survey.save("survey")                                    # -> survey.ep
-  Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
-
-  Do not hand-write a survey file. A bare list of question dicts, or a document
-  that stubs memory_plan or rule_collection, is refused.
-
-Commands
-  A verb is always required.
-
-  runway check  survey.ep --schema schema.json   # what each question will render as
-  runway render survey.ep --schema schema.json   # write the HTML
-  runway types                                   # which types have a control
-  runway guide                                   # what it does and cannot do
-  runway version
-
-  render writes ./previews/<survey>.html — one file, all questions, with a
-  toolbar to move between them. -o DIR to change it, --split for one file per
-  question (much larger; the stylesheet is re-inlined each time).
-
-  check writes nothing and is the fast way to see what you'll get:
-
-    mixed_survey.json  -  7 items
-
-      drawn      commute_mode          multiple_choice
-      drawn      commute_time          multiple_choice
-      drawn      commute_enjoyment     likert_five
-      drawn      commute_satisfaction  linear_scale
-      drawn      commute_switch        yes_no
-      note       commute_barriers      rank    (no preview built for this type yet)
-      warning    commute_breakdown     dict    (never shown to a respondent)
-
-    5 drawn, 1 note, 1 warning
-
-  Four outcomes, and they mean different things:
-
-    drawn      the real control; the preview is accurate.
-    automatic  compute, image_generation, or any type wrapped by
-               thinking_question(). Nobody is ever asked it; nothing is missing.
-    note       a type a human survey supports but runway hasn't transcribed
-               yet. The survey is fine; the tool is behind — do not change the
-               survey to work around it.
-    warning    no human-survey rendering exists anywhere. Fix the survey.
-
-  check exits 1 on warning, and on a file it cannot read. --json on check,
-  types and version.
-
-Drawn today (8)
-  multiple_choice, yes_no, likert_five, linear_scale, matrix, checkbox,
-  checkbox_with_other, free_text. Everything else renders a complete page with
-  a note where the control would be — so wording and position are still
-  checkable.
-
-Caveats
-  Piped values are not resolved. {{ agent.x }}, {{ scenario.x }} render as
-    written.
-  A matrix carousel (format: {type: carousel}) is not drawn; it previews as a
-    note naming the reason.
-  Position is inferred from authored order, so skip logic will differ.
-  Controls tick but mostly don't behave. Checkbox Select-all and exclusive
-    options do work; validation, limits and Next do not.
-  Media is not resolved — an option referencing a file previews as its
-    reference text.
+```bash
+uv tool install git+https://github.com/expectedparrot/runway.git   # CLI
+uv add git+https://github.com/expectedparrot/runway.git            # as a dep
+pip install git+https://github.com/expectedparrot/runway.git
 ```
+
+## Input
+
+A survey saved by edsl. `.ep`, `.json.gz` and `.json` all work and all give the
+same preview. The humanize schema, if there is one, is separate — a survey
+carries none.
+
+```python
+import json
+from pathlib import Path
+
+survey.save("survey")                                    # -> survey.ep
+Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
+```
+
+Do not hand-write a survey file. A bare list of question dicts, or a document
+that stubs `memory_plan` or `rule_collection`, is refused.
+
+## Commands
+
+A verb is always required.
+
+```bash
+runway check  survey.ep --schema schema.json   # what each question will render as
+runway render survey.ep --schema schema.json   # write the HTML
+runway types                                   # which types have a control
+runway guide                                   # what it does and cannot do
+runway version
+```
+
+`render` writes `./previews/<survey>.html` — one file, all questions, with a
+toolbar to move between them. `-o DIR` to change it, `--split` for one file per
+question (much larger; the stylesheet is re-inlined each time). Several surveys
+may be given at once, so long as their names differ.
+
+`check` writes nothing and is the fast way to see what you'll get:
+
+```
+mixed_survey.json  -  7 items
+
+  drawn      commute_mode          multiple_choice
+  drawn      commute_time          multiple_choice
+  drawn      commute_enjoyment     likert_five
+  drawn      commute_satisfaction  linear_scale
+  drawn      commute_switch        yes_no
+  note       commute_barriers      rank    (no preview built for this type yet)
+  warning    commute_breakdown     dict    (never shown to a respondent)
+
+5 drawn, 1 note, 1 warning
+```
+
+Four outcomes, and they mean different things:
+
+- `drawn` — the real control; the preview is accurate.
+- `automatic` — `compute`, `image_generation`, or any type wrapped by
+  `thinking_question()`. Nobody is ever asked it; nothing is missing.
+- `note` — a type a human survey supports but runway hasn't transcribed yet.
+  The survey is fine; the tool is behind.
+- `warning` — no human-survey rendering exists anywhere. Fix the survey.
+
+`check` exits 1 on `warning`, and on a file it cannot read. `--json` on
+`check`, `types` and `version`.
+
+## Drawn today (8)
+
+`multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
+`checkbox`, `checkbox_with_other`, `free_text`. Everything else renders a
+complete page with a note where the control would be — so wording and position
+are still checkable.
+
+## Caveats
+
+- Piped values are not resolved. `{{ agent.x }}`, `{{ scenario.x }}` render as
+  written.
+- A matrix carousel (`format: {type: carousel}`) is not drawn; it previews as a
+  note naming the reason.
+- Position is inferred from authored order, so skip logic will differ.
+- Controls tick but mostly don't behave. Checkbox Select-all and exclusive
+  options do work; validation, limits and Next do not.
+- Media is not resolved — an option referencing a file previews as its
+  reference text.
+````
 
 ## Install
 
@@ -185,8 +201,11 @@ runway render examples/*.json -o build/review       # -> somewhere else
 ```
 
 Each survey is written under its own name — the file's, with the format suffix
-taken off — so several can be rendered into one output directory and sit side by
-side. By default the whole survey lands in **one HTML file**, with a toolbar
+taken off — so several can share one output directory. Two whose names agree,
+like `survey.ep` and `survey.json`, are refused rather than one silently
+replacing the other.
+
+By default the whole survey lands in **one HTML file**, with a toolbar
 across the top to jump between questions (arrows, a dropdown, arrow keys).
 `--split` writes one file per question instead, which is far larger for anything
 but a short survey because each file re-inlines the stylesheet. `--json` on

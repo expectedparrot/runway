@@ -406,7 +406,7 @@ is how a single question is previewed without a survey around it.
 
 `render_survey` defaults to writing `index.html` unless `name=` is passed; the
 CLI passes the survey file's own name so that several surveys can share an
-output directory.
+output directory, and refuses a set whose names would collide.
 
 ## Adding a question type
 

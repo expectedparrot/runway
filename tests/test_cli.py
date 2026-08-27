@@ -217,6 +217,99 @@ def test_nothing_is_written_when_one_of_several_surveys_is_bad(tmp_path):
     assert not out.exists()
 
 
+def _named(tmp_path, subdir, name, question_name):
+    """A one-question survey saved at `subdir/name`, identifiable in the HTML."""
+    from edsl.questions import QuestionFreeText
+    from edsl.surveys import Survey
+
+    directory = tmp_path / subdir
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / name
+    Survey([QuestionFreeText(question_name=question_name, question_text="?")]).save(
+        str(path)
+    )
+    return path
+
+
+def test_two_surveys_that_would_share_an_output_file_are_refused(tmp_path):
+    """Written files are stemmed with the survey's name, so `survey.ep` and
+    `survey.json` both want `survey.html` -- and the second would silently
+    replace the first while both were reported as written."""
+    ep = _named(tmp_path, "in", "survey.ep", "from_ep")
+    js = _named(tmp_path, "in", "survey.json", "from_json")
+    out = tmp_path / "out"
+    assert main(["render", str(ep), str(js), "-o", str(out)]) == 1
+    assert not out.exists(), "a refused render must leave the directory as it was"
+
+
+def test_the_same_name_in_two_directories_is_refused(tmp_path):
+    """The same collision, reachable before any of the package formats existed."""
+    a = _named(tmp_path, "a", "survey.json", "from_a")
+    b = _named(tmp_path, "b", "survey.json", "from_b")
+    out = tmp_path / "out"
+    assert main(["render", str(a), str(b), "-o", str(out)]) == 1
+    assert not out.exists()
+
+
+def test_every_collision_is_reported_at_once(tmp_path, capsys):
+    """A caller fixing these -- an agent especially -- should be able to fix
+    them all in one pass, not discover the next on every re-run. The surveys
+    are named in the order they were given, so a report can be read against the
+    command that produced it."""
+    first = _named(tmp_path, "a", "survey.json", "q")
+    second = _named(tmp_path, "b", "survey.json", "q")
+    third = _named(tmp_path, "a", "other.ep", "q")
+    fourth = _named(tmp_path, "b", "other.json", "q")
+
+    out = tmp_path / "out"
+    argv = [str(first), str(second), str(third), str(fourth)]
+    assert main(["render", *argv, "-o", str(out)]) == 1
+    assert not out.exists()
+
+    report = capsys.readouterr().err
+    assert "survey.html" in report and "other.html" in report, "both clashes named"
+    for path in argv:
+        assert str(path) in report, "every colliding survey is named"
+    # In the order given: the a/ copy is listed before the b/ copy.
+    assert report.index(str(first)) < report.index(str(second))
+
+
+def test_surveys_with_distinct_names_still_render_together(tmp_path):
+    """The check must not fire on the ordinary case it is guarding."""
+    a = _named(tmp_path, "in", "first.json", "q_a")
+    b = _named(tmp_path, "in", "second.json", "q_b")
+    out = tmp_path / "out"
+    assert main(["render", str(a), str(b), "-o", str(out)]) == 0
+    assert {path.name for path in out.glob("*.html")} == {"first.html", "second.html"}
+
+
+def test_naming_one_survey_twice_renders_it_once(tmp_path):
+    """Not a collision -- a list with something said twice. Rendering it once is
+    what was meant, and the error for a real collision would read as nonsense
+    here: `survey.ep and survey.ep would both be written as ...`."""
+    survey = _named(tmp_path, "in", "survey.ep", "q")
+    out = tmp_path / "out"
+    assert main(["render", str(survey), str(survey), "-o", str(out)]) == 0
+    assert [path.name for path in out.glob("*.html")] == ["survey.html"]
+
+
+def test_rendering_the_same_survey_again_overwrites_without_complaint(tmp_path):
+    """Separate invocations are separate: overwriting your own previous output
+    is intended, and the collision check must never reach across runs."""
+    survey = _named(tmp_path, "in", "survey.ep", "q")
+    out = tmp_path / "out"
+    for _ in range(3):
+        assert main(["render", str(survey), "-o", str(out)]) == 0
+    assert [path.name for path in out.glob("*.html")] == ["survey.html"]
+
+
+def test_checking_colliding_surveys_is_fine(tmp_path):
+    """`check` writes nothing, so it has no output name to collide over."""
+    ep = _named(tmp_path, "in", "survey.ep", "from_ep")
+    js = _named(tmp_path, "in", "survey.json", "from_json")
+    assert main(["check", str(ep), str(js)]) == 0
+
+
 # --------------------------------------------------------------------------
 # A humanize schema of its own
 # --------------------------------------------------------------------------

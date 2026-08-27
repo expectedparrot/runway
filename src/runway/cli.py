@@ -25,7 +25,14 @@ from pathlib import Path
 
 from . import __version__, inspection
 from .question_types import RENDERERS, background, unsupported
-from .survey import SurveyLoadError, iter_questions, load, load_schema, name_for
+from .survey import (
+    SurveyLoadError,
+    iter_questions,
+    load,
+    load_schema,
+    name_for,
+    output_stem,
+)
 
 DEFAULT_OUT = Path("previews")
 
@@ -90,6 +97,9 @@ Add `--json` to `check`, `types` and `version` for machine-readable output.\
 def cmd_render(args: argparse.Namespace) -> int:
     surveys = _load_all(args.survey, args.schema)
     if surveys is None:
+        return 1
+    surveys = _without_repeats(surveys)
+    if _colliding(path for path, _, _ in surveys):
         return 1
 
     written: list[Path] = []
@@ -261,6 +271,66 @@ def _load_all(
     return surveys
 
 
+def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
+    """Drop repeats of the same file, keeping the first.
+
+    Naming one survey twice is not a collision -- it is a list with something
+    said twice, and rendering it once is what was meant. Compared on the
+    resolved path so that `survey.ep` and `./survey.ep` count as one.
+    """
+    seen: set[Path] = set()
+    unique = []
+    for entry in surveys:
+        try:
+            resolved = entry[0].resolve()
+        except OSError:  # pragma: no cover - a path the OS will not resolve
+            resolved = entry[0]
+        if resolved not in seen:
+            seen.add(resolved)
+            unique.append(entry)
+    return unique
+
+
+def _colliding(paths) -> bool:
+    """Report and return True if any two surveys would be written to one file.
+
+    Written files are stemmed with the survey's own name, so two inputs that
+    differ only in format -- `survey.ep` and `survey.json` -- or that share a
+    name across directories land on the same path, and the second would
+    silently replace the first. Refused rather than renamed: a made-up name
+    would no longer match the survey it came from, and working out which was
+    which is worse than being told to render them apart.
+
+    *Every* clash is reported, in the order the surveys were given, so that a
+    caller fixing them -- an agent especially -- can fix the lot in one pass
+    rather than discovering the next one on each re-run.
+
+    Checked before anything is written, so a set of surveys that cannot all be
+    rendered leaves the output directory as it was, the same way an unreadable
+    one does.
+    """
+    groups: dict[str, list[Path]] = {}
+    for path in paths:
+        groups.setdefault(output_stem(path), []).append(path)
+    clashes = {stem: found for stem, found in groups.items() if len(found) > 1}
+    if not clashes:
+        return False
+
+    print(
+        "error: these surveys would be written to the same file:", file=sys.stderr
+    )
+    width = max(len(stem) for stem in clashes) + len(".html")
+    for stem, found in clashes.items():
+        listed = ", ".join(str(path) for path in found)
+        print(f"  {stem + '.html':<{width}}  <- {listed}", file=sys.stderr)
+    print(
+        "Rename them, render them separately, or write into different "
+        "directories with -o.",
+        file=sys.stderr,
+    )
+    return True
+
+
 def _render_survey(*args, **kwargs) -> list[Path]:
     # Imported at call time: `check`, `types`, `guide` and `version` have no
     # reason to build a Jinja environment or read the stylesheet off disk.
@@ -314,7 +384,9 @@ def _add_survey_argument(parser: argparse.ArgumentParser) -> None:
         type=Path,
         nargs="+",
         help="Survey file: a .ep package, or a .json.gz or .json dump. All "
-        "three are opened by Survey.load(). Several may be given.",
+        "three are opened by Survey.load(). Several may be given; for `render` "
+        "their names must differ, since each is written to a file named after "
+        "its survey.",
     )
     parser.add_argument(
         "--schema",

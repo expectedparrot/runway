@@ -54,6 +54,18 @@ def name_for(path: Path) -> str:
     return path.stem
 
 
+def output_stem(path: Path) -> str:
+    """What written files are actually stemmed with for this survey.
+
+    :func:`name_for` made filesystem-safe, which is the form two surveys would
+    have to share to overwrite each other. The CLI compares these rather than
+    file names, since the collision survives both the suffix being stripped
+    (``survey.ep`` and ``survey.json``) and the slug being taken (``my
+    survey.json`` and ``my-survey.json``).
+    """
+    return _slug(name_for(path))
+
+
 def _json_document(path: Path) -> dict | list | None:
     """The raw JSON behind a survey file, or ``None`` if there is none to read.
 
@@ -241,9 +253,9 @@ def render_survey(
     ``name`` is the stem the written files take, so several surveys can share
     an output directory without overwriting each other: the bundle becomes
     ``<name>.html`` and split pages ``<name>-01-<question>.html``. The CLI
-    passes the survey file's own name. Omitted, the bundle is ``index.html``
-    and split pages are numbered alone -- right for a directory holding the
-    one survey.
+    passes the survey file's own name, and refuses a set whose names agree.
+    Omitted, the bundle is ``index.html`` and split pages are numbered alone --
+    right for a directory holding the one survey.
     """
     humanize_schema = humanize_schema or {}
     out_dir = Path(out_dir or "previews")
