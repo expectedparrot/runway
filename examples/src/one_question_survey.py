@@ -4,8 +4,8 @@ Useful as the boundary case -- a bundle of one draws no toolbar, so this is what
 a preview looks like with no chrome at all.
 """
 
-from edsl import Survey
 from edsl.questions import QuestionMultipleChoice
+from edsl.surveys import Survey
 
 survey = Survey(
     [

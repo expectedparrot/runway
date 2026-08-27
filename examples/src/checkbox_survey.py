@@ -12,12 +12,12 @@ exclusive there are still four selectable, and the row stays.
 the *opposite* way: it never draws the row, however many options it has.
 """
 
-from edsl import Survey
 from edsl.questions import (
     QuestionCheckBox,
     QuestionCheckBoxWithOther,
     QuestionFreeText,
 )
+from edsl.surveys import Survey
 
 survey = Survey(
     [

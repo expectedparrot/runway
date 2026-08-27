@@ -49,12 +49,15 @@ install is still reproducible.
 ## Usage
 
 ```bash
-runway check  survey.json     # what each question will render as
-runway render survey.json     # write the HTML
+runway check  survey.ep       # what each question will render as
+runway render survey.ep       # write the HTML
 runway types                  # which question types have a control
 runway guide                  # what this does, and what a preview cannot show
 runway version                # version, and the types it draws
 ```
+
+The survey file is `.ep`, `.json.gz` or `.json` — see
+[Input format](#input-format).
 
 A verb is always required — `runway survey.json` is not a shortcut for
 `runway render survey.json`, so what a command does never depends on what its
@@ -105,6 +108,7 @@ previewable. Nobody is ever asked it.
 
 ```bash
 runway render examples/mixed_survey.json            # -> previews/mixed_survey.html
+runway render survey.ep                             # -> previews/survey.html
 runway render examples/mixed_survey.json --split    # -> one file per question
 runway render examples/*.json                       # -> one .html per survey
 runway render examples/*.json -o build/review       # -> somewhere else
@@ -112,8 +116,9 @@ runway render examples/*.json -o build/review       # -> somewhere else
 
 `--json` on `check`, `types` and `version` gives machine-readable output.
 
-Each survey is written under its own file name, so several can be rendered into
-one output directory and sit side by side. The library call keeps its own
+Each survey is written under its own name — the file's, with the format suffix
+taken off — so several can be rendered into one output directory and sit side by
+side. The library call keeps its own
 default of `index.html` unless you pass `name=`.
 
 By default the whole survey lands in **one HTML file**: every question rendered
@@ -146,13 +151,20 @@ survey displays something it doesn't.
 As a library:
 
 ```python
-from runway import render_bundle, render_page, render_survey
+from pathlib import Path
+from runway import load, load_schema, render_bundle, render_page, render_survey
+
+questions       = load(Path("survey.ep"))            # or .json.gz, or .json
+humanize_schema = load_schema(Path("schema.json"))   # always its own file
 
 html  = render_bundle(questions, humanize_schema)                # one document
 html  = render_page(question, {"format": {"type": "dropdown"}})  # one question
 paths = render_survey(questions, humanize_schema, out_dir="previews", split=False)
 paths = render_survey(questions, humanize_schema, name="my_survey")   # -> my_survey.html
 ```
+
+`load` raises `SurveyLoadError` for a file it cannot read, whichever format it
+was — one exception to catch rather than one per format.
 
 ## Question types
 
@@ -222,51 +234,93 @@ kinds next to shown questions of the same types.
 
 ## Input format
 
-Either a bare list of question dicts, or:
+Whatever edsl saves a survey as — all three of these are the same input:
+
+| file       | what it is                                              |
+| ---------- | ------------------------------------------------------- |
+| `.ep`      | the package `Survey.save("survey")` writes by default    |
+| `.json.gz` | the compressed dump `Survey.save("survey.json.gz")` writes |
+| `.json`    | the plain dump `Survey.save("survey.json")` writes        |
+
+**All three are opened by `Survey.load()`** and then flattened with `to_dict()`,
+so the questions that reach the renderer are the same dicts however the file was
+written. That is the point of loading through edsl rather than reading the JSON
+here: a survey does not survive JSON unchanged — integer `option_labels` keys
+come back as strings, among other things — so a lookalike reader would
+eventually make the same survey preview differently depending on which file it
+came out of. `tests/test_formats.py` holds all three to byte-identical output.
+
+Two consequences follow, and they are the price of the single path:
+
+- **A survey file is a survey**, not a list of questions. A bare JSON list of
+  question dicts is no longer accepted — edsl cannot build a `Survey` from one.
+  Wrap it in `{"questions": [...]}`, or save the survey with `Survey.save()`.
+  The library keeps `render_page(question, …)` for previewing a lone question
+  dict, which is the case the bare list served.
+- **`memory_plan` and `rule_collection` have to be real.** A hand-written survey
+  document that stubs them as `{}` will load as far as edsl and fail there. Dump
+  a real `Survey` rather than approximating one.
+
+Both of those fail with a message about the file rather than edsl's own, which
+is otherwise a `ValueError` about sequence lengths or a bare `KeyError`.
+
+A `.ep` is a git repository in a zip, so opening one shells out to `git` — the
+one runtime requirement beyond the Python dependencies, and only for that
+format. One caveat comes with it: a package that has been pushed to or pulled
+from Coop records that, and `Survey.load()` syncs such a package against the
+remote before handing it over. That is the only thing this tool does that can
+reach the network, and the only way `check`, which writes nothing of its own,
+can leave a file changed. A package saved locally carries no such record and is
+neither read from nor written to beyond being unzipped.
+
+### The humanize schema
+
+**A humanize schema is not part of an EDSL survey.** edsl neither writes one nor
+reads one, so no survey file has one to give, whatever its format — and a
+`humanize_schema` key written into a survey document is ignored, exactly as edsl
+ignores it. It travels in a file of its own:
+
+```bash
+runway render survey.ep --schema schema.json
+```
+
+That file is the object with `survey` and `questions` keys — the same structure
+you would pass to `Survey.humanize()`, so a schema written for a real deployment
+works here unchanged:
 
 ```json
 {
-  "questions": [ { "question_name": "...", "question_type": "...", ... } ],
-  "humanize_schema": {
-    "questions": { "question_name": { "format": {"type": "dropdown"} } },
-    "survey":    { "custom_css": ".edsl-question-text { font-size: 1.4rem }" }
-  }
+  "questions": { "question_name": { "format": {"type": "dropdown"} } },
+  "survey":    { "custom_css": ".edsl-question-text { font-size: 1.4rem }" }
 }
 ```
 
-`humanize_schema` is the same structure you would pass to `Survey.humanize()`,
-so a schema written for a real deployment works here unchanged. `custom_css` is
-emitted last in the page so it wins, exactly as the live survey applies it —
-`examples/styled_survey.json` is a survey that uses it, against the `edsl-`
-hooks the markup carries for exactly this.
+A file wrapping that under `humanize_schema` is accepted too, that being what
+the parameter is called and so a natural thing to have saved it as. `custom_css`
+is emitted last in the page so it wins, exactly as the live survey applies it —
+`examples/styled_survey.json` is a survey that uses it, against the `edsl-` hooks
+the markup carries for exactly this.
+
+Hand `--schema` a survey document by mistake and it is refused rather than read
+for what it does not have: a schema's `questions` is a table keyed by question
+name, where a survey's is a list. That is the difference between an error and a
+preview with every setting silently missing.
 
 ### From EDSL
 
-`Survey.to_dict()` writes the second shape above: a top-level `questions` list,
-alongside keys about survey flow that a preview ignores. It has **no**
-`humanize_schema`, because the schema is configured separately — so it travels
-as its own file:
-
-```bash
-runway render survey.json --schema schema.json
-```
-
-That schema file is the object with `survey` and `questions` keys; a file
-wrapping it under `humanize_schema` is accepted too, since that is what a
-survey document calls it. Passing `--schema` replaces whatever the survey file
-carried, and applies to every survey given.
-
-The two are told apart without guessing: a schema's `questions` is a table
-keyed by question name, where a survey's is a list — so handing `--schema` a
-survey document by mistake is an error rather than a preview with every setting
-silently missing.
+The survey and its schema are saved separately, because that is how they are
+configured:
 
 ```python
 import json
 from pathlib import Path
 
-Path("survey.json").write_text(json.dumps(survey.to_dict(), indent=2))
+survey.save("survey")                                    # -> survey.ep
 Path("schema.json").write_text(json.dumps(humanize_schema, indent=2))
+```
+
+```bash
+runway render survey.ep --schema schema.json
 ```
 
 ### The examples
@@ -590,6 +644,13 @@ does, or a newly supported type will keep reading as unsupportable.
   three classes to beat the `hover:` utility Tailwind emits after it. Everywhere
   else the class swap is not reproduced, because everywhere else the reference
   shows selection through the radio alone.
+- **A Coop-linked `.ep` syncs when it is opened.** Reading one goes through
+  `Survey.load()`, and edsl pulls a package that Coop holds a newer version of
+  before returning it — so that one input, unlike every other, can reach the
+  network and can rewrite the file it was read from. It is edsl's behaviour
+  rather than this tool's, and it is what "load" means there; noted because
+  nothing else here does either thing, and `check` otherwise writes nothing at
+  all. Dump the survey to JSON first if a preview must not touch it.
 - **Option randomization.** Not applied. A survey that randomizes options shows
   the authored order.
 - **The Next button does nothing.** The `<form>` is rendered for layout parity

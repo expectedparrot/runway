@@ -13,8 +13,15 @@ Markup lives in ``templates/`` and is rendered with Jinja. Two constraints
 shape it: byte parity with the reference implementation's server-rendered
 output, and escaping that matches it exactly. Both are documented in README.md.
 
-    from runway import render_page
-    html = render_page(question, humanize_schema={"format": {"type": "dropdown"}})
+    from runway import load, render_page
+    questions = load(Path("survey.ep"))
+    html = render_page(questions[0], humanize_schema={"format": {"type": "dropdown"}})
+
+:func:`load` reads any of the formats edsl saves a survey as -- ``.ep``,
+``.json.gz`` and ``.json``, all of them through ``Survey.load()`` -- and raises
+:class:`SurveyLoadError` for anything it cannot. It returns questions and only
+questions; a humanize schema is not part of an EDSL survey, and comes from
+:func:`load_schema` and its own file.
 """
 
 from __future__ import annotations
@@ -31,16 +38,27 @@ from .renderer import (
     render_question,
     render_question_with_comment,
 )
-from .survey import item_names, iter_questions, previewable, render_survey
+from .survey import (
+    SurveyLoadError,
+    item_names,
+    iter_questions,
+    load,
+    load_schema,
+    previewable,
+    render_survey,
+)
 
 __all__ = [
     "RENDERERS",
     "SUPPORTED_QUESTION_TYPES",
+    "SurveyLoadError",
     "__version__",
     "get_renderer",
     "inspection",
     "item_names",
     "iter_questions",
+    "load",
+    "load_schema",
     "previewable",
     "progress",
     "render_body",

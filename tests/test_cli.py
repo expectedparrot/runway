@@ -221,32 +221,33 @@ def test_nothing_is_written_when_one_of_several_surveys_is_bad(tmp_path):
 # A humanize schema of its own
 # --------------------------------------------------------------------------
 #
-# `Survey.to_dict()` carries a top-level `questions` list and no schema, because
-# the schema is configured and saved separately. `--schema` is how the other
-# file reaches a preview.
+# A humanize schema is not part of an EDSL survey -- edsl neither writes one nor
+# reads one -- so no survey file of any format has one to give. `--schema` is the
+# only way one reaches a preview.
+#
+# The fixture is built by edsl rather than written out by hand. A survey file is
+# loaded through `Survey.load()` now, whatever format it is in, so a stubbed
+# `memory_plan` or `rule_collection` is no longer something a survey can be short
+# of -- a hand-written approximation fails as a survey rather than standing in
+# for one.
 
 
 def _survey_dict(tmp_path):
-    """A survey in the shape `Survey.to_dict()` produces."""
-    path = tmp_path / "survey.json"
-    path.write_text(
-        json.dumps(
-            {
-                "questions": [
-                    {
-                        "question_name": "modes",
-                        "question_type": "checkbox",
-                        "question_text": "Which?",
-                        "question_options": ["Bus", "None of the above"],
-                    }
-                ],
-                "memory_plan": {},
-                "rule_collection": {},
-                "edsl_class_name": "Survey",
-            }
-        ),
-        encoding="utf-8",
+    """A one-question survey, saved as `Survey.to_dict()` writes it."""
+    from edsl.questions import QuestionCheckBox
+    from edsl.surveys import Survey
+
+    survey = Survey(
+        [
+            QuestionCheckBox(
+                question_name="modes",
+                question_text="Which?",
+                question_options=["Bus", "None of the above"],
+            )
+        ]
     )
+    path = tmp_path / "survey.json"
+    path.write_text(json.dumps(survey.to_dict()), encoding="utf-8")
     return path
 
 
@@ -305,32 +306,6 @@ def test_a_survey_document_passed_as_a_schema_is_refused(tmp_path):
 def test_a_missing_schema_is_an_error_not_a_traceback(tmp_path):
     survey = _survey_dict(tmp_path)
     assert main(["check", str(survey), "--schema", str(tmp_path / "nope.json")]) == 1
-
-
-def test_a_schema_replaces_the_one_in_the_survey_file(tmp_path):
-    """Passing one is asking for it to be used."""
-    survey = tmp_path / "both.json"
-    survey.write_text(
-        json.dumps(
-            {
-                "questions": [
-                    {
-                        "question_name": "modes",
-                        "question_type": "checkbox",
-                        "question_text": "Which?",
-                        "question_options": ["Bus", "None of the above"],
-                    }
-                ],
-                "humanize_schema": {},
-            }
-        ),
-        encoding="utf-8",
-    )
-    schema = tmp_path / "schema.json"
-    schema.write_text(json.dumps(SCHEMA), encoding="utf-8")
-    out = tmp_path / "out"
-    main(["render", str(survey), "--schema", str(schema), "-o", str(out)])
-    assert 'id="modes-select-all"' not in (out / "both.html").read_text(encoding="utf-8")
 
 
 def _main() -> int:

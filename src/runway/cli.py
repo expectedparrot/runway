@@ -1,6 +1,7 @@
 """The ``runway`` command line.
 
     runway render examples/mixed_survey.json
+    runway render survey.ep
     runway check  examples/mixed_survey.json
     runway types
     runway guide
@@ -24,7 +25,7 @@ from pathlib import Path
 
 from . import __version__, inspection
 from .question_types import RENDERERS, background, unsupported
-from .survey import iter_questions, load, load_schema
+from .survey import SurveyLoadError, iter_questions, load, load_schema, name_for
 
 DEFAULT_OUT = Path("previews")
 
@@ -36,23 +37,23 @@ runway renders EDSL human-survey questions as static HTML that looks like the
 page a respondent is served. It is one-shot: a survey file in, HTML out. There
 is no project, no state and no session to resume.
 
-  runway check  survey.json     what each question will render as
-  runway render survey.json     write the HTML
+  runway check  survey.ep       what each question will render as
+  runway render survey.ep       write the HTML
   runway types                  which question types have a control
 
-A survey file is either a bare JSON list of question dicts -- the shape
-`question.to_dict()` produces -- or an object with a `questions` list, which is
-what `Survey.to_dict()` writes. Its other keys describe survey flow and are
-ignored; a preview only needs the questions.
+A survey file is anything edsl saves a survey as: a `.ep` package -- what
+`Survey.save()` writes by default -- or a `.json.gz` or `.json` dump. All three
+are opened by `Survey.load()`, so all three describe the same survey the same
+way. Its keys about survey flow are ignored; a preview only needs the questions.
 
-A humanize schema may travel inside that object under `humanize_schema`:
+A bare list of question dicts is not a survey and is not accepted -- wrap it in
+{"questions": [...]}, or save the survey with Survey.save().
 
-  {"questions": [...], "humanize_schema": {"survey": {...}, "questions": {...}}}
+A humanize schema is not part of an EDSL survey -- edsl neither writes one nor
+reads one -- so it travels in a file of its own, whatever format the survey is
+in:
 
-or in a file of its own, which is where `Survey.to_dict()` leaves it, since the
-two are configured separately:
-
-  runway render survey.json --schema schema.json
+  runway render survey.ep --schema schema.json
 
 Start with `check`. It writes nothing and tells you which questions preview
 with their real control, which fall back to a note because no control is
@@ -85,14 +86,15 @@ def cmd_render(args: argparse.Namespace) -> int:
 
     written: list[Path] = []
     for path, questions, humanize_schema in surveys:
+        name = name_for(path)
         written.extend(
             _render_survey(
                 questions,
                 humanize_schema,
                 args.out,
                 split=args.split,
-                title=args.title or path.stem,
-                name=path.stem,
+                title=args.title or name,
+                name=name,
             )
         )
     for path in written:
@@ -218,24 +220,20 @@ def _load_all(
     Reading first means a bad path among several leaves the output directory as
     it was, rather than half rewritten.
 
-    ``schema_path`` is a humanize schema saved on its own, which is how
-    ``Survey.to_dict()`` output reaches a preview: that dump has no schema in it,
-    because the schema is configured separately. It replaces whatever the survey
-    file carried, and applies to every survey given -- rendering a set of surveys
-    against one schema is the reason to pass several at once.
+    ``schema_path`` is a humanize schema saved on its own, which is the only way
+    one reaches a preview: it is not part of an EDSL survey, so no survey file
+    of any format has one to give. It applies to every survey given -- rendering
+    a set of surveys against one schema is the reason to pass several at once.
     """
-    schema: dict | None = None
+    schema: dict = {}
     if schema_path is not None:
         if not schema_path.exists():
             print(f"error: no such schema file: {schema_path}", file=sys.stderr)
             return None
         try:
             schema = load_schema(schema_path)
-        except json.JSONDecodeError as exc:
-            print(f"error: {schema_path} is not valid JSON: {exc}", file=sys.stderr)
-            return None
-        except ValueError as exc:
-            print(f"error: {schema_path}: {exc}", file=sys.stderr)
+        except SurveyLoadError as exc:
+            print(f"error: {exc}", file=sys.stderr)
             return None
 
     surveys: list[tuple[Path, list[dict], dict]] = []
@@ -244,14 +242,14 @@ def _load_all(
             print(f"error: no such survey file: {path}", file=sys.stderr)
             return None
         try:
-            questions, humanize_schema = load(path)
-        except json.JSONDecodeError as exc:
-            print(f"error: {path} is not valid JSON: {exc}", file=sys.stderr)
+            questions = load(path)
+        except SurveyLoadError as exc:
+            print(f"error: {exc}", file=sys.stderr)
             return None
         if not questions:
             print(f"error: no questions found in {path}", file=sys.stderr)
             return None
-        surveys.append((path, questions, schema if schema is not None else humanize_schema))
+        surveys.append((path, questions, schema))
     return surveys
 
 
@@ -307,18 +305,17 @@ def _add_survey_argument(parser: argparse.ArgumentParser) -> None:
         "survey",
         type=Path,
         nargs="+",
-        help="Survey JSON: a bare list of question dicts, or an object with "
-        "'questions' and an optional 'humanize_schema' -- which is the shape "
-        "Survey.to_dict() produces. Several may be given.",
+        help="Survey file: a .ep package, or a .json.gz or .json dump. All "
+        "three are opened by Survey.load(). Several may be given.",
     )
     parser.add_argument(
         "--schema",
         type=Path,
         default=None,
         metavar="PATH",
-        help="Humanize schema saved on its own, as Survey.to_dict() output "
-        "has none. Replaces any the survey file carried, and applies to every "
-        "survey given.",
+        help="Humanize schema, which is configured and saved separately from "
+        "the survey and is the only way one reaches a preview. Applies to "
+        "every survey given.",
     )
 
 
@@ -355,7 +352,8 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument(
         "--title",
         default=None,
-        help="Document title for the bundled page (default: the survey file's name).",
+        help="Document title for the bundled page (default: the survey's own "
+        "name -- its file name with the format suffix taken off).",
     )
     render.set_defaults(func=cmd_render)
 

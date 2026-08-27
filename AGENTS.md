@@ -92,6 +92,37 @@ Five commands, argparse, no CLI dependency: `render`, `check`, `types`,
 unless `-o` says otherwise — relative to the caller's directory, not to this
 repository.
 
+A survey file is anything edsl saves: `.ep`, `.json.gz` or `.json`. **All three
+go through `Survey.load()`**, flattened with `to_dict()` — do not add a reader
+here that parses survey JSON itself. A survey does not survive JSON unchanged
+(integer `option_labels` keys come back as strings), so a second reader would
+drift from edsl's and make one format preview differently from another;
+`tests/test_formats.py` holds the three to byte-identical output.
+
+`survey.load` returns questions and nothing else. **A humanize schema is not
+part of an EDSL survey** — edsl neither writes one nor reads one — so it is not
+something a survey file can carry in any format, and a `humanize_schema` key
+written into a survey document is ignored rather than honoured. `load_schema`
+and `--schema` are the only route. Do not add an inline form back: it would be a
+runway-only extension to a format runway does not own.
+
+Survey JSON is parsed here in exactly one place, `survey._json_document`, and
+only to explain a *failure* — never on the path that succeeds. It turns edsl's
+`ValueError` about sequence lengths into "this is a bare list of question dicts"
+and its bare `KeyError` into "this has no memory_plan". Keep it on the error
+path; the moment it reads something the happy path depends on, the two readers
+can drift.
+
+Two things a survey file may no longer be, both deliberate: a bare list of
+question dicts (edsl cannot build a `Survey` from one) and a document that stubs
+`memory_plan` or `rule_collection`. Test fixtures build real surveys with edsl
+rather than approximating a dump — see `tests/test_cli.py::_survey_dict`.
+
+Everything downstream still takes a list of question dicts; nothing but
+`survey.load` knows about formats.
+
+Import `Survey` from `edsl.surveys`, not from the `edsl` top level.
+
 `check` classifies without rendering, and `inspection.classify` must keep
 mirroring `renderer.render_question`'s dispatch order — background questions
 are tested for *before* the type registry, because a thinking-wrapped
@@ -115,12 +146,20 @@ it falls through to a stand-in that renders a complete page with a note in
 place of the control, and that is the intended behavior for everything outside
 the supported table.
 
-Nothing here calls a model, reaches the network at run time, or needs node —
-`edsl` is a declared dependency but rendering does not go through it, and a
-preview is still a pure function from a question dict to a string. The single
-external reference in a rendered page is the Google Fonts stylesheet link, which
-is deliberate and documented under **Known gaps**. Keep it that way: a new
-runtime dependency needs a reason in the README.
+Nothing here calls a model or needs node, and **rendering** does not go through
+`edsl` — a preview is still a pure function from a question dict to a string.
+Reading a survey does go through edsl, in every format, and the import is kept
+lazy in `survey._load_questions` so that `types`, `version`, `guide` and every
+library call starting from a question dict do not pay for it.
+
+Reading a `.ep` is the one exception to run-time isolation: it shells out to
+`git`, and, for a package Coop holds, syncs it against the remote and rewrites
+the file. That is edsl's `load()` semantics rather than a choice made here; it is
+documented in the README under Known gaps.
+
+The single external reference in a rendered page is the Google Fonts stylesheet
+link, which is deliberate and documented under **Known gaps**. Keep it that way:
+a new runtime dependency needs a reason in the README.
 
 ## Public repository
 

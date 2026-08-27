@@ -18,7 +18,6 @@ control transcribed yet, so it gets the plain note. It stands in for whatever is
 undrawn at the time -- it was `free_text` until free_text was drawn.
 """
 
-from edsl import Survey
 from edsl.language_models import Model
 from edsl.questions import (
     QuestionCompute,
@@ -28,6 +27,7 @@ from edsl.questions import (
     QuestionMultipleChoice,
     thinking_question,
 )
+from edsl.surveys import Survey
 
 survey = Survey(
     [

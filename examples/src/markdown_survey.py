@@ -17,7 +17,6 @@ a `<select>` holds text and nothing else, and quietly rendering markup it cannot
 show would hide that the two settings do not combine.
 """
 
-from edsl import Survey
 from edsl.questions import (
     QuestionLikertFive,
     QuestionLinearScale,
@@ -25,6 +24,7 @@ from edsl.questions import (
     QuestionRank,
     QuestionYesNo,
 )
+from edsl.surveys import Survey
 
 survey = Survey(
     [
