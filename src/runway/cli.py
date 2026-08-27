@@ -31,7 +31,7 @@ from .survey import (
     load,
     load_schema,
     name_for,
-    output_stem,
+    output_paths,
 )
 
 DEFAULT_OUT = Path("previews")
@@ -99,7 +99,7 @@ def cmd_render(args: argparse.Namespace) -> int:
     if surveys is None:
         return 1
     surveys = _without_repeats(surveys)
-    if _colliding(path for path, _, _ in surveys):
+    if _colliding(surveys, args.out, args.split):
         return 1
 
     written: list[Path] = []
@@ -291,38 +291,42 @@ def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
     return unique
 
 
-def _colliding(paths) -> bool:
-    """Report and return True if any two surveys would be written to one file.
+def _colliding(
+    surveys: list[tuple[Path, list[dict], dict]], out_dir: Path, split: bool
+) -> bool:
+    """Report and return True if two surveys would write the same file.
 
-    Written files are stemmed with the survey's own name, so two inputs that
-    differ only in format -- `survey.ep` and `survey.json` -- or that share a
-    name across directories land on the same path, and the second would
-    silently replace the first. Refused rather than renamed: a made-up name
-    would no longer match the survey it came from, and working out which was
-    which is worse than being told to render them apart.
+    Compared on the paths a render would actually produce, which is not the
+    survey's name alone: bundled, each survey writes one `<name>.html`, so two
+    surveys sharing a name collide; `--split` names pages after the questions,
+    so the same two may not overlap at all. Asking :func:`output_paths` is what
+    keeps this answer and the writer's the same.
+
+    Refused rather than renamed: a made-up name would no longer match the
+    survey it came from, and working out which was which is worse than being
+    told to render them apart.
 
     *Every* clash is reported, in the order the surveys were given, so that a
     caller fixing them -- an agent especially -- can fix the lot in one pass
-    rather than discovering the next one on each re-run.
-
-    Checked before anything is written, so a set of surveys that cannot all be
-    rendered leaves the output directory as it was, the same way an unreadable
-    one does.
+    rather than discovering the next on each re-run. Checked before anything is
+    written, so a set that cannot all be rendered leaves the output directory
+    as it was, the same way an unreadable one does.
     """
-    groups: dict[str, list[Path]] = {}
-    for path in paths:
-        groups.setdefault(output_stem(path), []).append(path)
-    clashes = {stem: found for stem, found in groups.items() if len(found) > 1}
+    claimed: dict[Path, Path] = {}
+    clashes: dict[Path, list[Path]] = {}
+    for source, questions, _ in surveys:
+        for target in output_paths(questions, out_dir, split=split, name=name_for(source)):
+            first = claimed.setdefault(target, source)
+            if first != source:
+                clashes.setdefault(target, [first]).append(source)
     if not clashes:
         return False
 
-    print(
-        "error: these surveys would be written to the same file:", file=sys.stderr
-    )
-    width = max(len(stem) for stem in clashes) + len(".html")
-    for stem, found in clashes.items():
-        listed = ", ".join(str(path) for path in found)
-        print(f"  {stem + '.html':<{width}}  <- {listed}", file=sys.stderr)
+    print("error: these surveys would be written to the same file:", file=sys.stderr)
+    width = max(len(target.name) for target in clashes)
+    for target, sources in clashes.items():
+        listed = ", ".join(str(source) for source in sources)
+        print(f"  {target.name:<{width}}  <- {listed}", file=sys.stderr)
     print(
         "Rename them, render them separately, or write into different "
         "directories with -o.",

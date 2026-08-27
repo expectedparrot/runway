@@ -283,6 +283,48 @@ def test_surveys_with_distinct_names_still_render_together(tmp_path):
     assert {path.name for path in out.glob("*.html")} == {"first.html", "second.html"}
 
 
+def _one_question(tmp_path, subdir, file_name, question_name):
+    """A survey whose single question is named, so split page names differ."""
+    from edsl.questions import QuestionFreeText
+    from edsl.surveys import Survey
+
+    directory = tmp_path / subdir
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / file_name
+    Survey([QuestionFreeText(question_name=question_name, question_text="?")]).save(
+        str(path)
+    )
+    return path
+
+
+def test_split_surveys_that_share_a_name_but_no_pages_are_allowed(tmp_path):
+    """`--split` names pages after the questions, so two surveys sharing a file
+    name write `survey-01-alpha.html` and `survey-01-beta.html` -- different
+    files, and refusing them would reject a render that overwrites nothing."""
+    a = _one_question(tmp_path, "in", "survey.ep", "alpha")
+    b = _one_question(tmp_path, "in", "survey.json", "beta")
+    out = tmp_path / "out"
+    assert main(["render", str(a), str(b), "--split", "-o", str(out)]) == 0
+    assert {path.name for path in out.glob("*.html")} == {
+        "survey-01-alpha.html",
+        "survey-01-beta.html",
+    }
+
+
+def test_split_surveys_whose_pages_collide_are_refused(tmp_path, capsys):
+    """The same two names, but the questions agree too, so the pages really do
+    land on one file. The report names that page, not the bundle that `--split`
+    never writes."""
+    a = _one_question(tmp_path, "in", "survey.ep", "same")
+    b = _one_question(tmp_path, "in", "survey.json", "same")
+    out = tmp_path / "out"
+    assert main(["render", str(a), str(b), "--split", "-o", str(out)]) == 1
+    assert not out.exists()
+    report = capsys.readouterr().err
+    assert "survey-01-same.html" in report
+    assert "survey.html" not in report.replace("survey-01-same.html", "")
+
+
 def test_naming_one_survey_twice_renders_it_once(tmp_path):
     """Not a collision -- a list with something said twice. Rendering it once is
     what was meant, and the error for a real collision would read as nonsense

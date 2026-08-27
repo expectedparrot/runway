@@ -54,18 +54,6 @@ def name_for(path: Path) -> str:
     return path.stem
 
 
-def output_stem(path: Path) -> str:
-    """What written files are actually stemmed with for this survey.
-
-    :func:`name_for` made filesystem-safe, which is the form two surveys would
-    have to share to overwrite each other. The CLI compares these rather than
-    file names, since the collision survives both the suffix being stripped
-    (``survey.ep`` and ``survey.json``) and the slug being taken (``my
-    survey.json`` and ``my-survey.json``).
-    """
-    return _slug(name_for(path))
-
-
 def _json_document(path: Path) -> dict | list | None:
     """The raw JSON behind a survey file, or ``None`` if there is none to read.
 
@@ -235,6 +223,39 @@ def item_names(questions: list[dict]) -> list[str]:
     ]
 
 
+def _page_name(page_num: int, question: dict) -> str:
+    """The file name one split page takes, without its prefix or directory."""
+    question_name = question.get("question_name") or f"question-{page_num}"
+    return f"{page_num:02d}-{_slug(question_name)}.html"
+
+
+def output_paths(
+    questions: list[dict],
+    out_dir: Path | None = None,
+    split: bool = False,
+    name: str | None = None,
+) -> list[Path]:
+    """The files :func:`render_survey` would write, without writing them.
+
+    The CLI asks this of every survey it was given and refuses the set if two
+    would write the same file. What that is depends on the questions and on
+    ``split``, not on the survey's name alone: two surveys sharing a name split
+    into pages named after *their questions*, which may not overlap at all.
+
+    :func:`render_survey` writes to exactly these paths, in this order, so the
+    two cannot disagree about where a preview lands.
+    """
+    out_dir = Path(out_dir or "previews")
+    stem = _slug(name) if name else ""
+    if not split:
+        return [out_dir / f"{stem or 'index'}.html"]
+    prefix = f"{stem}-" if stem else ""
+    return [
+        out_dir / f"{prefix}{_page_name(page_num, question)}"
+        for page_num, question in iter_questions(questions)
+    ]
+
+
 def render_survey(
     questions: list[dict],
     humanize_schema: dict | None = None,
@@ -261,16 +282,15 @@ def render_survey(
     out_dir = Path(out_dir or "previews")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    stem = _slug(name) if name else ""
     names = item_names(questions)
     items = previewable(questions)
+    written = output_paths(questions, out_dir, split=split, name=name)
     if not split:
-        path = out_dir / f"{stem or 'index'}.html"
-        path.write_text(
+        written[0].write_text(
             render_bundle(items, humanize_schema, title=title, item_names=names),
             encoding="utf-8",
         )
-        return [path]
+        return written
 
     survey_schema = humanize_schema.get("survey") or {}
     per_question = humanize_schema.get("questions") or {}
@@ -278,19 +298,21 @@ def render_survey(
     progress_config = survey_schema.get("progress")
     total = len(questions)
 
-    prefix = f"{stem}-" if stem else ""
-    written: list[Path] = []
-    for page_num, question in iter_questions(questions):
+    # strict: output_paths and this loop walk the same questions, and a
+    # disagreement would silently drop or misname a page.
+    for (page_num, question), path in zip(
+        iter_questions(questions), written, strict=True
+    ):
         question_name = question.get("question_name") or f"question-{page_num}"
-        page = render_page(
-            question,
-            humanize_schema=per_question.get(question_name),
-            custom_css=custom_css,
-            progress=progress_module.resolve(
-                progress_config, page_num - 1, total, names
+        path.write_text(
+            render_page(
+                question,
+                humanize_schema=per_question.get(question_name),
+                custom_css=custom_css,
+                progress=progress_module.resolve(
+                    progress_config, page_num - 1, total, names
+                ),
             ),
+            encoding="utf-8",
         )
-        path = out_dir / f"{prefix}{page_num:02d}-{_slug(question_name)}.html"
-        path.write_text(page, encoding="utf-8")
-        written.append(path)
     return written
