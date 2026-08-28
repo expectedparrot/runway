@@ -365,6 +365,27 @@ classes to beat the `hover:` utility Tailwind emits after it. Everywhere else th
 class swap is not reproduced, because everywhere else the reference shows
 selection through the radio alone.
 
+### A message, which is a page with nothing on it
+
+`survey_message` is drawn, and its markup carries no control. That is not the
+stand-in in a different style: a message is text a respondent reads and then
+continues past with the page's own Next button, so the empty page **is** the
+page, and a notice apologising for a missing input would describe a survey that
+does not exist. Its humanize schema is empty over there for the same reason —
+nothing to configure, no comment field, no submitting indicator — so a schema
+cannot change what this renders.
+
+One thing an author meets on the first message they write and never on a
+question: a message is usually several markdown blocks, and
+`.edsl-question-text` renders under `whitespace-pre-wrap`. The newline the
+renderer puts between block elements — React puts it there too — is therefore
+visible, so a heading, a paragraph and a list arrive separated by blank lines;
+and Tailwind's preflight has meanwhile zeroed list markers and heading sizes.
+Both are faithful, and neither is what the author drew — a survey whose messages
+are more than one paragraph wants a `custom_css` that turns `white-space` back
+to `normal` on the container, restores `pre-wrap` on `p` and `li`, and asks for
+list markers and a heading size again.
+
 ### Questions answered without a respondent
 
 `compute` and `image_generation` are marked *automatic* because nobody is ever
@@ -510,6 +531,7 @@ runway/
     │   ├── checkbox.py           checkbox — and whether Select all is drawn
     │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
     │   ├── free_text.py          free_text — a textarea, and nothing else
+    │   ├── survey_message.py     survey_message — text, and no control at all
     │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/image_generation/thinking: never shown
     │   └── unsupported.py        the stand-in: a note, or a warning
@@ -525,6 +547,7 @@ runway/
     │       ├── checkbox.html
     │       ├── checkbox_with_other.html
     │       ├── free_text.html
+    │       ├── survey_message.html
     │       ├── background.html
     │       └── unsupported.html
     └── assets/

@@ -51,6 +51,7 @@ HUMANIZED_TYPES = frozenset(
         "multiple_choice_with_other",
         "numerical",
         "rank",
+        "survey_message",
         "top_k",
         "yes_no",
     }

@@ -57,6 +57,13 @@ Do not hand-edit the JSON — the next build reverts it. CI runs
 `build.py --check`, which fails if anything no longer matches its source,
 including a schema left behind by a survey that stopped needing one.
 
+`examples/src` is on the import path while a source is loaded, so one example
+may import another's `survey` rather than restating it — which is how a pair
+that differs only in its schema is built, and why the two cannot drift apart.
+The importing example's JSON is then a byte-identical twin, which is the point:
+two identical surveys, one schema between them, so a preview pair shows what
+`custom_css` did and nothing else.
+
 The survey file is `Survey.to_dict()` **verbatim**, so it carries `edsl_version`
 and an edsl upgrade will show up here as a diff. That is deliberate: an example
 that differed from what `to_dict()` writes would be demonstrating a format

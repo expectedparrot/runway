@@ -7,8 +7,9 @@ the live web survey a respondent would see — same markup, same stylesheet, sam
 font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
-and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other` and
-`free_text`.** Every other type renders a "No preview is available" notice.
+and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other`,
+`free_text` and `survey_message`.** Every other type renders a "No preview is
+available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
 
@@ -93,12 +94,12 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (8)
+## Drawn today (9)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
-`checkbox`, `checkbox_with_other`, `free_text`. Everything else renders a
-complete page with a note where the control would be — so wording and position
-are still checkable.
+`checkbox`, `checkbox_with_other`, `free_text`, `survey_message`. Everything
+else renders a complete page with a note where the control would be — so wording
+and position are still checkable.
 
 ## Caveats
 
@@ -231,15 +232,16 @@ survey can be checked meanwhile.
 
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
-| `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
-| `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
-| `checkbox_with_other` | **✅ available** |     | `matrix`                     | **✅ available** |
-| `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
-| `file_upload`         | — not yet       |     | `multiple_choice_with_other` | — not yet       |
-| `free_text`           | **✅ available** |     | `numerical`                  | — not yet       |
-| `image_generation`    | **✅ automatic** |     | `rank`                       | — not yet       |
+| `budget`              | — not yet       |     | `list`                       | — not yet       |
+| `checkbox`            | **✅ available** |     | `matrix`                     | **✅ available** |
+| `checkbox_with_other` | **✅ available** |     | `multiple_choice`            | **✅ available** |
+| `compute`             | **✅ automatic** |     | `multiple_choice_with_other` | — not yet       |
+| `file_upload`         | — not yet       |     | `numerical`                  | — not yet       |
+| `free_text`           | **✅ available** |     | `rank`                       | — not yet       |
+| `image_generation`    | **✅ automatic** |     | `survey_message`             | **✅ available** |
 | `interview`           | — not yet       |     | `top_k`                      | — not yet       |
 | `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `linear_scale`        | **✅ available** |     |                              |                 |
 
 
 Three results are worth expecting: `checkbox` draws a **Select all** row nothing
@@ -254,6 +256,11 @@ changing is the survey.
 `compute`, `image_generation` and anything wrapped by `thinking_question()` are
 marked *automatic* — the survey answers them itself and no respondent ever sees
 them. `examples/background_survey.json` has all three.
+
+`survey_message` is the one type drawn with **no control at all**, and that is
+the whole page rather than a gap in it: a message is text a respondent reads and
+then continues past with Next. Nothing is missing from that page, so it carries
+no note.
 
 ## Input format
 

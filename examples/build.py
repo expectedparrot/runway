@@ -47,7 +47,14 @@ PREVIEWS = REPO / "previews"
 
 
 def load_module(path: Path):
-    """Import a source module by path, without it needing to be a package."""
+    """Import a source module by path, without it needing to be a package.
+
+    ``src`` goes on the import path so one source can import another: an example
+    that is another example under a different schema imports its survey rather
+    than restating it, and the two cannot then drift apart.
+    """
+    if str(SOURCES) not in sys.path:
+        sys.path.insert(0, str(SOURCES))
     spec = importlib.util.spec_from_file_location(f"examples_src_{path.stem}", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
