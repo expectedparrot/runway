@@ -1,5 +1,7 @@
 # Runway
 
+![Runway artwork: a parrot modelling a sequined jacket on a Parrot Fashion Week catwalk](assets/runway-logo.png)
+
 Static HTML previews of EDSL human-survey questions.
 
 Runway turns a saved EDSL survey into a self-contained HTML page that looks like
