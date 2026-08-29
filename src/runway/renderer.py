@@ -64,6 +64,7 @@ PRETTY_TYPES = {
     "likert_five": "Likert Five",
     "linear_scale": "Linear Scale",
     "top_k": "Top K",
+    "survey_message": "Message",
     "yes_no": "Yes/No",
     "dict": "Dict",
 }

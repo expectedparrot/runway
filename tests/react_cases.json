@@ -1048,5 +1048,25 @@
       "other_selected": true
     },
     "humanize_schema": null
+  },
+  "survey_message": {
+    "kind": "question",
+    "component": "SurveyMessageQuestion",
+    "question": {
+      "question_name": "welcome",
+      "question_type": "survey_message",
+      "question_text": "Thanks for taking part. It'll take about five minutes."
+    },
+    "humanize_schema": null
+  },
+  "survey_message_multi_block": {
+    "kind": "question",
+    "component": "SurveyMessageQuestion",
+    "question": {
+      "question_name": "welcome",
+      "question_type": "survey_message",
+      "question_text": "## Before we start\n\nA short survey about **your commute**.\n\n- Two questions\n- Answers are anonymous\n"
+    },
+    "humanize_schema": null
   }
 }

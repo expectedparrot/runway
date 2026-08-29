@@ -29,6 +29,7 @@ from . import (
     choice,
     free_text,
     matrix,
+    survey_message,
     unsupported,
 )
 
@@ -43,6 +44,7 @@ RENDERERS: dict[str, Renderer] = {
     "checkbox": checkbox.render,
     "checkbox_with_other": checkbox_with_other.render,
     "free_text": free_text.render,
+    "survey_message": survey_message.render,
 }
 
 # Renderers that draw only some of what their type can be configured as. Each

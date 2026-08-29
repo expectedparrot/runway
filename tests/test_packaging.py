@@ -39,6 +39,7 @@ TEMPLATES = (
     "questions/choice.html",
     "questions/free_text.html",
     "questions/matrix.html",
+    "questions/survey_message.html",
     "questions/unsupported.html",
 )
 

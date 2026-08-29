@@ -1,0 +1,32 @@
+{# Transcription of the reference implementation's survey message.
+
+   A message is a page a respondent reads and then continues past with the
+   page's own Next button. It has no control at all -- the reference component
+   is the question text and nothing else -- which makes this the shortest
+   template here and the only drawn type whose markup carries no input.
+
+   That is not the "no preview" stand-in wearing a different hat. Nothing is
+   missing: the empty page IS the page, and a note apologising for an absent
+   control would describe a survey that does not exist.
+
+   The question text goes through the same `.edsl-question-text` div every other
+   type uses, because over there it goes through the same component. The wrapper
+   class is the only thing that differs from free_text's, which is what a
+   message is: that page without its textarea.
+
+   The reference's question-text component has a second branch, for the
+   server-prepared blocks a message can carry -- piped text, an image, a video,
+   a PDF. This package does not resolve piped values or media (see README under
+   Known gaps), so a survey file never carries blocks and that branch is not
+   transcribed. Text is what a survey on disk has.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side. The empty-comment separator
+   lines exist only to suppress whitespace between literal elements; JSX
+   discards that whitespace, so emitting it would break byte parity. See
+   README. #}
+<div class="edsl-question edsl-survey-message-question mb-6">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+</div>
