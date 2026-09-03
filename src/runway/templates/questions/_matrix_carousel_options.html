@@ -1,0 +1,33 @@
+{# One row's options, as the carousel's option list draws them.
+
+   The same file serves two callers, which is the point. `matrix_carousel.html`
+   includes it for the row the page opens on -- the only one the reference
+   renders, and therefore the only one a golden covers -- and `page.html` parks
+   a copy per row in a `<template>` for the page script to swap in. The script
+   never builds one, so every group a respondent meets is this markup, held to
+   the reference by the recorded case for row 0.
+
+   The option rows are `MatrixOption` in the reference, the same component the
+   stacked list uses, so an author's word for an option is already folded into
+   `row_label_html` -- see `matrix.py`. What differs from the stacked list is
+   only the id scheme: the carousel shares the table's, unscoped, because it is
+   never on the page beside the view it would collide with.
+
+   `row` is the row's index, and `question_name`/`options` are as
+   `matrix_carousel.html` has them. #}
+<div role="radiogroup" aria-labelledby="{{ question_name }}_item_{{ row }}" class="edsl-options space-y-1.5">
+{#- -#}
+{%- for option in options %}
+<label for="{{ question_name }}_{{ row }}_{{ loop.index0 }}" class="edsl-option flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+{#- -#}
+<span class="inline-flex shrink-0 rounded-full has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
+{#- -#}
+<input type="radio" id="{{ question_name }}_{{ row }}_{{ loop.index0 }}" name="{{ question_name }}_{{ row }}" class="edsl-radio h-5 w-5 cursor-pointer text-blue-600 border-gray-300 focus-visible:outline-none" value="{{ option.value }}"/>
+{#- -#}
+</span>
+{#- -#}
+<span class="edsl-option-label min-w-0 text-sm text-gray-900 dark:text-gray-100"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.row_label_html }}</span></span></span>
+{#- -#}
+</label>
+{%- endfor %}
+</div>

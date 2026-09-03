@@ -11,45 +11,49 @@ the visible one; the stacked view scopes its names under ``_stack``.
 An option carries an author's word for it -- ``option_labels``, the same field
 the linear scale uses. The two views spend it differently: the table stacks the
 label above the number in the column heading, where there is no width to spare,
-and the stacked list folds it into the option text as ``1 - Strongly disagree``,
-where there is. Both spellings are the reference's own, so both are built here
-rather than in the template.
+and the full-width option rows fold it into the option text as
+``1 - Strongly disagree``, where there is room. Both spellings are the
+reference's own, so both are built here rather than in the template.
 
-**The carousel format is not drawn yet.** A humanize schema can ask for one row
-at a time instead of the two default views, which is a third and quite different
-layout; until it is transcribed, a matrix configured that way renders the
-stand-in note rather than a grid the respondent will never be shown. See
-:func:`declines`.
+A humanize schema can ask for a **carousel** instead of the default pair --
+``format: {"type": "carousel"}`` -- which is a third layout: one row at a time,
+its options beneath it. :func:`is_carousel` is what recognises it, and the
+markup is ``templates/questions/matrix_carousel.html``. Only the row the page
+opens on carries options there, because that is all the reference renders; the
+page script swaps in the rest, from the same include.
 
-The markup lives in ``templates/questions/matrix.html`` and is verified
-byte-for-byte against the reference component's server-rendered output; this
-module only prepares the context.
+The markup lives in ``templates/questions/`` and is verified byte-for-byte
+against the reference component's server-rendered output; this module only
+prepares the context.
 """
 
 from __future__ import annotations
 
 from markupsafe import Markup
 
+from .. import icons
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text, option_labels
 
 TEMPLATE = "questions/matrix.html"
+CAROUSEL_TEMPLATE = "questions/matrix_carousel.html"
+CAROUSEL_OPTIONS_TEMPLATE = "questions/_matrix_carousel_options.html"
+
+# What the reference draws its two nav arrows at. Lucide's own default is 2, so
+# this is passed rather than assumed -- see ``icons.render``.
+_ARROW_STROKE_WIDTH = 1.5
 
 
-def declines(question: dict, humanize_schema: dict | None = None) -> str | None:
-    """Why this matrix gets no grid despite its type, or None.
+def is_carousel(humanize_schema: dict | None = None) -> bool:
+    """Whether this schema asks for one row at a time rather than the grid.
 
-    Asked before the renderer runs, so that what ``check`` reports and what the
-    page shows cannot disagree: a preview that drew the default views for a
-    question configured as a carousel would be showing a layout no respondent
-    is served, which is worse than admitting the gap.
+    A missing ``format`` and a null one both mean the default pair, which is
+    every matrix that says nothing about layout.
     """
     if not humanize_schema:
-        return None
-    if (humanize_schema.get("format") or {}).get("type") == "carousel":
-        return "the carousel format is not drawn yet"
-    return None
+        return False
+    return (humanize_schema.get("format") or {}).get("type") == "carousel"
 
 
 def _piped_axis_message(template: str) -> list[str]:
@@ -91,9 +95,11 @@ def _options(question: dict) -> list[dict[str, object]]:
     """The columns, in the three forms the two views need.
 
     ``header_label`` is the author's word on its own, which only the table uses;
-    the stacked list has ``stack_label_html`` with the same word already folded
-    in. An unlabelled column shows its own text in both, which is the usual
-    case -- the ends of a scale are typically the only points named.
+    ``row_label_html`` has the same word already folded in, for the two layouts
+    that draw an option as a full-width row -- the stacked list and the
+    carousel, which are the same component over there. An unlabelled column
+    shows its own text in every view, which is the usual case: the ends of a
+    scale are typically the only points named.
     """
     labels = option_labels(question)
     columns = []
@@ -109,19 +115,83 @@ def _options(question: dict) -> list[dict[str, object]]:
                 "value": text,
                 "header_label": label,
                 "label_html": Markup(render_option_text(text)),
-                "stack_label_html": Markup(render_option_text(stacked)),
+                "row_label_html": Markup(render_option_text(stacked)),
             }
         )
     return columns
 
 
+def render_carousel_options(question: dict, row: int) -> str:
+    """One row's option group, as the carousel draws it.
+
+    The page script needs a group per row and may not build one itself, so the
+    rows the reference does not render are rendered here instead and parked in
+    a ``<template>``. This is the same include the carousel template uses for
+    the row it opens on, which is what holds every group to the recorded one.
+    """
+    return render_template(
+        CAROUSEL_OPTIONS_TEMPLATE,
+        question_name=question.get("question_name", ""),
+        row=row,
+        options=_options(question),
+    )
+
+
+def advances_on_select(humanize_schema: dict | None = None) -> bool:
+    """Whether answering a row moves the carousel on by itself.
+
+    Absent means on, which is the reference's reading of the same field and the
+    backend default behind it -- a config written before the field existed
+    advances as it says it does.
+    """
+    fmt = (humanize_schema or {}).get("format") or {}
+    return fmt.get("advance_on_select") is not False
+
+
+def carousel_option_groups(question: dict) -> list[str]:
+    """The option groups the page does not open with: rows 1 onwards.
+
+    The reference renders only the row on screen, so those are the ones the
+    page script has to be given rather than build. Row 0 is already on the page
+    and is the one a golden covers.
+    """
+    return [
+        render_carousel_options(question, row)
+        for row in range(1, len(_items(question)))
+    ]
+
+
+def _render_carousel(question: dict) -> str:
+    """One row at a time: the layout a humanize schema can ask for."""
+    return render_template(
+        CAROUSEL_TEMPLATE,
+        question_name=question.get("question_name", ""),
+        question_text_html=Markup(
+            render_question_text(question.get("question_text", ""))
+        ),
+        items=_items(question),
+        options=_options(question),
+        chevron_left=Markup(
+            icons.render(
+                "chevron-left", class_name="h-5 w-5", stroke_width=_ARROW_STROKE_WIDTH
+            )
+        ),
+        chevron_right=Markup(
+            icons.render(
+                "chevron-right", class_name="h-5 w-5", stroke_width=_ARROW_STROKE_WIDTH
+            )
+        ),
+    )
+
+
 def render(question: dict, humanize_schema: dict | None = None) -> str:
     """Render a matrix question as static HTML.
 
-    Both default views, as the reference mounts them. A question this module
-    :func:`declines` never reaches here -- ``renderer.render_question`` sends it
-    to the stand-in instead.
+    Both default views, as the reference mounts them -- unless the schema asks
+    for the carousel, which replaces the pair rather than joining them.
     """
+    if is_carousel(humanize_schema):
+        return _render_carousel(question)
     options = _options(question)
     return render_template(
         TEMPLATE,

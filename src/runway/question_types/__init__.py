@@ -51,9 +51,12 @@ RENDERERS: dict[str, Renderer] = {
 # answers "why not this question", so that a partial transcription is a stated
 # gap rather than a preview quietly showing a layout nobody is served -- and so
 # that one answer serves both the renderer and `check`.
-DECLINES: dict[str, Callable[[dict, dict | None], str | None]] = {
-    "matrix": matrix.declines,
-}
+#
+# Empty, and kept: `matrix` was the entry, for the carousel format it now draws.
+# The mechanism is where the next partial renderer states its gap, and both
+# callers already ask -- putting it back later should not mean re-threading it
+# through `renderer.render_question` and `inspection.classify` again.
+DECLINES: dict[str, Callable[[dict, dict | None], str | None]] = {}
 
 
 def declined(question: dict, humanize_schema: dict | None = None) -> str | None:

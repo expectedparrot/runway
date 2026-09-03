@@ -10,11 +10,10 @@ property that turning a phone mid-question keeps the answer.
 The markup to match is recorded from the reference component, not written here.
 See ``test_choice.py`` and SPEC.md under "The goldens".
 
-One layout is deliberately *not* drawn: the carousel a humanize schema can ask
-for. Rather than showing the default views for a question configured that way,
-the renderer declines and the stand-in note is rendered -- and ``check`` says the
-same thing, which is the property ``test_a_carousel_is_declined_by_both_halves``
-holds.
+A humanize schema can ask for a third layout instead of that pair: the
+**carousel**, one row at a time. It replaces the two rather than joining them,
+so the tests below check what is *absent* from it as much as what is present --
+a carousel still emitting a table would be two layouts for one answer.
 
 Runs under pytest, or directly: python tests/test_matrix.py
 """
@@ -211,36 +210,221 @@ def test_the_label_column_has_no_heading():
 
 
 # --------------------------------------------------------------------------
-# The carousel, which is not drawn yet
+# The carousel
 # --------------------------------------------------------------------------
 
 
-def test_a_carousel_matrix_is_declined_with_a_reason():
-    assert matrix.declines(a_matrix(), CAROUSEL) == "the carousel format is not drawn yet"
-    assert matrix.declines(a_matrix(), None) is None
-    assert matrix.declines(a_matrix(), {"format": {"type": "dropdown"}}) is None
+def test_matrix_carousel_matches_react():
+    assert question_case("matrix_carousel") == GOLDENS["matrix_carousel"]
 
 
-def test_a_carousel_is_declined_by_both_halves():
-    """The property that keeps ``check`` from lying.
+def test_matrix_carousel_labelled_matches_react():
+    assert question_case("matrix_carousel_labelled") == GOLDENS["matrix_carousel_labelled"]
 
-    Whatever the renderer does with a carousel-formatted matrix, the classifier
-    must say the same -- a report promising a grid for a page that shows a note
-    is worse than no report.
+
+def test_matrix_carousel_single_item_matches_react():
+    """Both arrows disabled, and "1 of 1"."""
+    assert (
+        question_case("matrix_carousel_single_item")
+        == GOLDENS["matrix_carousel_single_item"]
+    )
+
+
+def test_matrix_carousel_no_items_matches_react():
+    """Recorded rather than reasoned out.
+
+    The reference does not special-case an empty matrix: the status reads
+    "Item 1 of 0", the label reads "0 items", and the option group is dropped
+    entirely because there is no row for it to answer. Every one of those is a
+    thing a transcription would have guessed wrong.
+    """
+    assert question_case("matrix_carousel_no_items") == GOLDENS["matrix_carousel_no_items"]
+
+
+def test_a_carousel_is_recognized_from_the_schema_and_nothing_else():
+    assert matrix.is_carousel(CAROUSEL)
+    assert not matrix.is_carousel(None)
+    assert not matrix.is_carousel({})
+    assert not matrix.is_carousel({"format": None})
+    assert not matrix.is_carousel({"format": {"type": "dropdown"}})
+
+
+def test_the_carousel_replaces_the_default_views_rather_than_joining_them():
+    """One question, one layout. A carousel that still emitted a table would be
+    two sets of radios answering the same rows, and the hidden set would uncheck
+    the visible one."""
+    html = render_question(a_matrix(), CAROUSEL)
+    assert "edsl-matrix-carousel" in html
+    assert "edsl-matrix-table" not in html
+    assert "edsl-matrix-stack" not in html
+
+
+def test_a_carousel_is_drawn_by_both_halves():
+    """``check`` and the renderer have to agree, whichever way the answer goes.
+
+    This was the property that held the *declined* carousel honest; it is worth
+    just as much now that the answer is "drawn", since a classifier still
+    promising a note would send someone looking for one.
     """
     question = a_matrix()
-    html = render_question(question, CAROUSEL)
-    assert "edsl-preview-note" in html
-    assert "edsl-matrix-table" not in html
-    assert inspection.classify(question, CAROUSEL) == "note"
-    assert inspection.classify(question, None) == "drawn"
+    assert "edsl-preview-note" not in render_question(question, CAROUSEL)
+    assert inspection.classify(question, CAROUSEL) == "drawn"
+    assert "reason" not in inspection.describe(question, 1, CAROUSEL)
 
 
-def test_the_reason_reaches_the_report():
-    entry = inspection.describe(a_matrix(), 1, CAROUSEL)
-    assert entry["reason"] == "the carousel format is not drawn yet"
-    # An ordinary matrix has nothing to explain away.
-    assert "reason" not in inspection.describe(a_matrix(), 1, None)
+def test_only_the_row_on_screen_carries_options():
+    """The reference's own shape: the option list sits outside the carousel and
+    is re-rendered for whichever row is showing, so the server emits one."""
+    html = render_question(
+        a_matrix(question_items=["The food", "The staff", "Value"]), CAROUSEL
+    )
+    assert html.count('role="radiogroup"') == 1
+    assert 'aria-labelledby="visit_item_0"' in html
+    # Every row is still a slide, because that is what there is to scroll to.
+    assert html.count("edsl-matrix-carousel-slide") == 3
+
+
+def test_only_the_row_on_screen_is_left_out_of_aria_hidden():
+    html = render_question(
+        a_matrix(question_items=["The food", "The staff", "Value"]), CAROUSEL
+    )
+    # On the slides, not on the page: the two nav arrows are decorative and
+    # carry aria-hidden of their own, so an unscoped count reads four.
+    slides = re.findall(r'<div class="edsl-matrix-carousel-slide[^>]*>', html)
+    assert len(slides) == 3
+    assert sum('aria-hidden="false"' in slide for slide in slides) == 1
+    assert sum('aria-hidden="true"' in slide for slide in slides) == 2
+
+
+def test_the_carousel_uses_the_tables_id_scheme_not_the_stacked_lists():
+    """The stacked list scopes its names under ``_stack`` because it shares a
+    page with the table. The carousel replaces both, so there is nothing to
+    collide with and the reference leaves its ids unscoped."""
+    html = render_question(a_matrix(), CAROUSEL)
+    assert 'id="visit_0_0"' in html and 'name="visit_0"' in html
+    assert "_stack" not in html
+
+
+def test_carousel_ids_are_built_from_indices_not_from_row_text():
+    html = render_question(
+        a_matrix(question_items=["The staff's attention"]), CAROUSEL
+    )
+    for identifier in re.findall(r'id="([^"]+)"', html):
+        assert " " not in identifier and "'" not in identifier
+
+
+def test_a_parked_option_group_is_the_same_markup_as_the_recorded_one():
+    """What lets the page script swap rows without writing markup.
+
+    Row 0's group is compared against the reference by the parity test above.
+    Every other row is the same include with a different index, so holding the
+    two to each other holds all of them to the recording.
+    """
+    question = CASES["matrix_carousel"]["question"]
+    recorded = GOLDENS["matrix_carousel"]
+    row_zero = matrix.render_carousel_options(question, 0)
+    assert row_zero in recorded
+
+    row_two = matrix.render_carousel_options(question, 2)
+    assert row_two == row_zero.replace("visit_item_0", "visit_item_2").replace(
+        "visit_0_", "visit_2_"
+    ).replace('name="visit_0"', 'name="visit_2"')
+
+
+# --------------------------------------------------------------------------
+# What the page gives the carousel script
+# --------------------------------------------------------------------------
+#
+# The arrows and the auto-advance are behaviour, not markup, so there is no
+# recording to hold them to and they are reimplemented -- the second and last
+# place here that does. What *can* be checked from Python is the arrangement
+# that keeps the script from writing markup: every row's options are rendered
+# by this package and parked, and the script only moves them.
+
+
+def test_a_carousel_page_carries_the_parked_rows_and_the_script():
+    page = runway_renderer.render_page(a_matrix(), CAROUSEL)
+    assert 'class="preview-matrix-carousel-options"' in page
+    assert "ADVANCE_DELAY_MS" in page
+
+
+def test_an_ordinary_matrix_page_carries_neither():
+    """A survey with no carousel pays for none of it."""
+    page = runway_renderer.render_page(a_matrix())
+    assert "preview-matrix-carousel-options" not in page
+    assert "ADVANCE_DELAY_MS" not in page
+
+
+def test_the_parked_rows_are_the_ones_the_page_did_not_open_with():
+    """Row 0 is on the page already -- it is the one the reference renders and
+    the one a golden covers -- so parking it again would be a second copy of the
+    only group anything checks."""
+    question = a_matrix(question_items=["A", "B", "C"])
+    page = runway_renderer.render_page(question, CAROUSEL)
+    parked = re.search(
+        r'<template class="preview-matrix-carousel-options"[^>]*>(.*?)</template>',
+        page,
+        re.S,
+    ).group(1)
+    assert parked.count('role="radiogroup"') == 2
+    assert re.findall(r'aria-labelledby="(visit_item_\d+)"', parked) == [
+        "visit_item_1",
+        "visit_item_2",
+    ]
+
+
+def test_every_row_keeps_a_radio_group_name_of_its_own():
+    """One name is one group. Rows sharing a name would uncheck each other as
+    the respondent moved between them, which is the whole reason the reference
+    names a matrix's groups per row rather than per question."""
+    page = runway_renderer.render_page(
+        a_matrix(question_items=["A", "B", "C"]), CAROUSEL
+    )
+    names = re.findall(r'<input [^>]*name="(visit_\d+)"', page)
+    assert set(names) == {"visit_0", "visit_1", "visit_2"}
+
+
+def test_the_advance_setting_reaches_the_page():
+    """Absent means on, which is the reference's reading of the same field."""
+    on = runway_renderer.render_page(a_matrix(), CAROUSEL)
+    off = runway_renderer.render_page(
+        a_matrix(), {"format": {"type": "carousel", "advance_on_select": False}}
+    )
+    assert 'data-advance="true"' in on
+    assert 'data-advance="false"' in off
+
+
+def test_a_bundle_parks_one_template_per_carousel_and_ships_one_script():
+    questions = [
+        a_matrix(question_name="first"),
+        a_matrix(question_name="second"),
+        a_matrix(question_name="plain"),
+    ]
+    page = runway_renderer.render_bundle(
+        questions,
+        {
+            "questions": {
+                "first": CAROUSEL,
+                "second": CAROUSEL,
+            }
+        },
+    )
+    assert page.count('class="preview-matrix-carousel-options"') == 2
+    assert page.count("var ADVANCE_DELAY_MS") == 1
+    # The one that asked for no carousel still gets its grid.
+    assert "edsl-matrix-table" in page
+
+
+def test_a_single_row_carousel_parks_nothing():
+    """Nothing to move to, so nothing to park -- and the reference disables both
+    arrows, which the recorded case holds."""
+    page = runway_renderer.render_page(a_matrix(question_items=["Only"]), CAROUSEL)
+    parked = re.search(
+        r'<template class="preview-matrix-carousel-options"[^>]*>(.*?)</template>',
+        page,
+        re.S,
+    ).group(1)
+    assert parked == ""
 
 
 # --------------------------------------------------------------------------
@@ -282,7 +466,10 @@ def test_a_matrix_with_no_rows_still_renders_a_page():
 STYLESHEET = (Path(runway_renderer.__file__).parent / "assets/questions.css").read_text(
     encoding="utf-8"
 )
-SELECTED_RULE = ":where(.edsl-matrix-stack) .edsl-option:where(:has(:checked)){"
+SELECTED_RULE = (
+    ":where(.edsl-matrix-stack,.edsl-matrix-carousel)"
+    " .edsl-option:where(:has(:checked)){"
+)
 
 
 def _without_where(selector: str) -> str:
@@ -329,11 +516,34 @@ def test_the_selected_rule_is_emitted_after_what_it_overrides():
         assert STYLESHEET.index(utility) < at, utility
 
 
-def test_the_selected_rule_is_scoped_to_the_stacked_list():
+def test_the_selected_rule_covers_both_layouts_that_draw_a_full_width_option():
+    """The stacked list and the carousel, which are one component over there.
+
+    Both draw an option as a full-width row whose classes the reference swaps on
+    selection, so a rule reaching one and not the other would be a preview where
+    the same control behaved differently depending on the layout asked for --
+    which is what happened when the carousel was added and this rule was not.
+    """
+    assert SELECTED_RULE.startswith(
+        ":where(.edsl-matrix-stack,.edsl-matrix-carousel) "
+    )
+    for view in ("edsl-matrix-stack", "edsl-matrix-carousel"):
+        assert f".{view} .edsl-option:where(:has(:checked)):hover" in STYLESHEET
+
+
+def test_the_selected_rule_reaches_a_carousels_options():
+    """Not just present in the stylesheet -- scoped to something the carousel
+    actually emits."""
+    html = render_question(a_matrix(), CAROUSEL)
+    assert "edsl-matrix-carousel" in html
+    assert "edsl-option" in html
+
+
+def test_the_selected_rule_is_still_kept_off_everything_else():
     """The choice family's options carry `.edsl-option` too and have no selected
     styling at all in the reference -- their radio alone shows the answer. An
-    unscoped rule would draw a highlight the live survey never draws."""
-    assert SELECTED_RULE.startswith(":where(.edsl-matrix-stack) ")
+    unscoped rule would draw a highlight the live survey never draws, and the
+    matrix table needs nothing either: its cells hold a bare radio."""
     choice = render_question(
         {
             "question_name": "q",
@@ -342,8 +552,8 @@ def test_the_selected_rule_is_scoped_to_the_stacked_list():
             "question_options": ["a", "b"],
         }
     )
-    assert "edsl-option" in choice and "edsl-matrix-stack" not in choice
-
+    assert "edsl-option" in choice
+    assert "edsl-matrix-stack" not in choice and "edsl-matrix-carousel" not in choice
 
 def test_a_surveys_own_css_is_still_emitted_last():
     """What lets a matched-weight rule be overridden at all."""

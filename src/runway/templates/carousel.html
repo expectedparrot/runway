@@ -1,0 +1,133 @@
+{# Matrix carousel behaviour: moving between rows.
+
+   The second reimplementation here, and it exists for the same reason as the
+   first -- there is no markup to record for "what the arrows do". The reference
+   drives this with a carousel library, which on the server does nothing at all;
+   what a golden captures is the resting state, and everything below is what
+   would otherwise never happen on a static page.
+
+   Markup is never written here, as in `behaviour.html`. The option groups for
+   the rows the page did not open with are rendered by
+   `questions/_matrix_carousel_options.html` -- the same include the drawn row
+   uses -- and parked in a `<template>` by `page.html`. This file moves those
+   nodes, and never builds one.
+
+   Moved, not copied, and that is why the groups are nodes rather than a string
+   of markup: a radio the respondent has filled in is live DOM state, and
+   re-parsing a row's markup each time it came back would hand them a row they
+   had already answered as though they had not.
+
+   **Dragging is not reproduced.** The library the reference uses follows a
+   finger through the gesture and decides where to land from its speed; nothing
+   here does, so a swipe does nothing and the arrows are the way through. That
+   is a real difference on a touch screen, and it is written down in the README
+   under Known gaps: the layout previews faithfully, the feel of it does not,
+   and a carousel is worth trying live before a survey goes out.
+
+   Nothing about validation or submission is here, for the reason
+   `behaviour.html` gives: none of it is visible on a static page, and each
+   would be another copy of the application with nothing checking it. #}
+<script>
+(function () {
+    /* How long a newly answered row stays on screen before the carousel moves
+     * on, and how long the move itself takes. The first is the reference's own
+     * constant; the second stands in for a physics-based animation and is not
+     * the same curve, only the same order of magnitude. */
+    var ADVANCE_DELAY_MS = 300;
+    var SLIDE_MS = 300;
+
+    /* Sliding is the whole interaction, and when an answer triggers it, it is
+     * motion nobody asked for -- so a reduced-motion preference drops the
+     * animation rather than the format, which is what the reference does by
+     * handing its carousel a duration of zero. Read once: the preference
+     * changing mid-page is not worth a subscription. */
+    var still = !!(window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+    function setUp(carousel) {
+        var slides = Array.prototype.slice.call(
+            carousel.querySelectorAll('.edsl-matrix-carousel-slide'));
+        /* A matrix with no rows is a shape the server can send. There is
+         * nothing to move between, and nothing here may take the page down. */
+        if (!slides.length) return;
+
+        var track = slides[0].parentNode;
+        var status = carousel.querySelector('.edsl-matrix-carousel-status');
+        var live = carousel.querySelector('[aria-live]');
+        var buttons = carousel.querySelectorAll('.edsl-matrix-carousel-button');
+        var prev = buttons[0];
+        var next = buttons[1];
+
+        /* The question's name, off the row label's id rather than passed in:
+         * every id here is built from it and the page already has it. */
+        var label = carousel.querySelector('.edsl-matrix-carousel-item');
+        var name = label ? label.id.replace(/_item_[0-9]+$/, '') : '';
+        var parked = document.querySelector(
+            '.preview-matrix-carousel-options[data-question-name="' + name + '"]');
+
+        var groups = [carousel.querySelector('[role="radiogroup"]')];
+        while (parked && parked.content.firstElementChild) {
+            groups.push(carousel.appendChild(parked.content.firstElementChild));
+        }
+        var advance = !!parked && parked.getAttribute('data-advance') === 'true';
+
+        var current = 0;
+        var timer = null;
+
+        function show(index) {
+            index = Math.max(0, Math.min(slides.length - 1, index));
+            current = index;
+            track.style.transform = 'translateX(' + (-index * 100) + '%)';
+            /* Every slide stays mounted, because that is what there is to
+             * scroll to; the ones off screen are hidden from assistive tech, so
+             * the respondent only ever meets the row they are on. */
+            slides.forEach(function (slide, i) {
+                slide.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+            });
+            groups.forEach(function (group, i) { group.hidden = i !== index; });
+            if (status) status.textContent = (index + 1) + ' of ' + slides.length;
+            /* The arrows change what is on screen without moving focus, so
+             * without this nothing announces that anything happened. */
+            if (live) live.textContent = 'Item ' + (index + 1) + ' of ' + slides.length;
+            if (prev) prev.disabled = index === 0;
+            if (next) next.disabled = index >= slides.length - 1;
+        }
+
+        if (prev) {
+            prev.addEventListener('click', function () { show(current - 1); });
+        }
+        if (next) {
+            next.addEventListener('click', function () { show(current + 1); });
+        }
+
+        carousel.addEventListener('change', function (event) {
+            var target = event.target;
+            if (!advance || !target || target.type !== 'radio') return;
+            if (timer !== null) window.clearTimeout(timer);
+            var from = current;
+            /* Every answer advances, corrections included -- the rule being
+             * "answering moves you on", with no exception to learn. There is
+             * nowhere to advance to from the last row. */
+            if (from >= slides.length - 1) return;
+            timer = window.setTimeout(function () {
+                timer = null;
+                /* They may have moved on themselves in the meantime, and
+                 * advancing from wherever they have since landed would be the
+                 * carousel taking a turn that is no longer its own. */
+                if (current !== from) return;
+                show(from + 1);
+            }, ADVANCE_DELAY_MS);
+        });
+
+        /* Settle the starting state before the transition is armed, so the page
+         * does not open by animating to the row it is already showing. */
+        show(0);
+        if (!still) {
+            track.style.transition = 'transform ' + SLIDE_MS + 'ms ease-out';
+        }
+    }
+
+    Array.prototype.forEach.call(
+        document.querySelectorAll('.edsl-matrix-carousel'), setUp);
+})();
+</script>

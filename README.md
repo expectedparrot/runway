@@ -107,8 +107,8 @@ and position are still checkable.
 
 - Piped values are not resolved. `{{ agent.x }}`, `{{ scenario.x }}` render as
   written.
-- A matrix carousel (`format: {type: carousel}`) is not drawn; it previews as a
-  note naming the reason.
+- A matrix carousel (`format: {type: carousel}`) is drawn, but you cannot swipe
+  it — use the arrows, and try it on a phone before sending the survey out.
 - Position is inferred from authored order, so skip logic will differ.
 - Controls tick but mostly don't behave. Checkbox Select-all and exclusive
   options do work; validation, limits and Next do not.
@@ -248,7 +248,8 @@ survey can be checked meanwhile.
 
 Three results are worth expecting: `checkbox` draws a **Select all** row nothing
 in the question asked for, `checkbox_with_other` never draws it, and a `matrix`
-configured as a carousel gets the note instead of a grid.
+configured as a carousel draws neither the grid nor the stacked list — the
+carousel replaces the pair rather than joining them.
 [SPEC.md](SPEC.md#what-a-preview-reproduces) has why.
 
 A type **outside** this table — `dict`, for instance — cannot be shown to a
@@ -309,9 +310,13 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
 - **Rich question text and option labels.** Images, video and PDFs referenced
   from question or option text are resolved server-side during a live run; here
   such an option previews as the reference text it was written as.
-- **The matrix carousel.** The one-row-at-a-time layout is not transcribed yet,
-  so a matrix configured for it gets the note. `check` names the reason rather
-  than silently substituting a grid.
+- **Dragging a matrix carousel.** The layout is drawn and the arrows work, and
+  answering a row advances to the next one as the live page does. What is
+  missing is the gesture: the live survey follows a finger through a swipe and
+  decides where to land from how fast it moved, and a preview does neither, so
+  a swipe does nothing at all. On a touch screen that is the difference between
+  reading the layout and using it — preview the format here, then try a real
+  one on a phone before the survey goes out.
 - **Option randomization.** Not applied; the authored order is shown.
 - **Piped values.** `{{ agent.x }}`, `{{ scenario.x }}` and `{{ q_name.answer }}`
   render as written. Resolving them means binding a survey to agent and scenario

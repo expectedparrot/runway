@@ -75,7 +75,7 @@ including that edsl had broken something.
 
 Read examples through `tests/examples.py`, never `load()` directly. The schema
 is a separate file now, and a test that forgot it would leave the cases that
-only exist *because* of a schema — the carousel note, a dropdown, an exclusive
+only exist *because* of a schema — the carousel, a dropdown, an exclusive
 option — green and unexercised.
 
 `mixed_survey` is the one to leave alone. Several survey-level tests assert
@@ -141,10 +141,12 @@ the two to each other, so adding a renderer without updating the classifier
 fails there rather than in someone's report.
 
 A renderer that draws only *some* of what its type can be configured as says so
-through `question_types.DECLINES` rather than by rendering the wrong thing —
-`matrix` declines the carousel format. Both `render_question` and `classify` ask
-`declined()` before the registry, which is what keeps them from disagreeing; a
-new partial renderer belongs there rather than in either caller.
+through `question_types.DECLINES` rather than by rendering the wrong thing.
+`DECLINES` is **empty** today — `matrix` was its one entry, for the carousel
+format it now draws — and it is kept all the same: both `render_question` and
+`classify` ask `declined()` before the registry, which is what keeps the two
+from disagreeing, and a new partial renderer belongs there rather than in
+either caller.
 
 ## Scope
 

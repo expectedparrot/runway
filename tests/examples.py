@@ -7,7 +7,7 @@ lives under ``examples/schemas`` with the same name.
 
 Tests read them through here rather than calling ``load`` directly, so that a
 test cannot quietly stop applying a schema. Several of the interesting cases
-only exist because of one: the matrix carousel is a note rather than a grid, a
+only exist because of one: a matrix is a carousel rather than a grid, a
 question is a dropdown rather than radios, an option is exclusive. Dropping the
 schema would leave those paths green and unexercised.
 """

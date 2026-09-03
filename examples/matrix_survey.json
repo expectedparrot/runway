@@ -63,6 +63,29 @@
       "edsl_class_name": "QuestionBase"
     },
     {
+      "question_name": "spirits",
+      "question_text": "How would you rate each of these?",
+      "question_items": [
+        "The house red",
+        "The cocktail list",
+        "The alcohol-free options"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Poor",
+        "5": "Excellent"
+      },
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
       "question_name": "likelihood_10pt",
       "question_text": "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 is 'extremely likely', how likely are you to do each of the following in the next year? Choose 'I don't know / prefer not to answer' if you would rather not say.",
       "question_items": [
@@ -106,6 +129,7 @@
       "service_ratings",
       "agreement",
       "one_at_a_time",
+      "spirits",
       "likelihood_10pt",
       "recommend"
     ],
@@ -113,6 +137,7 @@
       "Rate each part of your visit.",
       "How much do you agree with each statement?",
       "How often do you order each of these?",
+      "How would you rate each of these?",
       "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 is 'extremely likely', how likely are you to do each of the following in the next year? Choose 'I don't know / prefer not to answer' if you would rather not say.",
       "Would you recommend us to a friend?"
     ],
@@ -123,8 +148,9 @@
       "service_ratings": 0,
       "agreement": 1,
       "one_at_a_time": 2,
-      "likelihood_10pt": 3,
-      "recommend": 4
+      "spirits": 3,
+      "likelihood_10pt": 4,
+      "recommend": 5
     },
     "rules": [
       {
@@ -166,9 +192,17 @@
         "priority": -1,
         "before_rule": false,
         "question_name_to_index": {}
+      },
+      {
+        "current_q": 5,
+        "expression": "True",
+        "next_q": 6,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
       }
     ],
-    "num_questions": 5
+    "num_questions": 6
   },
   "question_groups": {},
   "edsl_version": "1.0.8.dev1",

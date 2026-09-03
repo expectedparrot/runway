@@ -56,6 +56,18 @@
 <template id="preview-other-add">{% include "questions/_other_add.html" %}</template>
 {% include "behaviour.html" %}
 {% endif %}
+{% if carousels %}
+{# One row's options per row the page did not open with, parked where the
+   carousel script can move them in. The reference renders only the row on
+   screen, so these are markup a static page would otherwise not have -- and
+   they come from the same include the drawn row uses, so what the script
+   moves in is the recorded markup rather than the script author's idea of
+   it. Preview chrome, outside `#root`, so it is not part of any question. #}
+{% for carousel in carousels %}
+<template class="preview-matrix-carousel-options" data-question-name="{{ carousel.question_name }}" data-advance="{{ 'true' if carousel.advance else 'false' }}">{% for group in carousel.groups %}{{ group }}{% endfor %}</template>
+{% endfor %}
+{% include "carousel.html" %}
+{% endif %}
 {% if toolbar_html %}
 <script>
 (function () {
