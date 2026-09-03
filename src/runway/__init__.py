@@ -26,7 +26,7 @@ questions; a humanize schema is not part of an EDSL survey, and comes from
 
 from __future__ import annotations
 
-from . import inspection, progress
+from . import inspection, progress, scenarios
 from .markdown import render_option_text, render_question_text
 from .question_types import RENDERERS, get_renderer
 from .renderer import (
@@ -61,6 +61,7 @@ __all__ = [
     "load_schema",
     "previewable",
     "progress",
+    "scenarios",
     "render_body",
     "render_bundle",
     "render_comment",

@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, inspection
+from . import __version__, inspection, scenarios
 from .question_types import RENDERERS, background, unsupported
 from .survey import (
     SurveyLoadError,
@@ -77,13 +77,26 @@ otherwise: one file holding every question, with a toolbar to move between them.
 `--split` writes one file per question instead, which is much larger -- the
 stylesheet is most of a page's weight and a bundle inlines it once.
 
-What a preview cannot show: piped values (`{{ agent.x }}` and `{{ scenario.x }}`
-render as written), option randomization, media resolved server-side from a file
-(an option referencing one previews as its reference text), a matrix configured
-as a carousel (it previews as a note naming the reason), and position under skip
-logic, which is inferred from authored order. Controls tick but mostly do not
-behave: checkbox Select all and exclusive options work; validation, selection
-limits and the Next button do not.
+A survey may also be bound to a scenario list. A respondent is assigned one
+scenario for their whole response, so each scenario is a different rendering of
+the survey, and a preview of one is a page nobody is served:
+
+  runway render survey.ep --scenarios scenarios.json
+  runway render survey.ep --scenarios scenarios.json --scenario-index 0,17,204
+
+The bundle then carries a second dropdown. A question that pipes nothing renders
+once and is shown for every scenario, so the file grows only where the survey
+really differs. A list longer than 25 is refused rather than truncated; pick
+from it with `--scenario-index`.
+
+What a preview cannot show: agent traits and prior answers (`{{ agent.x }}` and
+`{{ q.answer }}` render as written, and a question applying a *filter* to one of
+those does not pipe at all), option randomization, media resolved server-side
+from a file (an option referencing one previews as its reference text), a matrix
+configured as a carousel (it previews as a note naming the reason), and position
+under skip logic, which is inferred from authored order. Controls tick but
+mostly do not behave: checkbox Select all and exclusive options work; validation,
+selection limits and the Next button do not.
 
 Add `--json` to `check`, `types` and `version` for machine-readable output.\
 """
@@ -95,11 +108,12 @@ Add `--json` to `check`, `types` and `version` for machine-readable output.\
 
 
 def cmd_render(args: argparse.Namespace) -> int:
-    surveys = _load_all(args.survey, args.schema)
-    if surveys is None:
+    loaded = _load_all(args.survey, args.schema, args.scenarios, args.scenario_index)
+    if loaded is None:
         return 1
+    surveys, scenarios = loaded
     surveys = _without_repeats(surveys)
-    if _colliding(surveys, args.out, args.split):
+    if _colliding(surveys, args.out, args.split, scenarios):
         return 1
 
     written: list[Path] = []
@@ -113,6 +127,7 @@ def cmd_render(args: argparse.Namespace) -> int:
                 split=args.split,
                 title=args.title or name,
                 name=name,
+                scenarios=scenarios,
             )
         )
     for path in written:
@@ -123,9 +138,10 @@ def cmd_render(args: argparse.Namespace) -> int:
 
 def cmd_check(args: argparse.Namespace) -> int:
     """Report what each question will render as. Writes nothing."""
-    surveys = _load_all(args.survey, args.schema)
-    if surveys is None:
+    loaded = _load_all(args.survey, args.schema, args.scenarios, args.scenario_index)
+    if loaded is None:
         return 1
+    surveys, scenarios = loaded
 
     reports = []
     for path, questions, humanize_schema in surveys:
@@ -141,6 +157,8 @@ def cmd_check(args: argparse.Namespace) -> int:
             )
             for position, question in iter_questions(questions)
         ]
+        if scenarios:
+            _add_piping(entries, questions, scenarios)
         reports.append(
             {
                 "survey": str(path),
@@ -231,9 +249,12 @@ def cmd_version(args: argparse.Namespace) -> int:
 
 
 def _load_all(
-    paths: list[Path], schema_path: Path | None = None
-) -> list[tuple[Path, list[dict], dict]] | None:
-    """Read every survey before any is acted on, or report and return None.
+    paths: list[Path],
+    schema_path: Path | None = None,
+    scenarios_path: Path | None = None,
+    index_spec: str | None = None,
+) -> tuple[list[tuple[Path, list[dict], dict]], list[tuple[int, dict]]] | None:
+    """Read every input before any is acted on, or report and return None.
 
     Reading first means a bad path among several leaves the output directory as
     it was, rather than half rewritten.
@@ -242,6 +263,10 @@ def _load_all(
     one reaches a preview: it is not part of an EDSL survey, so no survey file
     of any format has one to give. It applies to every survey given -- rendering
     a set of surveys against one schema is the reason to pass several at once.
+
+    ``scenarios_path`` is a scenario list, and applies to every survey for the
+    same reason. It comes back as ``(index, scenario)`` pairs carrying the
+    list's own numbering, which is what a selection has to preserve.
     """
     schema: dict = {}
     if schema_path is not None:
@@ -253,6 +278,28 @@ def _load_all(
         except SurveyLoadError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return None
+
+    chosen: list[tuple[int, dict]] = []
+    if scenarios_path is not None:
+        if not scenarios_path.exists():
+            print(f"error: no such scenario list: {scenarios_path}", file=sys.stderr)
+            return None
+        # Imported here rather than at module scope: it reaches edsl, and
+        # `types`, `guide` and `version` have no reason to pay for that.
+        from .scenarios import load_selection
+
+        try:
+            chosen = load_selection(scenarios_path, index_spec)
+        except SurveyLoadError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return None
+    elif index_spec is not None:
+        print(
+            "error: --scenario-index selects from a scenario list, and none was "
+            "given. Add --scenarios PATH.",
+            file=sys.stderr,
+        )
+        return None
 
     surveys: list[tuple[Path, list[dict], dict]] = []
     for path in paths:
@@ -268,7 +315,51 @@ def _load_all(
             print(f"error: no questions found in {path}", file=sys.stderr)
             return None
         surveys.append((path, questions, schema))
-    return surveys
+    return surveys, chosen
+
+
+def _add_piping(
+    entries: list[dict], questions: list[dict], scenarios: list[tuple[int, dict]]
+) -> None:
+    """Record on each entry what a scenario does to it, in place.
+
+    Two different pieces of news, and the second is the one worth reporting
+    loudly. ``pipes`` is what a scenario resolves, which is the question working
+    as intended. ``unresolved`` is a name that is neither a scenario key nor a
+    deferred one, and those fail silently in one of two ways -- the text renders
+    as nothing, or the whole question stops piping. Neither leaves a mark on the
+    page, which is why this is the place to say it.
+
+    Reported against the first scenario. A key missing from one scenario but not
+    another is a ragged list rather than a survey problem, and naming every
+    scenario it is missing from would bury the case that matters.
+    """
+    from .scenarios import references, root_of, unresolved
+
+    _, first = scenarios[0]
+    names = [
+        question["question_name"]
+        for question in questions
+        if question.get("question_name")
+    ]
+    by_name = {question.get("question_name"): question for question in questions}
+    for entry in entries:
+        question = by_name.get(entry["name"])
+        if question is None:
+            continue
+        missing = unresolved(question, first, names)
+        resolved = [
+            reference
+            for reference in references(question)
+            if root_of(reference) in first or root_of(reference) == "scenario"
+        ]
+        # A deferred root -- `agent`, or another question's answer -- is
+        # neither. It renders back as written, which is what this package
+        # promises for it, so it is not news in either column.
+        if resolved:
+            entry["pipes"] = resolved
+        if missing:
+            entry["unresolved"] = missing
 
 
 def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
@@ -292,7 +383,10 @@ def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
 
 
 def _colliding(
-    surveys: list[tuple[Path, list[dict], dict]], out_dir: Path, split: bool
+    surveys: list[tuple[Path, list[dict], dict]],
+    out_dir: Path,
+    split: bool,
+    scenarios: list[tuple[int, dict]] | None = None,
 ) -> bool:
     """Report and return True if two surveys would write the same file.
 
@@ -312,10 +406,17 @@ def _colliding(
     written, so a set that cannot all be rendered leaves the output directory
     as it was, the same way an unreadable one does.
     """
+    indices = [index for index, _ in scenarios] if scenarios else None
     claimed: dict[Path, Path] = {}
     clashes: dict[Path, list[Path]] = {}
     for source, questions, _ in surveys:
-        for target in output_paths(questions, out_dir, split=split, name=name_for(source)):
+        for target in output_paths(
+            questions,
+            out_dir,
+            split=split,
+            name=name_for(source),
+            scenario_indices=indices,
+        ):
             first = claimed.setdefault(target, source)
             if first != source:
                 clashes.setdefault(target, [first]).append(source)
@@ -364,10 +465,15 @@ def _print_check(report: dict) -> None:
             detail = "  (never shown to a respondent)"
         elif entry["status"] == "automatic":
             detail = f"  ({entry['kind']})"
+        piping = ""
+        if entry.get("pipes"):
+            piping = f"  pipes {', '.join(entry['pipes'])}"
+        if entry.get("unresolved"):
+            piping += f"  {', '.join(entry['unresolved'])} (unresolved)"
         print(
             f"  {entry['status']:<{_STATUS_WIDTH}}  "
             f"{entry['name']:<{name_width}}  "
-            f"{entry['type']:<{type_width}}{detail}"
+            f"{entry['type']:<{type_width}}{detail}{piping}"
         )
 
     counts = report["summary"]
@@ -375,6 +481,20 @@ def _print_check(report: dict) -> None:
         f"{counts[status]} {status}" for status in inspection.STATUSES if counts[status]
     ]
     print(f"\n{', '.join(parts)}")
+
+    # Said separately from the status counts, because it is a different kind of
+    # news: a status is about whether a question can be drawn at all, where this
+    # is about whether the scenario reached it.
+    pipes = sum(1 for entry in entries if entry.get("pipes"))
+    missing = sum(1 for entry in entries if entry.get("unresolved"))
+    if pipes or missing:
+        said = [f"{pipes} pipe"] if pipes else []
+        if missing:
+            said.append(
+                f"{missing} name{'s' if missing > 1 else ''} nothing can resolve, "
+                "so nothing in them pipes at all"
+            )
+        print(", ".join(said))
 
 
 # --------------------------------------------------------------------------
@@ -400,6 +520,27 @@ def _add_survey_argument(parser: argparse.ArgumentParser) -> None:
         help="Humanize schema, which is configured and saved separately from "
         "the survey and is the only way one reaches a preview. Applies to "
         "every survey given.",
+    )
+    parser.add_argument(
+        "--scenarios",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Scenario list -- a .ep package, or a .json.gz or .json dump, all "
+        "opened by ScenarioList.load(). A respondent is assigned one scenario "
+        "for their whole response, so each is a different rendering of the "
+        "survey; the preview gets a dropdown to move between them. CSV is not "
+        "a format edsl loads a scenario list from. Applies to every survey "
+        "given.",
+    )
+    parser.add_argument(
+        "--scenario-index",
+        default=None,
+        metavar="SPEC",
+        help="Which scenarios to render: indices and ranges, comma-separated "
+        "(0, 0-9, 0,17,204). Needed for a list of more than "
+        f"{scenarios.MAX_SCENARIOS}, which is refused rather than truncated. "
+        "The indices are the list's own and stay so in the dropdown.",
     )
 
 

@@ -5,5 +5,16 @@
    full-height flex containers, and an ordinary wrapper div would break it.
 
    The first panel carries `is-active` from the server, so a document opened
-   without JavaScript still shows a question rather than nothing. #}
-<div class="preview-panel{% if is_active %} is-active{% endif %}" data-question-name="{{ question_name }}">{{ body_html }}</div>
+   without JavaScript still shows a question rather than nothing.
+
+   `data-question-index` and `data-scenario-indices` appear only in a bundle
+   bound to more than one scenario. Without them the panels are one per question
+   and their order says everything, which is what the page script falls back to
+   -- so an ordinary bundle carries the markup it always has.
+
+   `data-exclusive` is on every checkbox panel, the empty list included: its
+   absence means "not a checkbox", not "nothing is exclusive". The page script
+   reads it from here rather than from a page-level table because piped options
+   resolve per scenario, so one question can be several option lists with the
+   exclusive one in a different place in each. #}
+<div class="preview-panel{% if is_active %} is-active{% endif %}" data-question-name="{{ question_name }}"{% if question_index is not none %} data-question-index="{{ question_index }}"{% endif %}{% if scenario_indices is not none %} data-scenario-indices="{{ scenario_indices }}"{% endif %}{% if exclusive is not none %} data-exclusive="{{ exclusive }}"{% endif %}>{{ body_html }}</div>

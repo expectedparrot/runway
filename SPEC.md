@@ -274,6 +274,80 @@ weight and a bundle inlines it once:
 instead. Useful for handing someone a single question; each file carries its own
 stylesheet copy.
 
+## Scenarios
+
+A humanized survey can be bound to a scenario list, and a respondent is assigned
+one scenario for the whole of their response — so a scenario is not decoration on
+a survey, it is *which* survey that respondent is given. **A binding is a
+rendering**, and that is the whole design: `--scenarios` renders the survey once
+per scenario and the toolbar switches between the results.
+
+**The piping is delegated, not transcribed.** Everywhere else a divergence is
+caught by comparing against a recording of the reference's output; piping has no
+markup to record, because it transforms the question *before* any template sees
+it. The equivalent discipline is to call the same edsl entry points the live page
+calls — the option processor, then `question.render` in a `SandboxedEnvironment`
+— with the same replacement dictionary. A second implementation of the
+replacement rules here would be the unchecked copy the goldens exist to prevent.
+The sandbox is not optional: question text is researcher-authored Jinja, rendered
+on whoever's machine typed the command.
+
+Two details of that dictionary are load-bearing. **Every non-file key is exposed
+twice**, bare and namespaced, because both spellings are in real surveys.
+**A file-store key is exposed bare only**, as `<see file key>`, and is absent
+from the `scenario` namespace — so `{{ scenario.photo }}` is undefined on the
+live page too.
+
+### The undefined-name trap
+
+`QuestionBase.render` renders a question's text as one template, and reading an
+attribute off an undefined name discards the *entire* render — it does not raise,
+it warns and hands the template back untouched. `{{ agent.name }}` and
+`{{ q1.answer }}` are both that shape, so naive piping would silently do nothing
+at all on any survey that names one, and the page would look exactly like an
+unpiped preview while doing it.
+
+`scenarios.Unresolved` is the stand-in: every attribute of one is another one, so
+those references survive as themselves. It is **not a `str` subclass**, which is
+the version that does not work — `{{ pet.answer | length }}` is in this
+repository's own `background_survey`, and against a string placeholder `length`
+is the length of the placeholder text. A question that filters a deferred name
+therefore does not pipe at all, which is the intended trade: an unsubstituted
+scenario key is visible on the page, a fabricated number is not.
+
+A name that is *neither* a scenario key nor deferred fails silently in one of two
+ways — `{{ typo }}` renders as nothing, `{{ typo.attr }}` unpipes the whole
+question. Both are what the live page does, so neither is worked around;
+`check --scenarios` reports them instead.
+
+### Panels, deduplicated
+
+A bundle renders each question under each scenario and groups the panels by what
+they render to, so a question that pipes nothing gets one panel marked as serving
+every scenario. A survey that pipes nothing collapses to exactly the panel list
+it has without scenarios — which is what makes "an unbound render is unchanged"
+achievable rather than aspirational.
+
+`data-question-index` and `data-scenario-indices` appear only when bound; without
+them the panels are one per question and their order is the answer, which is what
+the page script falls back to.
+
+### Exclusive options are a per-panel fact
+
+Options can be piped, and a piped list resolves per scenario — so one question can
+be several option lists with the exclusive option in a different place in each.
+A table keyed by question name has one slot for those, and the other panels would
+act on another's positions: clicking an ordinary option would clear the rest
+while the exclusive one did nothing.
+
+So the positions are written on the container — the panel in a bundle, `#root` on
+a split page — and `behaviour.html` reads them off the nearest ancestor carrying
+`data-exclusive`, which means it needs to know nothing about which kind of page
+it is on. The attribute is present on every checkbox, the empty list included:
+its absence means "not a checkbox", not "nothing is exclusive". That replaced a
+regex reverse-engineering a question name out of a DOM id, so the one
+reimplementation in the package got shorter.
+
 ## The progress indicator
 
 `humanize_schema["survey"]["progress"]` selects one of three renderings, and the
@@ -449,6 +523,10 @@ html  = render_bundle(questions, humanize_schema)                # one document
 html  = render_page(question, {"format": {"type": "dropdown"}})  # one question
 paths = render_survey(questions, humanize_schema, out_dir="previews", split=False)
 paths = render_survey(questions, humanize_schema, name="my_survey")   # -> my_survey.html
+
+from runway import scenarios
+chosen = scenarios.load_selection(Path("scenarios.json"), "0-9")   # [(index, dict), ...]
+paths = render_survey(questions, humanize_schema, scenarios=chosen)
 ```
 
 `load` returns the questions and nothing else, in any format edsl saves a survey
@@ -537,6 +615,8 @@ runway/
 │   ├── mixed_survey.json         one of every type, drawn and undrawn
 │   ├── background_survey.json    questions answered without a respondent
 │   ├── markdown_survey.json      markdown in question and option text
+│   ├── scenario_survey.json      a survey bound to a scenario list
+│   ├── scenarios/                scenario lists, where a survey has one
 │   └── styled_survey.json        a survey with custom_css
 ├── tests/
 │   ├── goldens.py                reads the two recorded files
@@ -551,6 +631,7 @@ runway/
     ├── renderer.py               page/body/progress composition
     ├── progress.py               which indicator a config draws at a position
     ├── survey.py                 input parsing, one-page-per-question output
+    ├── scenarios.py              binding a survey to a scenario, once per scenario
     ├── templating.py             the Jinja environment (escaping + whitespace)
     ├── html.py                   escaping matched to the reference
     ├── markdown.py               question and option text, serialized as React does

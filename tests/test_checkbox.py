@@ -30,6 +30,10 @@ GOLDENS = goldens.load_goldens()
 
 SELECT_ALL = "edsl-select-all"
 
+# The behaviour script, identified by the one line only it has: where it reads
+# the exclusive positions from.
+SCRIPT = "closest('[data-exclusive]')"
+
 
 def question_case(name: str) -> str:
     case = CASES[name]
@@ -164,26 +168,44 @@ def test_exclusive_options_reach_the_page_as_positions():
     can read there would quietly stop recognising any option an author
     emphasised. The position is the same on both sides whatever the label says.
     """
-    found = renderer.exclusive_options(
-        [a_checkbox(question_options=["A", "**Never**", "C"])],
-        {"questions": {"courses": {"exclusive_options": ["**Never**"]}}},
+    found = renderer.exclusive_positions(
+        a_checkbox(question_options=["A", "**Never**", "C"]),
+        {"exclusive_options": ["**Never**"]},
     )
-    assert found == {"courses": [1]}
+    assert found == [1]
 
 
-def test_only_checkbox_questions_get_an_entry():
-    """No other type has the notion, and a key per question would invite a
-    script that assumed otherwise."""
-    questions = [a_checkbox(), {"question_name": "other", "question_type": "yes_no"}]
-    assert set(renderer.exclusive_options(questions, {})) == {"courses"}
+def test_a_question_that_is_not_a_checkbox_answers_none():
+    """`None` and `[]` are different answers: the empty list is a checkbox with
+    nothing exclusive, which still needs the script, where `None` is a question
+    with no such notion at all."""
+    assert renderer.exclusive_positions(a_checkbox(), None) == []
+    assert (
+        renderer.exclusive_positions(
+            {"question_name": "other", "question_type": "yes_no"}, None
+        )
+        is None
+    )
 
 
 def test_piped_options_have_nothing_to_be_exclusive_of():
-    found = renderer.exclusive_options(
-        [a_checkbox(question_options="{{ scenario.items }}")],
-        {"questions": {"courses": {"exclusive_options": ["A"]}}},
+    found = renderer.exclusive_positions(
+        a_checkbox(question_options="{{ scenario.items }}"),
+        {"exclusive_options": ["A"]},
     )
-    assert found == {"courses": []}
+    assert found == []
+
+
+def test_the_positions_are_carried_by_the_container_not_a_table():
+    """Read off the panel in a bundle and off `#root` on a split page, which is
+    what lets one question be several option lists -- a piped list resolves per
+    scenario -- without one rendering acting on another's positions."""
+    page = renderer.render_page(
+        a_checkbox(question_options=["A", "None"]),
+        {"exclusive_options": ["None"]},
+    )
+    assert 'id="root" class="h-full" data-exclusive="1"' in page
+    assert "closest('[data-exclusive]')" in page
 
 
 def test_the_script_ships_only_where_there_is_a_checkbox():
@@ -197,14 +219,16 @@ def test_the_script_ships_only_where_there_is_a_checkbox():
             "question_options": ["Yes", "No"],
         }
     )
-    assert "var EXCLUSIVE" in with_box
-    assert "var EXCLUSIVE" not in without
+    assert SCRIPT in with_box
+    assert SCRIPT not in without
+    # And nothing to read positions off, since there are none to read.
+    assert "data-exclusive" not in without
 
 
 def test_the_script_reaches_a_split_page_too():
     """A single question is still a clickable page; the behaviour is not a
     property of being in a bundle."""
-    assert "var EXCLUSIVE" in renderer.render_page(a_checkbox())
+    assert SCRIPT in renderer.render_page(a_checkbox())
 
 
 def _main() -> int:

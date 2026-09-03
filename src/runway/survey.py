@@ -234,6 +234,7 @@ def output_paths(
     out_dir: Path | None = None,
     split: bool = False,
     name: str | None = None,
+    scenario_indices: list[int] | None = None,
 ) -> list[Path]:
     """The files :func:`render_survey` would write, without writing them.
 
@@ -244,16 +245,51 @@ def output_paths(
 
     :func:`render_survey` writes to exactly these paths, in this order, so the
     two cannot disagree about where a preview lands.
+
+    Split pages take a scenario segment when there is more than one scenario,
+    scenario-major so a directory listing groups them the way it sorts them.
+    Panels are deduplicated inside a bundle; files are not. ``--split`` is for
+    handing someone one page, and a page whose name says scenario 2 has to exist
+    even where it is identical to scenario 1's.
     """
     out_dir = Path(out_dir or "previews")
     stem = _slug(name) if name else ""
     if not split:
         return [out_dir / f"{stem or 'index'}.html"]
     prefix = f"{stem}-" if stem else ""
+    bindings: list[int | None] = (
+        list(scenario_indices)
+        if scenario_indices and len(scenario_indices) > 1
+        else [None]
+    )
     return [
-        out_dir / f"{prefix}{_page_name(page_num, question)}"
+        out_dir
+        / (
+            prefix
+            + ("" if index is None else f"s{index:02d}-")
+            + _page_name(page_num, question)
+        )
+        for index in bindings
         for page_num, question in iter_questions(questions)
     ]
+
+
+def bind(questions: list[dict], scenarios: list[tuple[int, dict]]) -> list[list[dict]]:
+    """The survey's previewable questions, once per scenario.
+
+    A scenario is a *binding*, and a binding is a rendering: a respondent is
+    assigned one scenario for the whole of their response, and every page they
+    are then served has its values substituted in. So previewing a scenario is
+    not resolving some templates, it is rendering the survey the way that one
+    respondent would receive it.
+
+    Piped over the whole item list and filtered afterwards, so a question's
+    place among the items -- which is what its progress reading is measured
+    against -- is the same in every binding.
+    """
+    from .scenarios import pipe
+
+    return [previewable(pipe(questions, scenario)) for _, scenario in scenarios]
 
 
 def render_survey(
@@ -263,6 +299,7 @@ def render_survey(
     split: bool = False,
     title: str = "Survey preview",
     name: str | None = None,
+    scenarios: list[tuple[int, dict]] | None = None,
 ) -> list[Path]:
     """Write a survey preview into ``out_dir``. Returns the paths written.
 
@@ -277,6 +314,12 @@ def render_survey(
     passes the survey file's own name, and refuses a set whose names agree.
     Omitted, the bundle is ``index.html`` and split pages are numbered alone --
     right for a directory holding the one survey.
+
+    ``scenarios`` are ``(index, scenario)`` pairs -- see
+    :func:`scenarios.load_selection`, which is where the index comes from and
+    why it is the scenario list's own rather than a position in this list. A
+    bundle gains a second dropdown; split pages gain a file each. Given none,
+    nothing about this function's output changes at all.
     """
     humanize_schema = humanize_schema or {}
     out_dir = Path(out_dir or "previews")
@@ -284,10 +327,29 @@ def render_survey(
 
     names = item_names(questions)
     items = previewable(questions)
-    written = output_paths(questions, out_dir, split=split, name=name)
+    indices = [index for index, _ in scenarios] if scenarios else None
+    written = output_paths(
+        questions, out_dir, split=split, name=name, scenario_indices=indices
+    )
     if not split:
+        from .scenarios import label
+
         written[0].write_text(
-            render_bundle(items, humanize_schema, title=title, item_names=names),
+            render_bundle(
+                items,
+                humanize_schema,
+                title=title,
+                item_names=names,
+                variants=bind(questions, scenarios) if scenarios else None,
+                scenarios=(
+                    [
+                        {"index": index, "label": label(index, scenario)}
+                        for index, scenario in scenarios
+                    ]
+                    if scenarios
+                    else None
+                ),
+            ),
             encoding="utf-8",
         )
         return written
@@ -298,11 +360,21 @@ def render_survey(
     progress_config = survey_schema.get("progress")
     total = len(questions)
 
-    # strict: output_paths and this loop walk the same questions, and a
-    # disagreement would silently drop or misname a page.
-    for (page_num, question), path in zip(
-        iter_questions(questions), written, strict=True
-    ):
+    # One pass per binding, in the order output_paths names them -- which is
+    # scenario-major, so this loop is too. An unbound survey is the one binding
+    # that changes nothing, so there is no second code path for it.
+    bindings = bind(questions, scenarios) if scenarios else [items]
+
+    # strict: output_paths and this loop walk the same pages, and a
+    # disagreement would silently drop or misname one.
+    pages = [
+        (page_num, question)
+        for binding in bindings
+        for (page_num, _), question in zip(
+            iter_questions(questions), binding, strict=True
+        )
+    ]
+    for (page_num, question), path in zip(pages, written, strict=True):
         question_name = question.get("question_name") or f"question-{page_num}"
         path.write_text(
             render_page(

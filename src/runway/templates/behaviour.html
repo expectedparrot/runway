@@ -22,13 +22,20 @@
    `**Never**` reaches the DOM as `Never`, and matching strings would quietly
    stop recognising any option an author emphasised.
 
+   They are read off the container the question sits in -- the panel in a
+   bundle, `#root` on a split page, whichever is nearest, so this does not have
+   to know which kind of page it is on. Not from a page-level table keyed by
+   question name: options can be piped, a piped list resolves per scenario, and
+   one question can then be several option lists with the exclusive one in a
+   different place in each. A name cannot tell those apart, so one panel would
+   act on another's positions -- clicking an ordinary option would clear the
+   rest while the exclusive one did nothing.
+
    Nothing about limits, validation or submission belongs here. None of it is
    visible on a page, and each addition would be another copy with nothing
    checking it. #}
 <script>
 (function () {
-    var EXCLUSIVE = {{ exclusive_json }};
-
     function hasAnswer(texts) {
         return texts.some(function (text) { return text.trim() !== ''; });
     }
@@ -45,10 +52,11 @@
 
         var selectAll = question.querySelector(
             '.edsl-select-all input[type="checkbox"]');
-        var name = selectAll
-            ? selectAll.id.replace(/-select-all$/, '')
-            : (boxes[0] || other).id.replace(/-(?:\d+|other)$/, '');
-        var exclusive = EXCLUSIVE[name] || [];
+        var container = question.closest('[data-exclusive]');
+        var exclusive = container
+            ? container.getAttribute('data-exclusive')
+                  .split(' ').filter(Boolean).map(Number)
+            : [];
 
         // By position, not by label text -- see the note above.
         function isExclusive(box) {
