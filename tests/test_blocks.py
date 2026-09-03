@@ -21,7 +21,11 @@ from runway.blocks import (
     text_to_blocks,
 )
 
-PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+# A one-pixel PNG, base64 as a scenario carries one.
+PNG = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQ"
+    "DwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
 
 
 def _a_file(suffix: str = "png", mime: str = "image/png") -> dict:
@@ -147,6 +151,16 @@ def test_only_the_file_keys_of_a_scenario_become_entries():
 # --------------------------------------------------------------------------
 
 
+def _a_file_block(file_type: str, link: str, name: str = "f") -> dict:
+    """One file block, the shape `text_to_blocks` produces."""
+    return {
+        "type": "file",
+        "filename": name,
+        "file_type": file_type,
+        "file_load_link": link,
+    }
+
+
 def _drawn(blocks: list[dict]) -> str:
     return render_question(
         {
@@ -160,33 +174,28 @@ def _drawn(blocks: list[dict]) -> str:
 
 
 def test_an_image_block_draws_the_reference_img():
-    html = _drawn(
-        [{"type": "file", "filename": "p", "file_type": "image", "file_load_link": "data:image/png;base64,AA"}]
-    )
-    assert '<img class="edsl-question-image mb-3" src="data:image/png;base64,AA" alt="Image">' in html
+    html = _drawn([_a_file_block("image", "data:image/png;base64,AA")])
+    assert (
+        '<img class="edsl-question-image mb-3" '
+        'src="data:image/png;base64,AA" alt="Image">'
+    ) in html
 
 
 def test_a_video_block_draws_a_video_with_controls():
-    html = _drawn(
-        [{"type": "file", "filename": "v", "file_type": "video", "file_load_link": "data:video/mp4;base64,AA"}]
-    )
+    html = _drawn([_a_file_block("video", "data:video/mp4;base64,AA")])
     assert '<video controls class="max-w-full h-auto" src="data:video/mp4;base64,AA">' in html
     assert "Your browser does not support this video." in html
 
 
 def test_a_pdf_block_draws_an_object():
-    html = _drawn(
-        [{"type": "file", "filename": "d", "file_type": "pdf", "file_load_link": "data:application/pdf;base64,AA"}]
-    )
+    html = _drawn([_a_file_block("pdf", "data:application/pdf;base64,AA")])
     assert 'type="application/pdf"' in html
     assert "Your browser does not support PDF viewing." in html
 
 
 def test_an_audio_block_says_the_reference_says_it_is_unsupported():
     """Audio is classified and then not drawn, in the reference and so here."""
-    html = _drawn(
-        [{"type": "file", "filename": "a", "file_type": "audio", "file_load_link": "data:audio/mp3;base64,AA"}]
-    )
+    html = _drawn([_a_file_block("audio", "data:audio/mp3;base64,AA")])
     assert "Unsupported file type" in html
 
 
@@ -200,12 +209,12 @@ def test_a_data_uri_is_not_mangled_by_escaping():
     """A base64 payload contains `+` and `/` and can end in `=`; an escaping bug
     here would produce a page whose images silently do not load."""
     uri = f"data:image/png;base64,{PNG}"
-    html = _drawn([{"type": "file", "filename": "p", "file_type": "image", "file_load_link": uri}])
+    html = _drawn([_a_file_block("image", uri)])
     assert f'src="{uri}"' in html
 
 
 def test_prepared_leaves_a_file_block_alone_and_renders_only_text():
-    file_block = {"type": "file", "filename": "p", "file_type": "image", "file_load_link": "data:x"}
+    file_block = _a_file_block("image", "data:x")
     out = prepared([{"type": "text", "content": "hi"}, file_block])
     assert out[1] == file_block
     assert "content_html" in out[0] and "content_html" not in out[1]
