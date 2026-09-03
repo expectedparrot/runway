@@ -38,7 +38,7 @@
     } -%}
 <div class="{{ WRAPPER_CLASS[question_type] }}">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 <div class="edsl-options space-y-1">
 {#- -#}

@@ -32,7 +32,7 @@
    empty-comment separator lines suppress whitespace JSX would discard. #}
 <div class="edsl-question edsl-matrix-question mb-6">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 {# The wrapper takes focus when a submit finds the question unanswered: the
    radio the form would otherwise reach for may be on a slide that is off

@@ -76,8 +76,8 @@ rendering of the survey, and previewing one is previewing a page somebody is
 actually served.
 
 ```bash
-runway render survey.ep --scenarios scenarios.json
-runway render survey.ep --scenarios scenarios.json --scenario-index 0,17,204
+runway render survey.ep --scenarios scenarios.ep
+runway render survey.ep --scenarios scenarios.ep --scenario-index 0,17,204
 ```
 
 The bundle gains a second dropdown beside the question one; picking a scenario
@@ -140,8 +140,9 @@ and position are still checkable.
 - Position is inferred from authored order, so skip logic will differ.
 - Controls tick but mostly don't behave. Checkbox Select-all and exclusive
   options do work; validation, limits and Next do not.
-- Media is not resolved — an option referencing a file previews as its
-  reference text.
+- Media in question text is drawn — an image, video or PDF held in a scenario
+  is inlined into the page, so the file's bytes are in the HTML. An *option*
+  referencing a file still previews as its reference text.
 ````
 
 ## Install
@@ -358,9 +359,16 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   on the live page: `{{ typo }}` renders as nothing, and `{{ typo.attr }}` leaves
   the whole question unpiped. Neither leaves a mark on the page, so
   `check --scenarios` names them.
-- **A file-valued scenario key** previews as the marker `<see file key>` — the
-  text form the live page holds before its own media pass, which this package
-  does not have.
+- **A file-valued scenario key is drawn**, not named. The question text is split
+  around each `<see file key>` marker and the file goes in between: an `<img>`
+  for an image, a `<video>` for a video, an `<object>` for a PDF, and the live
+  page's own "Unsupported file type" for anything else, audio included. Where
+  the live page has a link to a file it has fetched, a preview has the bytes —
+  a scenario list carries each file base64-encoded, so it is inlined as a
+  `data:` URI. **The page is therefore as large as the media in it**: a survey
+  of small images costs nothing, twenty scenarios of video does not. A marker
+  naming a key that holds no file draws as unsupported, which is what it is.
+  Option labels are not split this way — only question text.
 - **Markup in a scenario value shows as plaintext**, which is right, but the live
   page shows slightly less of it: question text is sanitized server-side there
   before it is rendered, so a tag outside its allowlist (`<div>`, `<script>`) is

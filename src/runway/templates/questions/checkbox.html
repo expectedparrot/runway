@@ -20,7 +20,7 @@
    whitespace, so emitting it would break byte parity. See README. #}
 <div class="edsl-question edsl-checkbox-question mb-6">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 <div class="edsl-options space-y-1">
 {#- -#}

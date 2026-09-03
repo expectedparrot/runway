@@ -149,10 +149,36 @@ def load(path: Path) -> list[dict]:
             f"{path} could not be opened by edsl as a scenario list "
             f"({type(exc).__name__}: {exc}). Save one with ScenarioList.save()."
         ) from exc
-    scenarios = [dict(scenario) for scenario in scenario_list]
+    scenarios = [
+        {key: _as_live_page_value(value) for key, value in dict(scenario).items()}
+        for scenario in scenario_list
+    ]
     if not scenarios:
         raise SurveyLoadError(f"{path} is a scenario list with no scenarios in it")
     return scenarios
+
+
+def _as_live_page_value(value: object) -> object:
+    """A scenario value as plain data, which is how everything here reads one.
+
+    ``ScenarioList.load()`` rebuilds a file key as a **live ``FileStore``**,
+    which is not a ``dict`` -- not even a ``Mapping``; it answers ``keys()`` and
+    little else. A scenario that arrived as parsed JSON holds a plain dict in
+    the same place. Normalizing the two here, once, beats teaching every
+    predicate downstream to accept both: each of those is a rule about *what a
+    scenario means*, and none of them should also have to know how it was
+    loaded.
+
+    Anything that is not a file is returned untouched, so a scenario of ordinary
+    strings and lists is not put through a serializer at all.
+    """
+    if isinstance(value, dict) or not hasattr(value, "to_dict"):
+        return value
+    try:
+        serialized = value.to_dict()
+    except Exception:  # pragma: no cover - a value edsl cannot serialize
+        return value
+    return serialized if _is_file_value(serialized) else value
 
 
 def parse_indices(spec: str, total: int) -> list[int]:
@@ -198,9 +224,39 @@ def parse_indices(spec: str, total: int) -> list[int]:
     return chosen
 
 
+# What a *raw* FileStore carries: where it came from, what kind of file it is,
+# and its bytes. A file that has been resolved for display is flagged instead --
+# see :func:`_is_file_value` for why both are worth recognizing.
+_RAW_FILE_FIELDS = ("path", "suffix", "base64_string")
+
+
 def _is_file_value(value: object) -> bool:
-    """Whether a scenario value is a serialized FileStore."""
-    return isinstance(value, dict) and value.get("is_file_store") is True
+    """Whether a scenario value is a file, in either shape one reaches here in.
+
+    A file key has a *different shape* before and after the live survey resolves
+    its media, and this package sits on the side where it has not been resolved:
+
+    * A file that **has** been resolved -- fetched, and turned into something a
+      respondent can actually see -- is marked as one, and ``is_file_store`` is
+      the mark.
+    * Resolving media takes a fetch this package does not make, so that mark is
+      never applied here. What a saved scenario list holds is the **raw**
+      FileStore the researcher put in it, carrying no flag at all: only its
+      path, its suffix and its encoded bytes.
+
+    Testing for the flag alone is therefore a faithful copy of the wrong half --
+    it describes a value that exists only after a step nothing here runs, so it
+    matches nothing a preview is ever given. The miss is not quiet: an
+    undetected file goes into the render dictionary whole, and prints a few
+    hundred characters of base64 into the question a respondent reads.
+
+    Both shapes are accepted, so a file reaches the same marker either way.
+    """
+    if not isinstance(value, dict):
+        return False
+    if value.get("is_file_store") is True:
+        return True
+    return all(field in value for field in _RAW_FILE_FIELDS)
 
 
 def _clip(text: str, width: int) -> str:
@@ -394,18 +450,40 @@ def pipe(questions: list[dict], scenario: dict) -> list[dict]:
     them either -- but they hold their place in the list, because position is
     counted over every item.
     """
+    from .blocks import file_entries
+
     names = [
         question["question_name"]
         for question in questions
         if question.get("question_name")
     ]
     render_dict = replacements(scenario, names)
+    files = file_entries(scenario)
     return [
         question
         if question.get("edsl_class_name") in NON_QUESTION_CLASSES
-        else pipe_question(question, scenario, render_dict)
+        else _with_blocks(pipe_question(question, scenario, render_dict), files)
         for question in questions
     ]
+
+
+def _with_blocks(question: dict, files: dict[str, dict]) -> dict:
+    """A piped question, carrying its text split into blocks if it names a file.
+
+    Attached only when the text actually holds a marker, so a survey that
+    references no file is handed on exactly as it was -- the same question dict,
+    not a copy with an empty key in it. That is what keeps every question type's
+    markup unchanged for the surveys that make up nearly all of them: no blocks,
+    no second code path.
+
+    The split is done here, after piping, because a marker is *produced* by
+    piping -- it is what a file-valued scenario key renders to. There is nothing
+    to split before that.
+    """
+    from .blocks import text_to_blocks
+
+    blocks = text_to_blocks(question.get("question_text") or "", files)
+    return {**question, "question_text_blocks": blocks} if blocks else question
 
 
 def load_selection(

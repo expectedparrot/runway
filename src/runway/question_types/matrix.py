@@ -32,6 +32,7 @@ from __future__ import annotations
 from markupsafe import Markup
 
 from .. import icons
+from ..blocks import prepared
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text, option_labels
@@ -169,6 +170,7 @@ def _render_carousel(question: dict) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         items=_items(question),
         options=_options(question),
         chevron_left=Markup(
@@ -199,6 +201,7 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         items=_items(question),
         options=options,
         # The one part of the grid a stylesheet cannot know, handed to the table

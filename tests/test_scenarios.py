@@ -74,16 +74,86 @@ def test_both_spellings_of_a_key_resolve():
     assert piped["question_text"] == "Boston and Boston"
 
 
+def _a_raw_file_value(path: str = "x.png") -> dict:
+    """A FileStore as a *saved scenario list* holds one, before any media pass.
+
+    The shape this package is actually given. Spelled out rather than
+    abbreviated because an abbreviation is what let a detection bug live: a
+    fixture that invented an `is_file_store` flag passed against a predicate
+    that no scenario off a researcher's disk ever matched.
+    """
+    return {
+        "path": path,
+        "base64_string": "iVBORw0KGgo=",
+        "binary": True,
+        "suffix": "png",
+        "mime_type": "image/png",
+        "external_locations": {},
+        "extracted_text": None,
+    }
+
+
+def _a_resolved_file_value() -> dict:
+    """A file value that has already been resolved for display, and so is flagged.
+
+    Nothing here produces this shape -- resolving media takes a fetch a preview
+    does not make -- but it is the shape a file is recognized by once it has
+    been, so the predicate has to keep matching it.
+    """
+    return {
+        "is_file_store": True,
+        "file_store_type": "png",
+        "file_name": "swatch.png",
+        "mime_type": "image/png",
+    }
+
+
 def test_a_file_key_is_the_marker_and_is_absent_from_the_namespace():
     """The marker is the text form the live page holds before its own media
     pass, which this package does not have. Absent from the namespace because
     it is absent there too -- `{{ scenario.photo }}` is undefined on the live
     page, and inventing a value for it here would preview a page nobody gets."""
-    scenario = {"photo": {"is_file_store": True, "path": "x.png"}, "city": "Austin"}
-    replacements = scenarios.replacements(scenario, [])
-    assert replacements["photo"] == "<see file photo>"
-    assert "photo" not in replacements["scenario"]
-    assert replacements["scenario"] == {"city": "Austin"}
+    for value in (_a_raw_file_value(), _a_resolved_file_value()):
+        scenario = {"photo": value, "city": "Austin"}
+        replacements = scenarios.replacements(scenario, [])
+        assert replacements["photo"] == "<see file photo>"
+        assert "photo" not in replacements["scenario"]
+        assert replacements["scenario"] == {"city": "Austin"}
+
+
+def test_a_file_key_survives_the_trip_through_a_saved_scenario_list():
+    """End to end, because the bug this covers lived *between* the two halves.
+
+    `replacements` was correct and its unit test passed; what no test held was
+    that `load` hands it a live `FileStore` object rather than the dict the
+    live page works with, so the predicate matched nothing on the command line.
+    Only loading a real saved file exercises that seam.
+    """
+    from edsl.scenarios import FileStore, Scenario, ScenarioList
+
+    with tempfile.TemporaryDirectory() as tmp:
+        image = Path(tmp) / "swatch.png"
+        image.write_bytes(bytes.fromhex("89504e470d0a1a0a"))  # a PNG magic number
+        saved = Path(tmp) / "list"
+        ScenarioList(
+            [Scenario({"city": "Austin", "photo": FileStore(str(image), binary=True)})]
+        ).save(str(saved))
+
+        scenario = scenarios.load(saved.with_suffix(".ep"))[0]
+
+    assert scenarios._is_file_value(scenario["photo"]), scenario["photo"]
+    assert scenarios.replacements(scenario, [])["photo"] == "<see file photo>"
+    assert scenarios.label(0, scenario) == "0 — city=Austin, photo=<file>"
+
+
+def test_an_ordinary_scenario_value_is_not_taken_for_a_file():
+    """A miss costs a base64 dump in the question; a false positive costs a key
+    replaced by a marker and dropped from the namespace."""
+    assert not scenarios._is_file_value({"path": "x.png"})
+    assert not scenarios._is_file_value({"city": "Boston"})
+    assert not scenarios._is_file_value({"is_file_store": False, "city": "B"})
+    assert not scenarios._is_file_value("Boston")
+    assert not scenarios._is_file_value(["Boston"])
 
 
 # --------------------------------------------------------------------------

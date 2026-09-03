@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from markupsafe import Markup
 
+from ..blocks import prepared
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text, option_labels
@@ -111,6 +112,7 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         options=_options(question),
         is_dropdown=_is_dropdown(humanize_schema),
     )

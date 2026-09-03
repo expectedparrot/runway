@@ -75,7 +75,7 @@ survey = Survey(
                 "- travel from home to a workplace\n"
                 "- on a day you were expected there\n\n"
                 "> Trips made entirely for personal reasons do not count.\n\n"
-                "With that in mind — did you commute last week?"
+                "With that in mind, did you commute last week?"
             ),
             question_options=["Yes", "No"],
         ),
@@ -101,7 +101,7 @@ survey = Survey(
         QuestionMultipleChoice(
             question_name="md_not_markdown",
             question_text=(
-                "Which cost code applies? Enter it as `dept_code * 2` — note "
+                "Which cost code applies? Enter it as `dept_code * 2`; note "
                 "that snake_case_names and 3 * 4 are literal."
             ),
             question_options=["snake_case_one", "2 * 3 = 6", 'Don\'t "know" & <unsure>'],
@@ -120,8 +120,8 @@ survey = Survey(
             question_name="md_footnote_gap",
             question_text=(
                 "Do you claim mileage?[^1]\n\n"
-                "[^1]: Footnotes are the one thing this preview does not render "
-                "— see README."
+                "[^1]: Footnotes are the one thing this preview does not "
+                "render; see README."
             ),
             question_options=["Yes", "No"],
         ),

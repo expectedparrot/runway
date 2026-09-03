@@ -19,7 +19,7 @@
 <div class="edsl-question mb-6">
 {#- -#}
 {%- if question_text_html %}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 {%- endif %}
 {%- if humanized %}

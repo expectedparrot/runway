@@ -30,7 +30,7 @@
    comment early.) #}
 <div class="edsl-question edsl-matrix-question mb-6">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 {# The gap under the question text is set here, once, so the two views open
    alike -- and it is the same gap the stacked list keeps between its rows,

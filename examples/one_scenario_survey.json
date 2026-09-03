@@ -1,0 +1,63 @@
+{
+  "questions": [
+    {
+      "question_name": "visited",
+      "question_text": "Have you been to the **{{ venue }}** in the past year?",
+      "question_options": [
+        "Yes, more than once",
+        "Yes, once",
+        "No",
+        "I did not know it was there"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "improve",
+      "question_text": "What would make {{ scenario.venue }} better?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "visited",
+      "improve"
+    ],
+    "survey_question_texts": [
+      "Have you been to the **{{ venue }}** in the past year?",
+      "What would make {{ scenario.venue }} better?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "visited": 0,
+      "improve": 1
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 2
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}

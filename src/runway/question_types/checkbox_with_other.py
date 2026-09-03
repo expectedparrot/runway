@@ -31,6 +31,7 @@ from __future__ import annotations
 from markupsafe import Markup
 
 from .. import icons
+from ..blocks import prepared
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text
@@ -119,6 +120,7 @@ def render(
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         options=_options(question, selected),
         # Plain text, not markdown: the reference interpolates it into the label
         # directly rather than passing it through the option renderer.
