@@ -1,4 +1,4 @@
-"""Matrix questions: the grid, its labels, and the layout that is not drawn yet.
+"""Matrix questions: the grid, its labels, and the carousel.
 
 A matrix is the first type here that is not a list of options, and the first
 whose reference renders *two* layouts at once -- a table above the `md`
@@ -9,10 +9,20 @@ every preview; narrow the window to swap between them.
 differently: the grid stacks the author's word above the number, the stacked
 list folds it in as `1 - Strongly disagree`.
 
-`one_at_a_time` asks for the carousel format, which is not transcribed yet, so
-it previews as a note naming the reason rather than as a grid no respondent
-would be shown. `likelihood_10pt` is the width stress case: eleven columns is
-where a table stops being readable and the stacked list earns its place.
+`one_at_a_time` and `spirits` ask for the third layout, the carousel: one row
+at a time, with the options beneath it, which replaces the default pair rather
+than joining them. They differ in the one setting the format has. `one_at_a_time`
+takes the default, where answering a row moves you on by itself; `spirits` sets
+`advance_on_select: false`, where it does not and the arrows are the only way
+through. `spirits` also carries `option_labels`, which the carousel folds into
+the option text the way the stacked list does.
+
+Dragging a carousel does nothing in a preview -- see README under Known gaps --
+so use the arrows here, and try a real one on a phone before sending a survey
+out.
+
+`likelihood_10pt` is the width stress case: eleven columns is where a table
+stops being readable and the stacked list earns its place.
 """
 
 from edsl.questions import QuestionMatrix, QuestionYesNo
@@ -49,6 +59,17 @@ survey = Survey(
             question_options=["Never", "Sometimes", "Usually"],
         ),
         QuestionMatrix(
+            question_name="spirits",
+            question_text="How would you rate each of these?",
+            question_items=[
+                "The house red",
+                "The cocktail list",
+                "The alcohol-free options",
+            ],
+            question_options=[1, 2, 3, 4, 5],
+            option_labels={1: "Poor", 5: "Excellent"},
+        ),
+        QuestionMatrix(
             question_name="likelihood_10pt",
             question_text=(
                 "On a scale from 1 to 10, where 1 is 'not at all likely' and 10 "
@@ -76,8 +97,10 @@ humanize_schema = {
     "survey": {"progress": {"style": "bar", "show_label": True}},
     "questions": {
         "agreement": {"comment": {"label": "Anything you'd add?"}},
-        # Not transcribed yet, so this one previews as a note. Kept in the
-        # example precisely so the gap is visible rather than discovered.
+        # The carousel, in its two settings. Absent means on, which is the
+        # reference's own reading of the field, so the first of these is what a
+        # schema written before the field existed gets.
         "one_at_a_time": {"format": {"type": "carousel"}},
+        "spirits": {"format": {"type": "carousel", "advance_on_select": False}},
     },
 }

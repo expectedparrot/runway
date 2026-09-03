@@ -321,10 +321,10 @@ overrides neither. `exclusive_options` therefore changes nothing in its markup a
 all — the row was the only thing they reached.
 
 **Select all** and `exclusive_options` are rules rather than markup, so a page
-holding a checkbox question ships ~40 lines of script for them — the one place
-here that reimplements behaviour instead of transcribing markup, and deliberately
-the last. There is no recording to hold a behaviour to, so it is kept to those
-two: selection limits, validation and submission are all absent, none of them is
+holding a checkbox question ships ~40 lines of script for them — one of the two
+places here that reimplement behaviour instead of transcribing markup, the other
+being the carousel below. There is no recording to hold a behaviour to, so it is
+kept to those two: selection limits, validation and submission are all absent, none of them is
 visible on a page, and each would be another uncheckable copy of the
 application. Exclusive options reach the script as *positions*, not option text —
 a label on the page is rendered markdown, so matching strings would quietly stop
@@ -342,12 +342,43 @@ for byte.
 
 ### The matrix carousel
 
-`matrix` is available with one exception: a survey that configures it as a
-**carousel** — one row at a time, rather than the grid and stacked list it serves
-by default — gets a note, not a grid. That layout is a third, quite different
-component and is not transcribed yet. Showing the default views for a question
-configured that way would be a preview of a page nobody is served, so the
-renderer declines it and `check` reports the same thing, naming the reason.
+A humanize schema can ask for `matrix` as a **carousel** — one row at a time,
+with the options beneath it — instead of the grid and stacked list it serves by
+default. It **replaces** that pair rather than joining it, so a carousel page
+carries neither a table nor a stacked list; the two default views are mounted
+together only because a breakpoint chooses between them, and the carousel is the
+answer to the same problem at every width.
+
+What the reference renders on the server is the layout at rest. The carousel
+library it uses does nothing without a DOM, so the recording shows the first
+slide current, the previous arrow disabled and the status reading `1 of N` — and
+one further thing that is easy to misread as an economy: only the *first* row
+has options. The option list sits outside the carousel and is re-rendered for
+whichever row is showing, so on the server there is exactly one of it. Four cases
+are recorded, including a single-row matrix (both arrows disabled) and one with
+no rows at all, which reads `Item 1 of 0` and drops the option group entirely.
+The reference does not pluralize `1 items` and does not special-case an empty
+matrix; both spellings are recorded rather than reasoned out.
+
+Moving between rows is behaviour, so it is the second and last reimplementation
+here — `templates/carousel.html`, on the same terms as the checkbox script. The
+arrows move the track by whole viewport widths, the live region announces the
+row, and answering one advances to the next after 300 ms, which is the
+reference's own constant and its own rule: every answer advances, corrections
+included. `advance_on_select: false` turns that off, absent meaning on.
+
+The option groups for rows the page did not open with are **not** built by that
+script. They are rendered from `questions/_matrix_carousel_options.html` — the
+same include the drawn row uses — and parked in a `<template>`, exactly as
+`checkbox_with_other` parks its **Add another** button. The script *moves* those
+nodes rather than copying their markup, which is what lets a respondent leave a
+row and come back to find their answer still there.
+
+**Dragging is not reproduced**, and that is the gap worth knowing. The reference
+follows a finger through the gesture and picks where to land from how fast it
+moved; nothing here does either, so a swipe does nothing at all. The layout
+previews faithfully and the arrows work; the feel of it under a thumb does not
+preview, and a carousel is worth trying live before a survey goes out.
 
 ### A clicked option only half responds
 
@@ -527,7 +558,7 @@ runway/
     ├── question_types/           context preparation only; markup lives in templates/
     │   ├── __init__.py           RENDERERS registry, and what each declines
     │   ├── choice.py             multiple_choice, likert_five, yes_no, linear_scale
-    │   ├── matrix.py             matrix — the grid and the stacked list
+    │   ├── matrix.py             matrix — the grid, the stacked list, the carousel
     │   ├── checkbox.py           checkbox — and whether Select all is drawn
     │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
     │   ├── free_text.py          free_text — a textarea, and nothing else
@@ -541,11 +572,17 @@ runway/
     │   ├── panel.html            one question's page inside a bundle
     │   ├── body.html             the respondent page
     │   ├── progress.html         the bar and the stepped indicator
+    │   ├── comment.html          the box a schema can attach to a question
+    │   ├── behaviour.html        reimplemented: the checkbox rules
+    │   ├── carousel.html         reimplemented: moving a carousel between rows
     │   └── questions/
     │       ├── choice.html
     │       ├── matrix.html
+    │       ├── matrix_carousel.html
+    │       ├── _matrix_carousel_options.html  one row's options, parked per row
     │       ├── checkbox.html
     │       ├── checkbox_with_other.html
+    │       ├── _other_add.html   the "Add another" button, parked for cloning
     │       ├── free_text.html
     │       ├── survey_message.html
     │       ├── background.html

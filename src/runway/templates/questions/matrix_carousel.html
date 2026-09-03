@@ -1,0 +1,82 @@
+{# Transcription of the reference implementation's third matrix layout: one row
+   at a time, which a humanize schema asks for with `format: {type: carousel}`.
+
+   The grid is what a matrix is for -- every row on one screen against a shared
+   scale -- and that is also what breaks it on a narrow screen. This spends the
+   overview to buy the room back: the row rides in a carousel, and the options
+   answering it sit below at full width.
+
+   **What is recorded here is the resting state.** The reference drives this
+   with a carousel library that does nothing at all on the server: no effect
+   runs, so the first slide is the current one, the previous arrow is disabled
+   and the status reads "1 of N". That is what a golden captures and what this
+   file emits. Moving between rows is the page script's job -- see
+   `carousel.html`, and README under Known gaps for what it does not do.
+
+   Every row is emitted, because that is what the reference emits: the slides
+   are how the carousel has something to scroll to. Only the row on screen is
+   left out of `aria-hidden`, so a respondent meets one row at a time whichever
+   way they are reading.
+
+   Only the *first* row's options are here, though, and that is the reference's
+   shape rather than an economy: the option list sits outside the carousel and
+   is re-rendered for whichever row is showing, so on the server there is
+   exactly one. The rest are parked in `<template>`s by `page.html` -- from the
+   same file this includes, so what the script swaps in is this markup.
+
+   Note "1 items, one at a time" and "Item 1 of 0": the reference does not
+   pluralize and does not special-case an empty matrix, and both spellings are
+   recorded. Do not fix them here.
+
+   Class strings are inline for the reason `matrix.html` gives, and the
+   empty-comment separator lines suppress whitespace JSX would discard. #}
+<div class="edsl-question edsl-matrix-question mb-6">
+{#- -#}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{#- -#}
+{# The wrapper takes focus when a submit finds the question unanswered: the
+   radio the form would otherwise reach for may be on a slide that is off
+   screen, and focusing it would scroll the viewport out from under the
+   carousel. #}
+<div class="edsl-matrix-carousel mt-4" tabindex="-1" role="group" aria-roledescription="carousel" aria-label="{{ items|length }} items, one at a time">
+{#- -#}
+{# The arrows change what is on screen without moving focus, so nothing would
+   announce the change otherwise. The count beside them says it on screen but
+   cannot do this job: it would be read as a control's label, not as news. #}
+<span class="sr-only" aria-live="polite">Item 1 of {{ items|length }}</span>
+{#- -#}
+<div class="overflow-hidden">
+{#- -#}
+<div class="flex">
+{#- -#}
+{%- for item in items %}
+<div class="edsl-matrix-carousel-slide flex-[0_0_100%] min-w-0 px-px" role="group" aria-roledescription="slide" aria-label="Item {{ loop.index }} of {{ items|length }}" aria-hidden="{{ 'false' if loop.first else 'true' }}">
+{#- -#}
+<div id="{{ question_name }}_item_{{ loop.index0 }}" class="edsl-matrix-carousel-item h-full rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-base font-medium text-gray-900 dark:text-white"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></div>
+{#- -#}
+</div>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
+{#- -#}
+{# Below the sliding label and above the options: the label is what is being
+   asked and the options are the answer, so a way out placed under the answer
+   would invite reading the options as things to scroll past on the way to it. #}
+<div class="edsl-matrix-carousel-nav flex items-center justify-center gap-4 py-3">
+{#- -#}
+<button type="button" disabled="" aria-label="Previous item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_left }}</button>
+{#- -#}
+<span class="edsl-matrix-carousel-status text-sm text-gray-600 dark:text-gray-400">1 of {{ items|length }}</span>
+{#- -#}
+<button type="button"{% if items|length <= 1 %} disabled=""{% endif %} aria-label="Next item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_right }}</button>
+{#- -#}
+</div>
+{%- if items %}
+{% with row = 0 %}
+{% include "questions/_matrix_carousel_options.html" %}
+{% endwith %}
+{%- endif %}
+</div>
+{#- -#}
+</div>

@@ -38,14 +38,21 @@
  * this would be three classes and would quietly outrank a survey's own
  * `.edsl-option` rule, which the live page's styling never does.
  *
- * Scoped to the stacked list on purpose. The choice family's options carry
+ * Scoped to the two matrix layouts that draw an option as a full-width row --
+ * the stacked list and the carousel. They are not two cases: over there both
+ * render the *same* component, the one that swaps these exact classes, so a
+ * rule covering one and not the other would be a preview where the same
+ * control behaves differently depending on which layout was asked for.
+ *
+ * Everything else is left alone deliberately. The choice family's options carry
  * `.edsl-option` too and have no selected styling at all in the reference --
  * their radio alone shows the answer -- so an unscoped rule would draw a
  * highlight the live survey never draws. The matrix table needs nothing either:
  * its cells hold a bare radio with no label styling to swap, so it already
  * behaves correctly on a click.
  * --------------------------------------------------------------------- */
-:where(.edsl-matrix-stack) .edsl-option:where(:has(:checked)) {
+:where(.edsl-matrix-stack, .edsl-matrix-carousel)
+    .edsl-option:where(:has(:checked)) {
     @apply border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20;
 }
 
@@ -63,6 +70,7 @@
  * survey's own `.edsl-option:hover`, where the live page's styling would not.
  * It buys the pointer not greying out an answer the respondent just gave, which
  * is the more visible of the two. */
-.edsl-matrix-stack .edsl-option:where(:has(:checked)):hover {
+.edsl-matrix-stack .edsl-option:where(:has(:checked)):hover,
+.edsl-matrix-carousel .edsl-option:where(:has(:checked)):hover {
     @apply bg-blue-50 dark:bg-blue-900/20;
 }

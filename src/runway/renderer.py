@@ -25,7 +25,14 @@ from markupsafe import Markup
 
 from . import icons
 from . import progress as progress_module
-from .question_types import background, checkbox, declined, get_renderer, unsupported
+from .question_types import (
+    background,
+    checkbox,
+    declined,
+    get_renderer,
+    matrix,
+    unsupported,
+)
 from .templating import render as render_template
 
 ASSETS_DIR = Path(__file__).parent / "assets"
@@ -249,6 +256,43 @@ def exclusive_options(
     return found
 
 
+def carousel_questions(
+    questions: list[dict], humanize_schema: dict | None = None
+) -> list[dict]:
+    """Every carousel matrix on the page, with what the page script needs.
+
+    A carousel shows one row at a time, and the reference renders only the row
+    on screen -- so the option groups for every other row do not exist on a
+    static page and the script cannot be allowed to build them. They are
+    rendered here from the same include the drawn row uses and parked in a
+    ``<template>``, which is the same arrangement ``checkbox_with_other`` uses
+    for the states a preview does not open in.
+
+    Empty for a survey with no carousel, which is the common case, and the page
+    then carries neither the templates nor the script.
+    """
+    per_question = (humanize_schema or {}).get("questions") or {}
+    found: list[dict] = []
+    for question in questions:
+        if question.get("question_type") != "matrix":
+            continue
+        name = question.get("question_name") or ""
+        schema = per_question.get(name)
+        if not matrix.is_carousel(schema):
+            continue
+        found.append(
+            {
+                "question_name": name,
+                "advance": matrix.advances_on_select(schema),
+                "groups": [
+                    Markup(group)
+                    for group in matrix.carousel_option_groups(question)
+                ],
+            }
+        )
+    return found
+
+
 def _document(
     *,
     title: str,
@@ -256,6 +300,7 @@ def _document(
     custom_css: str | None,
     toolbar_html: str = "",
     exclusive: dict[str, list[str]] | None = None,
+    carousels: list[dict] | None = None,
 ) -> str:
     """Wrap composed body markup in the standalone document shell."""
     custom = (custom_css or "").strip()
@@ -272,9 +317,23 @@ def _document(
         # Emitted only when there is a checkbox on the page, so an ordinary
         # survey carries no script it has no use for.
         exclusive_json=Markup(json.dumps(exclusive)) if exclusive else "",
+        # Emitted only when a carousel is on the page, so an ordinary survey
+        # carries neither the parked option groups nor the script that moves
+        # them.
+        carousels=carousels or [],
         add_icon=Markup(icons.render("plus", class_name="w-4 h-4")),
         body_html=Markup(body_html),
     )
+
+
+def _as_survey_schema(question: dict, humanize_schema: dict | None) -> dict:
+    """One question's schema, in the survey-wide shape the page helpers read.
+
+    ``render_page`` takes the schema for its single question; everything that
+    assembles a page reads the survey's, keyed by question name. Wrapping it
+    once here keeps the two callers from spelling the same nesting differently.
+    """
+    return {"questions": {question.get("question_name", ""): humanize_schema}}
 
 
 def render_page(
@@ -297,8 +356,9 @@ def render_page(
         title=question.get("question_name") or "Survey preview",
         body_html=render_body(question, humanize_schema, progress),
         custom_css=custom_css,
-        exclusive=exclusive_options(
-            [question], {"questions": {question.get("question_name", ""): humanize_schema}}
+        exclusive=exclusive_options([question], _as_survey_schema(question, humanize_schema)),
+        carousels=carousel_questions(
+            [question], _as_survey_schema(question, humanize_schema)
         ),
     )
 
@@ -393,4 +453,5 @@ def render_bundle(
         custom_css=custom_css,
         toolbar_html=toolbar,
         exclusive=exclusive_options(questions, humanize_schema),
+        carousels=carousel_questions(questions, humanize_schema),
     )
