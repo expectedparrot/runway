@@ -3,6 +3,15 @@
 The split is a transcription, so these hold it against the rules it was copied
 from rather than against whatever it happens to do: where a block boundary
 falls, what is dropped, and what an unresolvable marker becomes.
+
+The *markup* is not held here. The recorded goldens are the authority for that,
+and they cover every branch below; what these add is the splitting, which no
+recording reaches -- a recorded case carries a list of blocks already, so where
+the boundaries fall is this package's own to get right.
+
+Markup spelled out below is spelled the recorded way, down to the void element's
+`/>` and the boolean attribute's `=""`. Both are how React serializes and
+neither is visible in the JSX, so tidying either is a divergence.
 """
 
 from __future__ import annotations
@@ -177,13 +186,16 @@ def test_an_image_block_draws_the_reference_img():
     html = _drawn([_a_file_block("image", "data:image/png;base64,AA")])
     assert (
         '<img class="edsl-question-image mb-3" '
-        'src="data:image/png;base64,AA" alt="Image">'
+        'src="data:image/png;base64,AA" alt="Image"/>'
     ) in html
 
 
 def test_a_video_block_draws_a_video_with_controls():
     html = _drawn([_a_file_block("video", "data:video/mp4;base64,AA")])
-    assert '<video controls class="max-w-full h-auto" src="data:video/mp4;base64,AA">' in html
+    assert (
+        '<video controls="" class="max-w-full h-auto" '
+        'src="data:video/mp4;base64,AA">'
+    ) in html
     assert "Your browser does not support this video." in html
 
 

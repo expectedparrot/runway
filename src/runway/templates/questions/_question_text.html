@@ -27,12 +27,12 @@
 <div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ block.content_html }}</div>
 {#- -#}
 {% elif block.type == 'file' and block.file_type == 'image' %}
-<img class="edsl-question-image mb-3" src="{{ block.file_load_link }}" alt="Image">
+<img class="edsl-question-image mb-3" src="{{ block.file_load_link }}" alt="Image"/>
 {#- -#}
 {% elif block.type == 'file' and block.file_type == 'video' %}
 <div class="flex justify-center items-center mb-3">
 {#- -#}
-<video controls class="max-w-full h-auto" src="{{ block.file_load_link }}">Your browser does not support this video. Please contact support.</video>
+<video controls="" class="max-w-full h-auto" src="{{ block.file_load_link }}">Your browser does not support this video. Please contact support.</video>
 {#- -#}
 </div>
 {#- -#}
