@@ -480,10 +480,23 @@ def _with_blocks(question: dict, files: dict[str, dict]) -> dict:
     piping -- it is what a file-valued scenario key renders to. There is nothing
     to split before that.
     """
-    from .blocks import text_to_blocks
+    from .blocks import options_to_blocks, text_to_blocks
 
+    grown = {}
     blocks = text_to_blocks(question.get("question_text") or "", files)
-    return {**question, "question_text_blocks": blocks} if blocks else question
+    if blocks:
+        grown["question_text_blocks"] = blocks
+    # `None` rather than an empty list is what says "no option references a
+    # file", which is every survey that does not use image options -- those draw
+    # the option strings they already have rather than a second copy of each.
+    for source, key in (
+        ("question_options", "question_options_blocks"),
+        ("question_items", "question_items_blocks"),
+    ):
+        per_option = options_to_blocks(question.get(source), files)
+        if per_option is not None:
+            grown[key] = per_option
+    return {**question, **grown} if grown else question
 
 
 def load_selection(

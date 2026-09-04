@@ -61,6 +61,13 @@ _FILE_REFERENCE = re.compile(r"<see file ([a-zA-Z0-9_.-]+)>")
 # `<see file x>` by hand, and a scenario key can simply be missing.
 _UNRESOLVED = {"file_store_type": "", "file_load_link": ""}
 
+# A file whose bytes were moved out of the scenario and left a receipt behind:
+# `base64_string` says so literally. The live survey fetches it back; nothing here
+# can, so the file resolves to no source and draws as the reference draws a file
+# it cannot show. Taking the word for base64 would emit `src="data:...,offloaded"`
+# -- a broken image on every page, which is worse than saying so.
+OFFLOADED = "offloaded"
+
 
 def data_uri(value: dict) -> str:
     """A file's bytes as a ``data:`` URI, or ``""`` if it carries none.
@@ -73,7 +80,7 @@ def data_uri(value: dict) -> str:
     if isinstance(existing, str) and existing:
         return existing
     encoded = value.get("base64_string")
-    if not isinstance(encoded, str) or not encoded:
+    if not isinstance(encoded, str) or not encoded or encoded == OFFLOADED:
         return ""
     mime = value.get("mime_type")
     if not isinstance(mime, str) or not mime:
@@ -163,24 +170,71 @@ def text_to_blocks(text: str, files: dict[str, dict]) -> list[dict]:
     return blocks
 
 
-def prepared(blocks: object) -> list[dict]:
-    """Blocks with each text block's markdown rendered, ready for the template.
-
-    The markdown pass is the same one a question with no blocks goes through, so
-    a text block and a whole question text are drawn identically -- which is the
-    point: splitting a question around an image must not change how its words
-    are rendered.
-    """
+def _prepare(blocks: object, render) -> list[dict]:
     from markupsafe import Markup
-
-    from .markdown import render_question_text
 
     if not isinstance(blocks, list):
         return []
     return [
-        {**block, "content_html": Markup(render_question_text(block.get("content", "")))}
+        {**block, "content_html": Markup(render(block.get("content", "")))}
         if block.get("type") == "text"
         else block
         for block in blocks
         if isinstance(block, dict)
     ]
+
+
+def prepared(blocks: object) -> list[dict]:
+    """Question-text blocks, with each text block's markdown rendered.
+
+    The markdown pass is the one a question with no blocks goes through, so a
+    text block and a whole question text draw identically -- splitting a
+    question around an image must not change how its words are rendered.
+    """
+    from .markdown import render_question_text
+
+    return _prepare(blocks, render_question_text)
+
+
+def prepared_option(blocks: object) -> list[dict]:
+    """Option-label blocks, rendered as option text rather than question text.
+
+    A different markdown pass, because an option label renders *inside* the
+    label wrapping a radio, which admits phrasing content only -- a paragraph
+    becomes a span there. Running question-text markdown over an option's words
+    would drop a block element into a label, putting a one-line label below its
+    input instead of beside it.
+    """
+    from .markdown import render_option_text
+
+    return _prepare(blocks, render_option_text)
+
+
+def options_to_blocks(options: object, files: dict[str, dict]) -> list[list[dict]] | None:
+    """Per-option blocks, one entry per option, in the order given.
+
+    The option-level counterpart of :func:`text_to_blocks`: an author who writes
+    ``{{ scenario.dog }}`` as an option gets the image in that option's label,
+    exactly as they would in the question text.
+
+    **Positional**, so it has to be built from the option order actually being
+    drawn -- pair a label with another option's image and a respondent clicks
+    one picture and answers with a different one.
+
+    ``None`` -- not an empty list -- when no option references a file, which is
+    every survey that does not use image options. Those draw the option strings
+    they already have, so the page carries no second copy of every label. A
+    non-string option (a linear scale's numbers) gets an empty list and falls
+    back the same way, and options still sitting as an unresolved template
+    *string* are refused outright: a string is iterable, and scanning one would
+    hand back a block per character.
+    """
+    if not isinstance(options, list):
+        return None
+    per_option = [
+        text_to_blocks(option, files) if isinstance(option, str) else []
+        for option in options
+    ]
+    if not any(block["type"] == "file" for blocks in per_option for block in blocks):
+        return None
+    return per_option

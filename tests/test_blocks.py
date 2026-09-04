@@ -26,6 +26,7 @@ from runway.blocks import (
     data_uri,
     file_entries,
     file_type_of,
+    options_to_blocks,
     prepared,
     text_to_blocks,
 )
@@ -254,3 +255,92 @@ def test_the_image_example_draws_its_swatch_rather_than_a_marker():
     assert 'class="edsl-question-image mb-3"' in html
     assert "see file swatch" not in html
     assert re.search(r'src="data:image/png;base64,[A-Za-z0-9+/=]+"', html)
+
+
+# --------------------------------------------------------------------------
+# Option labels
+# --------------------------------------------------------------------------
+
+
+def test_options_with_no_file_reference_produce_no_blocks_at_all():
+    """`None`, not a list of empties: it is what says "this survey does not use
+    image options", and it keeps the page from carrying a second copy of every
+    label."""
+    assert options_to_blocks(["Yes", "No"], {}) is None
+
+
+def test_a_template_string_of_options_is_refused_rather_than_scanned():
+    """A string is iterable. Walking one would hand back a block per character."""
+    assert options_to_blocks("{{ brands }}", {}) is None
+
+
+def test_non_string_options_fall_back_without_blocking_the_others():
+    files = {"dog": {"file_store_type": "image", "file_load_link": "data:x"}}
+    blocks = options_to_blocks([1, "A <see file dog>"], files)
+    assert blocks[0] == []
+    assert [b["type"] for b in blocks[1]] == ["text", "file"]
+
+
+def _option_html(blocks, **extra):
+    question = {
+        "question_name": "q",
+        "question_type": "multiple_choice",
+        "edsl_class_name": "QuestionMultipleChoice",
+        "question_text": "Pick.",
+        "question_options": ["A <see file dog>"],
+        "question_options_blocks": [blocks],
+        **extra,
+    }
+    return render_question(question)
+
+
+def test_an_image_option_draws_the_picture_in_its_label():
+    html = _option_html(
+        [
+            {"type": "text", "content": "Baked"},
+            _a_file_block("image", "data:image/png;base64,AA", "dog"),
+        ]
+    )
+    assert 'class="edsl-option-content inline-flex flex-col items-start gap-1 align-middle"' in html
+    assert 'class="edsl-option-image max-h-40 w-auto max-w-full' in html
+    assert 'alt="dog"' in html
+
+
+def test_only_images_draw_in_an_option_label():
+    """A video or a PDF in a label would be a control inside a control, where
+    every play is also a click on the radio."""
+    for kind in ("video", "pdf", "audio"):
+        html = _option_html([_a_file_block(kind, "data:x", "clip")])
+        assert "(image unavailable)" in html, kind
+        assert "edsl-option-image" not in html, kind
+
+
+def test_a_file_with_no_source_says_so_rather_than_drawing_a_broken_image():
+    """A mistyped scenario key, or a file whose bytes are not in the list at
+    all -- the option stays selectable and labelled."""
+    html = _option_html([_a_file_block("image", "", "gone")])
+    assert "edsl-option-media-unavailable" in html
+    assert "edsl-option-image" not in html
+
+
+def test_an_option_without_blocks_keeps_the_markup_it_always_had():
+    """The wrapper and the text span are emitted either way: a hook that
+    appeared only on piped options would work on one question and silently do
+    nothing on the next."""
+    html = render_question(
+        {
+            "question_name": "q",
+            "question_type": "multiple_choice",
+            "edsl_class_name": "QuestionMultipleChoice",
+            "question_text": "Pick.",
+            "question_options": ["Plain"],
+        }
+    )
+    assert '<span class="edsl-option-content"><span class="edsl-option-text">' in html
+    assert "inline-flex" not in html
+
+
+def test_an_offloaded_file_carries_no_bytes():
+    """Its `base64_string` is a receipt, not base64. Taking the word for it
+    would put `src="data:...,offloaded"` on the page."""
+    assert data_uri({**_a_file(), "base64_string": "offloaded"}) == ""

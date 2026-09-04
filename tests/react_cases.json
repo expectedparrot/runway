@@ -1279,5 +1279,245 @@
       ]
     },
     "humanize_schema": null
+  },
+  "option_blocks_image": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "dish",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one.",
+      "question_options": [
+        "Baked goods <see file baked>",
+        "Couldn't say"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Baked goods"
+          },
+          {
+            "type": "file",
+            "filename": "baked",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        []
+      ]
+    },
+    "humanize_schema": null
+  },
+  "option_blocks_unavailable": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "media",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one.",
+      "question_options": [
+        "Clip <see file clip>",
+        "Missing <see file gone>"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Clip"
+          },
+          {
+            "type": "file",
+            "filename": "clip",
+            "file_type": "video",
+            "file_load_link": "data:video/mp4;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Missing"
+          },
+          {
+            "type": "file",
+            "filename": "gone",
+            "file_type": "",
+            "file_load_link": ""
+          }
+        ]
+      ]
+    },
+    "humanize_schema": null
+  },
+  "option_blocks_checkbox": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "courses",
+      "question_type": "checkbox",
+      "question_text": "Which did you order?",
+      "question_options": [
+        "Starters <see file starter>",
+        "Couldn't say"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Starters"
+          },
+          {
+            "type": "file",
+            "filename": "starter",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        []
+      ]
+    },
+    "humanize_schema": null
+  },
+  "matrix_item_blocks": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "shots",
+      "question_type": "matrix",
+      "question_text": "Rate each image.",
+      "question_items": [
+        "Watercolor <see file wc>",
+        "Couldn't say <see file cs>"
+      ],
+      "question_options": [
+        "Poor",
+        "Good"
+      ],
+      "question_items_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Watercolor"
+          },
+          {
+            "type": "file",
+            "filename": "wc",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Couldn't say"
+          },
+          {
+            "type": "file",
+            "filename": "cs",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": null
+  },
+  "matrix_option_blocks_labelled": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "faces",
+      "question_type": "matrix",
+      "question_text": "Rate each.",
+      "question_items": [
+        "The food",
+        "Couldn't say"
+      ],
+      "question_options": [
+        "A <see file happy>",
+        "B <see file sad>"
+      ],
+      "option_labels": {
+        "A <see file happy>": "Delighted"
+      },
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "A"
+          },
+          {
+            "type": "file",
+            "filename": "happy",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "B"
+          },
+          {
+            "type": "file",
+            "filename": "sad",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": null
+  },
+  "matrix_carousel_item_blocks": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "slides",
+      "question_type": "matrix",
+      "question_text": "Rate each image.",
+      "question_items": [
+        "Watercolor <see file wc>",
+        "Couldn't say <see file cs>"
+      ],
+      "question_options": [
+        "Poor",
+        "Good"
+      ],
+      "question_items_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Watercolor"
+          },
+          {
+            "type": "file",
+            "filename": "wc",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Couldn't say"
+          },
+          {
+            "type": "file",
+            "filename": "cs",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": {
+      "format": {
+        "type": "carousel"
+      }
+    }
   }
 }

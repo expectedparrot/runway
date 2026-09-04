@@ -52,7 +52,7 @@
 {%- for item in items %}
 <div class="edsl-matrix-carousel-slide flex-[0_0_100%] min-w-0 px-px" role="group" aria-roledescription="slide" aria-label="Item {{ loop.index }} of {{ items|length }}" aria-hidden="{{ 'false' if loop.first else 'true' }}">
 {#- -#}
-<div id="{{ question_name }}_item_{{ loop.index0 }}" class="edsl-matrix-carousel-item h-full rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-base font-medium text-gray-900 dark:text-white"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></div>
+<div id="{{ question_name }}_item_{{ loop.index0 }}" class="edsl-matrix-carousel-item h-full rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-base font-medium text-gray-900 dark:text-white">{% with label_html = item.label_html, blocks = item.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</div>
 {#- -#}
 </div>
 {%- endfor %}
