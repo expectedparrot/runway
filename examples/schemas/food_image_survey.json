@@ -1,0 +1,42 @@
+{
+  "questions": {
+    "dish": {
+      "submitting_indicator": {
+        "type": "callout",
+        "title": "Generating 3 images of your dish..."
+      }
+    },
+    "ratings": {
+      "format": {
+        "type": "carousel"
+      },
+      "comment": {
+        "label": "Anything to add about these?"
+      }
+    }
+  },
+  "survey": {
+    "custom_css": "\n/* ---- Image options as a card grid ---- */\n.edsl-multiple-choice-question .edsl-options {\n    display: grid;\n    grid-template-columns: 1fr;      /* single column on phones */\n    gap: 1rem;\n}\n\n/* The options container also carries a vertical-rhythm rule that puts a\n    margin-top on every option after the first. Harmless in a column, stray gaps\n    in a grid. This selector matches its specificity, so it wins. */\n.edsl-multiple-choice-question .edsl-options > :not([hidden]) ~ :not([hidden]) {\n    margin-top: 0;\n}\n\n@media (min-width: 640px) {\n    .edsl-multiple-choice-question .edsl-options {\n        grid-template-columns: repeat(2, 1fr);   /* 2x2 for the four categories */\n    }\n\n    /* Exactly three options -- the favourite question -- would otherwise sit\n        2 + 1 with an orphan on its own row. One row of three instead. */\n    .edsl-multiple-choice-question\n        .edsl-options:has(> .edsl-option:nth-child(3):last-child) {\n        grid-template-columns: repeat(3, 1fr);\n    }\n}\n\n.edsl-multiple-choice-question .edsl-option {\n    flex-direction: column-reverse;   /* picture on top, radio beneath it */\n    align-items: center;\n    gap: 0.5rem;\n    padding: 0.75rem;\n    border: 1px solid rgb(148 163 184 / 0.35);\n    border-radius: 0.75rem;\n    cursor: pointer;\n}\n\n.edsl-multiple-choice-question .edsl-option:hover {\n    border-color: rgb(22 163 74 / 0.5);\n}\n\n.edsl-multiple-choice-question .edsl-option:has(.edsl-radio:checked) {\n    border-color: rgb(22 163 74);\n    background: rgb(22 163 74 / 0.1);\n}\n\n.edsl-multiple-choice-question .edsl-option-label {\n    margin-left: 0;\n    text-align: center;\n}\n\n.edsl-multiple-choice-question .edsl-option-content {\n    align-items: center;\n}\n\n.edsl-multiple-choice-question .edsl-option-image {\n    max-height: none;\n    width: 100%;\n    aspect-ratio: 1 / 1;\n    object-fit: cover;\n    border-radius: 0.5rem;\n}\n\n/* ---- Matrix rows, one slide each: caption above a large thumbnail ---- */\n/* The row label owns the full width of the slide now, so the picture finally\n    gets the size the sticky label column never had room for. */\n.edsl-matrix-question .edsl-matrix-carousel-item {\n    text-align: center;\n}\n\n.edsl-matrix-question .edsl-matrix-carousel-item .edsl-option-content {\n    flex-direction: column;      /* caption on top, image beneath */\n    align-items: center;\n    gap: 0.5rem;\n    width: 100%;\n}\n\n.edsl-matrix-question .edsl-matrix-carousel-item .edsl-option-text {\n    font-weight: 600;\n}\n\n.edsl-matrix-question .edsl-matrix-carousel-item .edsl-option-image {\n    max-height: none;\n    width: 100%;\n    max-width: 14rem;\n    aspect-ratio: 1 / 1;\n    object-fit: cover;\n    border-radius: 0.5rem;\n    margin-inline: auto;\n}\n\n/* The rating options are full-width rows here, not radios in a column of a\n    grid -- so give them the same green \"chosen\" state as the picture cards. */\n.edsl-matrix-question .edsl-option:hover {\n    border-color: rgb(22 163 74 / 0.5);\n}\n\n.edsl-matrix-question .edsl-option:has(.edsl-radio:checked) {\n    border-color: rgb(22 163 74);\n    background: rgb(22 163 74 / 0.1);\n}\n\n/* The dots are the overview the grid gave away: a filled one is a row already\n    rated. Same green, so the survey has one meaning for \"done\". */\n.edsl-matrix-question .edsl-matrix-carousel-dot-answered > span {\n    background: rgb(22 163 74);\n}\n\n.edsl-matrix-question .edsl-matrix-carousel-dot-current > span {\n    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(22 163 74);\n}\n",
+    "progress": {
+      "type": "steps",
+      "marker": "number",
+      "steps": [
+        {
+          "label": "Category",
+          "complete_after": "food_category"
+        },
+        {
+          "label": "Your dish",
+          "complete_after": "dish"
+        },
+        {
+          "label": "Rate",
+          "complete_after": "ratings"
+        },
+        {
+          "label": "Favorite"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "scenarios": [
+    {
+      "baked_img": {
+        "path": "baked.jpg",
+        "base64_string": "offloaded",
+        "binary": true,
+        "suffix": "jpg",
+        "mime_type": "image/jpeg",
+        "external_locations": {
+          "gcs": {
+            "file_uuid": "3d316073-83c4-41d9-ae73-11c234f24081",
+            "uploaded": true,
+            "offloaded": true,
+            "content_hash": "773fcf75bc3a30f7ed3d7d5e2022dfa6",
+            "token_estimate": 516
+          }
+        },
+        "extracted_text": null,
+        "edsl_version": "1.0.8.dev1",
+        "edsl_class_name": "Scenario"
+      },
+      "grilled_img": {
+        "path": "grilled.jpg",
+        "base64_string": "offloaded",
+        "binary": true,
+        "suffix": "jpg",
+        "mime_type": "image/jpeg",
+        "external_locations": {
+          "gcs": {
+            "file_uuid": "4774a835-b96f-4503-907c-5aae1f2173f6",
+            "uploaded": true,
+            "offloaded": true,
+            "content_hash": "af9eb3d31b96a9fb46a3342493a55595",
+            "token_estimate": 516
+          }
+        },
+        "extracted_text": null,
+        "edsl_version": "1.0.8.dev1",
+        "edsl_class_name": "Scenario"
+      },
+      "noodles_img": {
+        "path": "noodles.jpg",
+        "base64_string": "offloaded",
+        "binary": true,
+        "suffix": "jpg",
+        "mime_type": "image/jpeg",
+        "external_locations": {
+          "gcs": {
+            "file_uuid": "c603f0fd-9f1b-49a3-8349-2c5a5cc423e7",
+            "uploaded": true,
+            "offloaded": true,
+            "content_hash": "4fc1379d28eff0dd57cc448f74418e0b",
+            "token_estimate": 516
+          }
+        },
+        "extracted_text": null,
+        "edsl_version": "1.0.8.dev1",
+        "edsl_class_name": "Scenario"
+      },
+      "dessert_img": {
+        "path": "dessert.jpg",
+        "base64_string": "offloaded",
+        "binary": true,
+        "suffix": "jpg",
+        "mime_type": "image/jpeg",
+        "external_locations": {
+          "gcs": {
+            "file_uuid": "a4fc7702-1a50-4060-9838-c82e04daeeb2",
+            "uploaded": true,
+            "offloaded": true,
+            "content_hash": "0f146108a3f88eb99ed94542852efdfa",
+            "token_estimate": 516
+          }
+        },
+        "extracted_text": null,
+        "edsl_version": "1.0.8.dev1",
+        "edsl_class_name": "Scenario"
+      },
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "Scenario"
+    }
+  ],
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "ScenarioList"
+}
