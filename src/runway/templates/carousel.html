@@ -62,8 +62,20 @@
          * every id here is built from it and the page already has it. */
         var label = carousel.querySelector('.edsl-matrix-carousel-item');
         var name = label ? label.id.replace(/_item_[0-9]+$/, '') : '';
-        var parked = document.querySelector(
-            '.preview-matrix-carousel-options[data-question-name="' + name + '"]');
+        /* The parked rows belonging to *this* panel. A bound page draws the
+         * question once per scenario, so the name alone names several of them --
+         * and the rows are moved out of the template as they mount, so taking
+         * another panel's would leave that panel with none. Falls back to the
+         * name alone, which is the whole story on a page with no scenarios. */
+        var selector =
+            '.preview-matrix-carousel-options[data-question-name="' + name + '"]';
+        var panel = carousel.closest && carousel.closest('[data-scenario-indices]');
+        var serving = panel && panel.getAttribute('data-scenario-indices');
+        var parked = serving
+            ? document.querySelector(
+                selector + '[data-scenario-indices="' + serving + '"]')
+            : null;
+        if (!parked) parked = document.querySelector(selector);
 
         var groups = [carousel.querySelector('[role="radiogroup"]')];
         while (parked && parked.content.firstElementChild) {

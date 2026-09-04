@@ -19,6 +19,7 @@ Runs under pytest, or directly: python tests/test_scenarios.py
 
 from __future__ import annotations
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -498,3 +499,91 @@ def _main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(_main())
+
+
+# --------------------------------------------------------------------------
+# Carousel rows under a scenario
+# --------------------------------------------------------------------------
+
+
+def _carousel_survey():
+    question = {
+        "question_name": "m",
+        "question_type": "matrix",
+        "edsl_class_name": "QuestionMatrix",
+        "question_text": "Rate each.",
+        "question_items": ["Row A", "Row B"],
+        "question_options": ["{{ scenario.word }}", "No"],
+    }
+    schema = {"questions": {"m": {"format": {"type": "carousel"}}}}
+    return question, schema
+
+
+def _parked(html: str) -> dict[str, str]:
+    """The parked carousel rows on a page, by the panel they belong to."""
+    return dict(
+        re.findall(
+            r'<template class="preview-matrix-carousel-options"[^>]*'
+            r'data-scenario-indices="([^"]*)"[^>]*>(.*?)</template>',
+            html,
+            re.S,
+        )
+    )
+
+
+def test_carousel_rows_are_parked_per_panel_and_carry_that_binding():
+    """A carousel draws one row and parks the rest, and the parked ones have to
+    be the same binding as the drawn one.
+
+    Two failures at once if they are not. The rows go up unpiped -- the visible
+    row shows the scenario's wording and the next row shows the template it came
+    from -- and, because the script *moves* them out of the template as it
+    mounts them, a single shared set leaves every panel after the first with no
+    options at all.
+    """
+    question, schema = _carousel_survey()
+    variants = [
+        scenarios.pipe([question], one) for one in ({"word": "Oui"}, {"word": "Ja"})
+    ]
+    html = render_bundle(
+        [question],
+        schema,
+        variants=variants,
+        scenarios=[{"index": 0, "label": "0"}, {"index": 1, "label": "1"}],
+        title="t",
+    )
+    parked = _parked(html)
+    assert sorted(parked) == ["0", "1"], "one parked set per panel"
+    assert "Oui" in parked["0"] and "Ja" not in parked["0"]
+    assert "Ja" in parked["1"] and "Oui" not in parked["1"]
+    assert "{{ scenario.word }}" not in html
+
+
+def test_scenarios_that_render_alike_share_one_parked_set():
+    """Panels are grouped on what they draw, and the parked rows follow that
+    grouping -- otherwise a survey whose carousel does not vary would carry a
+    copy of every row per scenario."""
+    question, schema = _carousel_survey()
+    question = {**question, "question_options": ["Yes", "No"]}
+    variants = [scenarios.pipe([question], one) for one in ({"a": 1}, {"a": 2})]
+    html = render_bundle(
+        [question],
+        schema,
+        variants=variants,
+        scenarios=[{"index": 0, "label": "0"}, {"index": 1, "label": "1"}],
+        title="t",
+    )
+    assert sorted(_parked(html)) == ["0 1"]
+
+
+def test_an_unbound_carousel_parks_its_rows_exactly_as_it_always_did():
+    """No scenarios, no key: the markup an ordinary bundle carries is the markup
+    it carried before any of this existed."""
+    question, schema = _carousel_survey()
+    question = {**question, "question_options": ["Yes", "No"]}
+    html = render_bundle([question], schema, title="t")
+    tag = re.search(
+        r'<template class="preview-matrix-carousel-options"[^>]*>', html
+    ).group(0)
+    assert "data-scenario-indices" not in tag
+    assert 'data-question-name="m"' in tag

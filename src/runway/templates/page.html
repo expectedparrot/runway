@@ -62,13 +62,17 @@
 {% endif %}
 {% if carousels %}
 {# One row's options per row the page did not open with, parked where the
-   carousel script can move them in. The reference renders only the row on
+   carousel script can move them in. One template per *panel*, not per
+   question: a question bound to several scenarios is drawn once for each, and
+   the rows behind each of those have to be that binding's rows. The script
+   moves them out of the template as it mounts them, so a shared one would also
+   leave every panel after the first with no options at all. The reference renders only the row on
    screen, so these are markup a static page would otherwise not have -- and
    they come from the same include the drawn row uses, so what the script
    moves in is the recorded markup rather than the script author's idea of
    it. Preview chrome, outside `#root`, so it is not part of any question. #}
 {% for carousel in carousels %}
-<template class="preview-matrix-carousel-options" data-question-name="{{ carousel.question_name }}" data-advance="{{ 'true' if carousel.advance else 'false' }}">{% for group in carousel.groups %}{{ group }}{% endfor %}</template>
+<template class="preview-matrix-carousel-options" data-question-name="{{ carousel.question_name }}"{% if carousel.scenario_indices is not none %} data-scenario-indices="{{ carousel.scenario_indices }}"{% endif %} data-advance="{{ 'true' if carousel.advance else 'false' }}">{% for group in carousel.groups %}{{ group }}{% endfor %}</template>
 {% endfor %}
 {% include "carousel.html" %}
 {% endif %}

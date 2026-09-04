@@ -291,24 +291,35 @@ def carousel_questions(
     then carries neither the templates nor the script.
     """
     per_question = (humanize_schema or {}).get("questions") or {}
-    found: list[dict] = []
-    for question in questions:
-        if question.get("question_type") != "matrix":
-            continue
-        name = question.get("question_name") or ""
-        schema = per_question.get(name)
-        if not matrix.is_carousel(schema):
-            continue
-        found.append(
-            {
-                "question_name": name,
-                "advance": matrix.advances_on_select(schema),
-                "groups": [
-                    Markup(group) for group in matrix.carousel_option_groups(question)
-                ],
-            }
-        )
-    return found
+    found = [carousel_entry(question, per_question) for question in questions]
+    return [entry for entry in found if entry is not None]
+
+
+def carousel_entry(
+    question: dict, per_question: dict, scenario_indices: str | None = None
+) -> dict | None:
+    """One carousel's parked rows, or ``None`` if this question is not one.
+
+    ``scenario_indices`` names the panel these belong to, and is what keeps a
+    scenario-bound page honest. **The rows must be built from the same rendering
+    of the question the visible row was built from** -- these are the rest of
+    that question, and a set built from the unbound question would put an
+    unpiped row behind a piped one. It is also what makes them unique: the
+    script finds them by question name, and a question drawn once per scenario
+    is several panels answering to the same name.
+    """
+    if question.get("question_type") != "matrix":
+        return None
+    name = question.get("question_name") or ""
+    schema = per_question.get(name)
+    if not matrix.is_carousel(schema):
+        return None
+    return {
+        "question_name": name,
+        "scenario_indices": scenario_indices,
+        "advance": matrix.advances_on_select(schema),
+        "groups": [Markup(group) for group in matrix.carousel_option_groups(question)],
+    }
 
 
 def _document(
@@ -452,6 +463,7 @@ def render_bundle(
 
     panels: list[str] = []
     items: list[dict] = []
+    carousels: list[dict] = []
 
     for index, question in enumerate(questions):
         name = names[index]
@@ -468,6 +480,9 @@ def render_bundle(
         # Grouped on everything the panel would carry, so two scenarios share a
         # panel only when there is genuinely nothing to tell them apart by.
         grouped: dict[tuple[str, str | None], list[int]] = {}
+        # The rendering each group was formed from, so the carousel rows parked
+        # for a panel come from the same binding as the row on it.
+        formed_by: dict[tuple[str, str | None], dict] = {}
         for slot, variant in enumerate(variants):
             variant_question = variant[index]
             key = (
@@ -475,7 +490,14 @@ def render_bundle(
                 _positions_attribute(exclusive_positions(variant_question, schema)),
             )
             grouped.setdefault(key, []).append(scenario_ids[slot])
+            formed_by.setdefault(key, variant_question)
         for (body, exclusive), serves in grouped.items():
+            serving = " ".join(str(one) for one in serves) if bound else None
+            entry = carousel_entry(
+                formed_by[(body, exclusive)], per_question, scenario_indices=serving
+            )
+            if entry is not None:
+                carousels.append(entry)
             panels.append(
                 render_template(
                     "panel.html",
@@ -485,9 +507,7 @@ def render_bundle(
                     # carries the markup it always has: the panels are then one
                     # per question and their order is the answer.
                     question_index=index if bound else None,
-                    scenario_indices=(
-                        " ".join(str(one) for one in serves) if bound else None
-                    ),
+                    scenario_indices=serving,
                     exclusive=exclusive,
                     is_active=not panels,
                 )
@@ -523,6 +543,6 @@ def render_bundle(
         body_html="".join(panels),
         custom_css=custom_css,
         toolbar_html=toolbar,
-        carousels=carousel_questions(questions, humanize_schema),
+        carousels=carousels,
         checkbox_present=has_checkbox(questions),
     )
