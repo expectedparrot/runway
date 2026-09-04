@@ -1,0 +1,11 @@
+{
+  "scenarios": [
+    {
+      "venue": "Boston Public Library",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "Scenario"
+    }
+  ],
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "ScenarioList"
+}

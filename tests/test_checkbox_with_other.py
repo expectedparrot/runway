@@ -99,10 +99,10 @@ def test_exclusive_options_reach_the_behaviour_script():
     something to a respondent: ticking one clears the others and the answers
     typed below. That is behaviour rather than markup, so it reaches the page
     script instead of the template."""
-    found = renderer.exclusive_options(
-        [a_question()], {"questions": {"allergies": {"exclusive_options": ["Vegan"]}}}
+    found = renderer.exclusive_positions(
+        a_question(), {"exclusive_options": ["Vegan"]}
     )
-    assert found == {"allergies": [1]}
+    assert found == [1]
 
 
 def test_the_answered_state_renders_from_the_same_template():
@@ -140,7 +140,7 @@ def test_the_button_the_script_clones_is_the_recorded_one():
 
 def test_the_script_ships_with_this_type_too():
     """It has no Select all row, but it has rules all the same."""
-    assert "var EXCLUSIVE" in renderer.render_page(a_question())
+    assert "closest('[data-exclusive]')" in renderer.render_page(a_question())
 
 
 # --------------------------------------------------------------------------

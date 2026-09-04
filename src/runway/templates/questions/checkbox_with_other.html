@@ -25,7 +25,7 @@
    whitespace, so emitting it would break byte parity. See README. #}
 <div class="edsl-question edsl-checkbox-with-other-question mb-6">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 <div class="edsl-options space-y-1">
 {#- -#}
@@ -34,7 +34,7 @@
 {#- -#}
 <input type="checkbox" id="{{ question_name }}-{{ loop.index0 }}" class="edsl-checkbox w-4 h-4 shrink-0 text-blue-600 border-gray-300 rounded focus:ring-blue-500"{% if option.checked %} checked=""{% endif %}/>
 {#- -#}
-<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option-label grow ml-2 py-1"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></label>
+<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option-label grow ml-2 py-1">{% with label_html = option.label_html, blocks = option.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</label>
 {#- -#}
 </div>
 {%- endfor %}

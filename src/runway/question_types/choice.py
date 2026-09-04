@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from markupsafe import Markup
 
+from ..blocks import prepared, prepared_option
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text, option_labels
@@ -35,7 +36,20 @@ TEMPLATE = "questions/choice.html"
 TYPES = ("multiple_choice", "likert_five", "yes_no", "linear_scale")
 
 
-def _option(value: object, label: str | None = None) -> dict[str, str]:
+def _blocks_at(blocks: object, index: int) -> list[dict]:
+    """One option's blocks out of the positional list, if it has any.
+
+    Positional because that is how they arrive: an option and its blocks are
+    matched by index against the order actually being drawn.
+    """
+    if not isinstance(blocks, list) or index >= len(blocks):
+        return []
+    return prepared_option(blocks[index])
+
+
+def _option(
+    value: object, label: str | None = None, blocks: list[dict] | None = None
+) -> dict[str, str]:
     """One option's three forms.
 
     ``value`` and ``label`` are the plain strings; ``label_html`` is the label
@@ -50,6 +64,7 @@ def _option(value: object, label: str | None = None) -> dict[str, str]:
         "value": text,
         "label": label,
         "label_html": Markup(render_option_text(label)),
+        "blocks": blocks or [],
     }
 
 
@@ -74,18 +89,22 @@ def _options(question: dict) -> list[dict[str, str]]:
     if isinstance(options, str):
         return _piped_options_message(options)
 
+    option_blocks = question.get("question_options_blocks")
     if question.get("question_type") != "linear_scale":
-        return [_option(option) for option in options]
+        return [
+            _option(option, blocks=_blocks_at(option_blocks, index))
+            for index, option in enumerate(options)
+        ]
 
     labels = option_labels(question)
     scale = []
-    for option in options:
+    for index, option in enumerate(options):
         text = as_text(option)
         # The reference's own format, spaces included. An unlabelled point on a
         # labelled scale shows its number alone -- the ends of a scale are
         # usually the only points named.
         label = f"{text} - {labels[text]}" if text in labels else None
-        scale.append(_option(option, label))
+        scale.append(_option(option, label, _blocks_at(option_blocks, index)))
     return scale
 
 
@@ -111,6 +130,7 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         options=_options(question),
         is_dropdown=_is_dropdown(humanize_schema),
     )

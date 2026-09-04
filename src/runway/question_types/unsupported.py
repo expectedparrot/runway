@@ -17,6 +17,7 @@ from __future__ import annotations
 from markupsafe import Markup
 
 from .. import icons
+from ..blocks import prepared
 from ..markdown import render_question_text
 from ..templating import render as render_template
 
@@ -84,6 +85,11 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         # showing.
         question_text_html=Markup(
             render_question_text(question.get("question_text", "")) if show_text else ""
+        ),
+        # Gated on `show_text` for the same reason the text above is: a type
+        # drawn with no wording shows no image either.
+        question_text_blocks=(
+            prepared(question.get("question_text_blocks")) if show_text else []
         ),
         humanized=humanized,
         # Already-built markup; Markup keeps it from being escaped.

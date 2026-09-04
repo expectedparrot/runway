@@ -20,6 +20,7 @@ from runway.survey import load, load_schema
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
 SCHEMAS = EXAMPLES / "schemas"
+SCENARIOS = EXAMPLES / "scenarios"
 
 
 def paths() -> list[Path]:
@@ -30,6 +31,15 @@ def paths() -> list[Path]:
 def schema_path(survey: Path) -> Path:
     """Where a survey's schema would be, whether or not it has one."""
     return SCHEMAS / survey.name
+
+
+def scenarios_path(survey: Path) -> Path:
+    """Where a survey's scenario list would be, whether or not it has one.
+
+    A third file for the same reason there is a second: a scenario list is
+    bound to a survey rather than stored in one, so it arrives on its own.
+    """
+    return SCENARIOS / survey.name
 
 
 def load_example(survey: Path) -> tuple[list[dict], dict]:

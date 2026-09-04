@@ -1165,5 +1165,359 @@
       "question_text": "## Before we start\n\nA short survey about **your commute**.\n\n- Two questions\n- Answers are anonymous\n"
     },
     "humanize_schema": null
+  },
+  "question_text_blocks_image": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "swatch",
+      "question_type": "multiple_choice",
+      "question_text": "Here is the swatch. How does it strike you?",
+      "question_options": [
+        "I'd live with it",
+        "Only as an accent"
+      ],
+      "question_text_blocks": [
+        {
+          "type": "text",
+          "content": "Here is **Ember Red**, this year's colour."
+        },
+        {
+          "type": "file",
+          "filename": "swatch",
+          "file_type": "image",
+          "file_load_link": "data:image/png;base64,AA"
+        },
+        {
+          "type": "text",
+          "content": "How does it strike you?"
+        }
+      ]
+    },
+    "humanize_schema": null
+  },
+  "question_text_blocks_video": {
+    "kind": "controlled_question",
+    "component": "ControlledFreeTextQuestion",
+    "question": {
+      "question_name": "clip",
+      "question_type": "free_text",
+      "question_text": "What did you make of the clip?",
+      "question_text_blocks": [
+        {
+          "type": "text",
+          "content": "What did you make of the advert's opening?"
+        },
+        {
+          "type": "file",
+          "filename": "clip",
+          "file_type": "video",
+          "file_load_link": "data:video/mp4;base64,AA"
+        }
+      ]
+    },
+    "humanize_schema": null
+  },
+  "question_text_blocks_pdf": {
+    "kind": "controlled_question",
+    "component": "ControlledFreeTextQuestion",
+    "question": {
+      "question_name": "report",
+      "question_type": "free_text",
+      "question_text": "Any comments on the report?",
+      "question_text_blocks": [
+        {
+          "type": "file",
+          "filename": "report",
+          "file_type": "pdf",
+          "file_load_link": "data:application/pdf;base64,AA"
+        },
+        {
+          "type": "text",
+          "content": "Any comments on the report's summary?"
+        }
+      ]
+    },
+    "humanize_schema": null
+  },
+  "question_text_blocks_unsupported": {
+    "kind": "controlled_question",
+    "component": "ControlledFreeTextQuestion",
+    "question": {
+      "question_name": "track",
+      "question_type": "free_text",
+      "question_text": "What did you hear?",
+      "question_text_blocks": [
+        {
+          "type": "file",
+          "filename": "track",
+          "file_type": "audio",
+          "file_load_link": "data:audio/mpeg;base64,AA"
+        }
+      ]
+    },
+    "humanize_schema": null
+  },
+  "question_text_blocks_unresolved": {
+    "kind": "controlled_question",
+    "component": "ControlledFreeTextQuestion",
+    "question": {
+      "question_name": "missing",
+      "question_type": "free_text",
+      "question_text": "Anything else?",
+      "question_text_blocks": [
+        {
+          "type": "text",
+          "content": "The file below isn't there."
+        },
+        {
+          "type": "file",
+          "filename": "nope",
+          "file_type": "",
+          "file_load_link": ""
+        }
+      ]
+    },
+    "humanize_schema": null
+  },
+  "option_blocks_image": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "dish",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one.",
+      "question_options": [
+        "Baked goods <see file baked>",
+        "Couldn't say"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Baked goods"
+          },
+          {
+            "type": "file",
+            "filename": "baked",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        []
+      ]
+    },
+    "humanize_schema": null
+  },
+  "option_blocks_unavailable": {
+    "kind": "question",
+    "component": "MultipleChoiceQuestion",
+    "question": {
+      "question_name": "media",
+      "question_type": "multiple_choice",
+      "question_text": "Pick one.",
+      "question_options": [
+        "Clip <see file clip>",
+        "Missing <see file gone>"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Clip"
+          },
+          {
+            "type": "file",
+            "filename": "clip",
+            "file_type": "video",
+            "file_load_link": "data:video/mp4;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Missing"
+          },
+          {
+            "type": "file",
+            "filename": "gone",
+            "file_type": "",
+            "file_load_link": ""
+          }
+        ]
+      ]
+    },
+    "humanize_schema": null
+  },
+  "option_blocks_checkbox": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "courses",
+      "question_type": "checkbox",
+      "question_text": "Which did you order?",
+      "question_options": [
+        "Starters <see file starter>",
+        "Couldn't say"
+      ],
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Starters"
+          },
+          {
+            "type": "file",
+            "filename": "starter",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        []
+      ]
+    },
+    "humanize_schema": null
+  },
+  "matrix_item_blocks": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "shots",
+      "question_type": "matrix",
+      "question_text": "Rate each image.",
+      "question_items": [
+        "Watercolor <see file wc>",
+        "Couldn't say <see file cs>"
+      ],
+      "question_options": [
+        "Poor",
+        "Good"
+      ],
+      "question_items_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Watercolor"
+          },
+          {
+            "type": "file",
+            "filename": "wc",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Couldn't say"
+          },
+          {
+            "type": "file",
+            "filename": "cs",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": null
+  },
+  "matrix_option_blocks_labelled": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "faces",
+      "question_type": "matrix",
+      "question_text": "Rate each.",
+      "question_items": [
+        "The food",
+        "Couldn't say"
+      ],
+      "question_options": [
+        "A <see file happy>",
+        "B <see file sad>"
+      ],
+      "option_labels": {
+        "A <see file happy>": "Delighted"
+      },
+      "question_options_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "A"
+          },
+          {
+            "type": "file",
+            "filename": "happy",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "B"
+          },
+          {
+            "type": "file",
+            "filename": "sad",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": null
+  },
+  "matrix_carousel_item_blocks": {
+    "kind": "question",
+    "component": "MatrixQuestion",
+    "question": {
+      "question_name": "slides",
+      "question_type": "matrix",
+      "question_text": "Rate each image.",
+      "question_items": [
+        "Watercolor <see file wc>",
+        "Couldn't say <see file cs>"
+      ],
+      "question_options": [
+        "Poor",
+        "Good"
+      ],
+      "question_items_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Watercolor"
+          },
+          {
+            "type": "file",
+            "filename": "wc",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Couldn't say"
+          },
+          {
+            "type": "file",
+            "filename": "cs",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "value": {},
+    "humanize_schema": {
+      "format": {
+        "type": "carousel"
+      }
+    }
   }
 }

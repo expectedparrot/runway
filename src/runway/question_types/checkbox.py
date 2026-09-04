@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from markupsafe import Markup
 
+from ..blocks import prepared, prepared_option
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text
@@ -48,9 +49,18 @@ def _options(question: dict) -> list[dict[str, object]]:
             f"{options} — In a live survey, each item from {options} will be "
             "shown as a separate option."
         ]
+    # Blocks arrive positionally, matched to the options actually being drawn.
+    option_blocks = question.get("question_options_blocks")
     return [
-        {"label_html": Markup(render_option_text(as_text(option)))}
-        for option in options
+        {
+            "label_html": Markup(render_option_text(as_text(option))),
+            "blocks": prepared_option(
+                option_blocks[index]
+                if isinstance(option_blocks, list) and index < len(option_blocks)
+                else None
+            ),
+        }
+        for index, option in enumerate(options)
     ]
 
 
@@ -67,6 +77,7 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         options=_options(question),
         # One option has nothing to say "all" about, so the row is not drawn.
         show_select_all=len(selectable) > 1,

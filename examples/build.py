@@ -42,6 +42,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SOURCES = HERE / "src"
 SCHEMAS = HERE / "schemas"
+SCENARIOS = HERE / "scenarios"
 REPO = HERE.parent
 PREVIEWS = REPO / "previews"
 
@@ -66,12 +67,21 @@ def dump(value: object) -> str:
 
 
 def wanted(source: Path) -> dict[Path, str]:
-    """The files a source module describes: its survey, and its schema if any."""
+    """The files a source module describes: its survey, its schema, its scenarios.
+
+    Three files because they are three separately held things. A survey carries
+    no humanize schema, and it carries no scenario list either -- a scenario list
+    is uploaded beside a survey and bound to it rather than stored in it, which
+    is why each reaches a preview through a flag of its own.
+    """
     module = load_module(source)
     files = {HERE / f"{source.stem}.json": dump(module.survey.to_dict())}
     schema = getattr(module, "humanize_schema", None)
     if schema:
         files[SCHEMAS / f"{source.stem}.json"] = dump(schema)
+    scenarios = getattr(module, "scenarios", None)
+    if scenarios is not None:
+        files[SCENARIOS / f"{source.stem}.json"] = dump(scenarios.to_dict())
     return files
 
 
@@ -91,10 +101,16 @@ def build(render: bool = False, check: bool = False) -> int:
     for source in sources:
         expected.update(wanted(source))
 
-    # A schema whose source stopped needing one, left behind. Surveys are not
-    # swept the same way: a .json here with no source is somebody's own file,
-    # where schemas/ holds nothing but generated output.
-    orphans = [path for path in sorted(SCHEMAS.glob("*.json")) if path not in expected]
+    # A schema or scenario list whose source stopped naming one, left behind.
+    # Surveys are not swept the same way: a .json in examples/ with no source is
+    # somebody's own file, where these two directories hold nothing but
+    # generated output.
+    orphans = [
+        path
+        for directory in (SCHEMAS, SCENARIOS)
+        for path in sorted(directory.glob("*.json"))
+        if path not in expected
+    ]
 
     stale = []
     for path, content in sorted(expected.items()):
@@ -126,9 +142,12 @@ def build(render: bool = False, check: bool = False) -> int:
         for source in sources:
             survey = HERE / f"{source.stem}.json"
             schema = SCHEMAS / f"{source.stem}.json"
+            scenarios = SCENARIOS / f"{source.stem}.json"
             command = [sys.executable, "-m", "runway", "render", str(survey)]
             if schema.is_file():
                 command += ["--schema", str(schema)]
+            if scenarios.is_file():
+                command += ["--scenarios", str(scenarios)]
             command += ["-o", str(PREVIEWS)]
             result = subprocess.run(command, capture_output=True, text=True, cwd=REPO)
             if result.returncode != 0:
@@ -140,8 +159,8 @@ def build(render: bool = False, check: bool = False) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Regenerate examples/*.json and examples/schemas/*.json "
-        "from examples/src/*.py."
+        description="Regenerate examples/*.json, examples/schemas/*.json and "
+        "examples/scenarios/*.json from examples/src/*.py."
     )
     parser.add_argument(
         "--render",

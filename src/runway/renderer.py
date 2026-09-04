@@ -17,7 +17,6 @@ Two entry points:
 
 from __future__ import annotations
 
-import json
 import math
 from pathlib import Path
 
@@ -174,17 +173,19 @@ def render_progress(payload: dict | None = None) -> str:
             kind="steps",
             # A marker style this package predates renders as a numbered step
             # rather than as a marker with no shape at all.
-            marker=payload.get("marker")
-            if payload.get("marker") in MARKERS
-            else "number",
+            marker=(
+                payload.get("marker") if payload.get("marker") in MARKERS else "number"
+            ),
             steps=[
                 {
                     "label": step.get("label"),
                     # Same fallback the reference applies: a status from a newer
                     # server ("skipped", say) reads as upcoming.
-                    "status": step.get("status")
-                    if step.get("status") in progress_module.STEP_STATUSES
-                    else "upcoming",
+                    "status": (
+                        step.get("status")
+                        if step.get("status") in progress_module.STEP_STATUSES
+                        else "upcoming"
+                    ),
                 }
                 for step in payload.get("steps") or []
             ],
@@ -216,10 +217,10 @@ def render_body(
     )
 
 
-def exclusive_options(
-    questions: list[dict], humanize_schema: dict | None = None
-) -> dict[str, list[int]]:
-    """Which options clear the rest when ticked, per checkbox question.
+def exclusive_positions(
+    question: dict, humanize_schema: dict | None = None
+) -> list[int] | None:
+    """Which options clear the rest when ticked, or ``None`` for a non-checkbox.
 
     The one thing a checkbox's own markup cannot say. A preview's controls
     respond to a click because the browser makes them, but "Select all" and
@@ -233,27 +234,45 @@ def exclusive_options(
     stop recognising any option an author emphasised. The position is the same
     on both sides whatever the label says.
 
-    Entries only for the two checkbox types: no other has the notion, and a map
-    with a key per question would invite a script that assumed otherwise. An
-    entry with an empty list still matters -- it is how the page knows there is a
-    checkbox question to give behaviour to at all.
+    **Per rendering, not per question name.** Options can be piped, and a piped
+    list resolves per scenario -- so one question can be several different
+    option lists with the exclusive option in a different place in each. Keyed
+    by name, one of those renderings would get another's positions, and clicking
+    an ordinary option would clear the rest while the exclusive one did nothing.
+
+    The empty list and ``None`` are different answers: the first is a checkbox
+    with nothing exclusive, which still needs the script; the second is a
+    question that is not a checkbox at all. A question whose options are still a
+    template string resolves to one explanatory line, which nothing can be
+    exclusive of.
     """
-    per_question = (humanize_schema or {}).get("questions") or {}
-    found: dict[str, list[int]] = {}
-    for question in questions:
-        if question.get("question_type") not in CHECKBOX_TYPES:
-            continue
-        name = question.get("question_name") or ""
-        exclusive = checkbox.exclusive_options(per_question.get(name))
-        options = question.get("question_options") or []
-        if isinstance(options, str):
-            # Piped options resolve to one explanatory line, which nothing can
-            # be exclusive of.
-            options = []
-        found[name] = [
-            index for index, option in enumerate(options) if option in exclusive
-        ]
-    return found
+    if question.get("question_type") not in CHECKBOX_TYPES:
+        return None
+    exclusive = checkbox.exclusive_options(humanize_schema)
+    options = question.get("question_options") or []
+    if isinstance(options, str):
+        options = []
+    return [index for index, option in enumerate(options) if option in exclusive]
+
+
+def _positions_attribute(positions: list[int] | None) -> str | None:
+    """:func:`exclusive_positions` as the attribute the page script reads."""
+    if positions is None:
+        return None
+    return " ".join(str(position) for position in positions)
+
+
+def has_checkbox(questions: list[dict]) -> bool:
+    """Whether anything here needs the behaviour script at all.
+
+    Asked on its own rather than read off the positions, which used to carry
+    this too: an ordinary survey should ship no script it has no use for, and
+    "there is a checkbox here" and "this checkbox's exclusive options are these"
+    became two different questions once the second was answered per panel.
+    """
+    return any(
+        question.get("question_type") in CHECKBOX_TYPES for question in questions
+    )
 
 
 def carousel_questions(
@@ -272,25 +291,35 @@ def carousel_questions(
     then carries neither the templates nor the script.
     """
     per_question = (humanize_schema or {}).get("questions") or {}
-    found: list[dict] = []
-    for question in questions:
-        if question.get("question_type") != "matrix":
-            continue
-        name = question.get("question_name") or ""
-        schema = per_question.get(name)
-        if not matrix.is_carousel(schema):
-            continue
-        found.append(
-            {
-                "question_name": name,
-                "advance": matrix.advances_on_select(schema),
-                "groups": [
-                    Markup(group)
-                    for group in matrix.carousel_option_groups(question)
-                ],
-            }
-        )
-    return found
+    found = [carousel_entry(question, per_question) for question in questions]
+    return [entry for entry in found if entry is not None]
+
+
+def carousel_entry(
+    question: dict, per_question: dict, scenario_indices: str | None = None
+) -> dict | None:
+    """One carousel's parked rows, or ``None`` if this question is not one.
+
+    ``scenario_indices`` names the panel these belong to, and is what keeps a
+    scenario-bound page honest. **The rows must be built from the same rendering
+    of the question the visible row was built from** -- these are the rest of
+    that question, and a set built from the unbound question would put an
+    unpiped row behind a piped one. It is also what makes them unique: the
+    script finds them by question name, and a question drawn once per scenario
+    is several panels answering to the same name.
+    """
+    if question.get("question_type") != "matrix":
+        return None
+    name = question.get("question_name") or ""
+    schema = per_question.get(name)
+    if not matrix.is_carousel(schema):
+        return None
+    return {
+        "question_name": name,
+        "scenario_indices": scenario_indices,
+        "advance": matrix.advances_on_select(schema),
+        "groups": [Markup(group) for group in matrix.carousel_option_groups(question)],
+    }
 
 
 def _document(
@@ -299,10 +328,17 @@ def _document(
     body_html: str,
     custom_css: str | None,
     toolbar_html: str = "",
-    exclusive: dict[str, list[str]] | None = None,
     carousels: list[dict] | None = None,
+    checkbox_present: bool = False,
+    root_exclusive: str | None = None,
 ) -> str:
-    """Wrap composed body markup in the standalone document shell."""
+    """Wrap composed body markup in the standalone document shell.
+
+    ``root_exclusive`` is how a split page -- one question, no panel around it --
+    carries what a bundle carries on the panel. The script looks for the nearest
+    ancestor with the attribute, so it does not have to know which kind of page
+    it is on.
+    """
     custom = (custom_css or "").strip()
     return render_template(
         "page.html",
@@ -314,13 +350,12 @@ def _document(
         stylesheet=Markup(STYLESHEET.read_text(encoding="utf-8")),
         custom_css=Markup(custom) if custom else "",
         toolbar_html=Markup(toolbar_html) if toolbar_html else "",
-        # Emitted only when there is a checkbox on the page, so an ordinary
-        # survey carries no script it has no use for.
-        exclusive_json=Markup(json.dumps(exclusive)) if exclusive else "",
         # Emitted only when a carousel is on the page, so an ordinary survey
         # carries neither the parked option groups nor the script that moves
         # them.
         carousels=carousels or [],
+        checkbox_present=checkbox_present,
+        root_exclusive=root_exclusive,
         add_icon=Markup(icons.render("plus", class_name="w-4 h-4")),
         body_html=Markup(body_html),
     )
@@ -352,14 +387,16 @@ def render_page(
     ``progress`` is a payload from :mod:`progress`; omitting it draws the bar at
     0%, and ``progress.HIDDEN`` leaves the indicator off the page entirely.
     """
+    positions = exclusive_positions(question, humanize_schema)
     return _document(
         title=question.get("question_name") or "Survey preview",
         body_html=render_body(question, humanize_schema, progress),
         custom_css=custom_css,
-        exclusive=exclusive_options([question], _as_survey_schema(question, humanize_schema)),
         carousels=carousel_questions(
             [question], _as_survey_schema(question, humanize_schema)
         ),
+        checkbox_present=positions is not None,
+        root_exclusive=_positions_attribute(positions),
     )
 
 
@@ -368,6 +405,8 @@ def render_bundle(
     humanize_schema: dict | None = None,
     title: str = "Survey preview",
     item_names: list[str] | None = None,
+    variants: list[list[dict]] | None = None,
+    scenarios: list[dict] | None = None,
 ) -> str:
     """Render a whole survey as one standalone document.
 
@@ -386,6 +425,19 @@ def render_bundle(
     for a survey that is only questions and understates the rest: a step ending
     on an instruction the caller did not name cannot resolve, and the indicator
     falls back to the bar.
+
+    ``variants`` is the same questions bound to each scenario, one list per
+    scenario and each parallel to ``questions`` -- what :mod:`scenarios` returns.
+    ``scenarios`` describes them for the toolbar: ``{"index", "label"}`` per
+    entry, indexed by the *scenario list's* own numbering rather than by
+    position here, since that is the number the live survey identifies a
+    scenario by.
+
+    **Panels are deduplicated by what they render to.** A question that pipes
+    nothing renders identically under every scenario and gets one panel, marked
+    as serving all of them; only a question that actually varies is repeated. So
+    a survey that pipes nothing collapses to exactly the panel list it has
+    without scenarios, and a bundle grows only where the survey really differs.
     """
     humanize_schema = humanize_schema or {}
     per_question = humanize_schema.get("questions") or {}
@@ -401,32 +453,65 @@ def render_bundle(
     position_of = {name: index for index, name in enumerate(item_names)}
     total = len(item_names)
 
+    variants = variants if variants else [questions]
+    bound = len(variants) > 1
+    scenario_ids = (
+        [entry["index"] for entry in scenarios]
+        if scenarios
+        else list(range(len(variants)))
+    )
+
     panels: list[str] = []
     items: list[dict] = []
+    carousels: list[dict] = []
 
     for index, question in enumerate(questions):
         name = names[index]
-        body = render_body(
-            question,
-            per_question.get(name),
-            progress=progress_module.resolve(
-                progress_config,
-                # Where this question sits among every item, which is what both
-                # readings measure against. A question the caller did not list
-                # falls back to its position among the questions.
-                position_of.get(name, index),
-                total,
-                item_names,
-            ),
+        schema = per_question.get(name)
+        progress = progress_module.resolve(
+            progress_config,
+            # Where this question sits among every item, which is what both
+            # readings measure against. A question the caller did not list
+            # falls back to its position among the questions.
+            position_of.get(name, index),
+            total,
+            item_names,
         )
-        panels.append(
-            render_template(
-                "panel.html",
-                body_html=Markup(body),
-                question_name=name,
-                is_active=index == 0,
+        # Grouped on everything the panel would carry, so two scenarios share a
+        # panel only when there is genuinely nothing to tell them apart by.
+        grouped: dict[tuple[str, str | None], list[int]] = {}
+        # The rendering each group was formed from, so the carousel rows parked
+        # for a panel come from the same binding as the row on it.
+        formed_by: dict[tuple[str, str | None], dict] = {}
+        for slot, variant in enumerate(variants):
+            variant_question = variant[index]
+            key = (
+                render_body(variant_question, schema, progress=progress),
+                _positions_attribute(exclusive_positions(variant_question, schema)),
             )
-        )
+            grouped.setdefault(key, []).append(scenario_ids[slot])
+            formed_by.setdefault(key, variant_question)
+        for (body, exclusive), serves in grouped.items():
+            serving = " ".join(str(one) for one in serves) if bound else None
+            entry = carousel_entry(
+                formed_by[(body, exclusive)], per_question, scenario_indices=serving
+            )
+            if entry is not None:
+                carousels.append(entry)
+            panels.append(
+                render_template(
+                    "panel.html",
+                    body_html=Markup(body),
+                    question_name=name,
+                    # Both omitted without scenarios, so an ordinary bundle
+                    # carries the markup it always has: the panels are then one
+                    # per question and their order is the answer.
+                    question_index=index if bound else None,
+                    scenario_indices=serving,
+                    exclusive=exclusive,
+                    is_active=not panels,
+                )
+            )
         items.append(
             {
                 "name": name,
@@ -439,10 +524,16 @@ def render_bundle(
             }
         )
 
-    # The toolbar counts panels, not survey items: it is preview chrome for
-    # moving between the questions in this document.
+    # The toolbar counts questions, not panels: it is preview chrome for moving
+    # between the questions in this document, and a question bound to four
+    # scenarios is still one question.
     toolbar = (
-        render_template("toolbar.html", items=items, count=len(items))
+        render_template(
+            "toolbar.html",
+            items=items,
+            count=len(items),
+            scenarios=scenarios if bound else None,
+        )
         if len(items) > 1
         else ""
     )
@@ -452,6 +543,6 @@ def render_bundle(
         body_html="".join(panels),
         custom_css=custom_css,
         toolbar_html=toolbar,
-        exclusive=exclusive_options(questions, humanize_schema),
-        carousels=carousel_questions(questions, humanize_schema),
+        carousels=carousels,
+        checkbox_present=has_checkbox(questions),
     )

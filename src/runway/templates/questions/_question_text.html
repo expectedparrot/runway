@@ -1,0 +1,63 @@
+{# Transcription of the reference implementation's question-text renderer.
+
+   Two shapes, and which one is drawn is decided by whether the question has
+   blocks. Without them -- every question that names no file, which is nearly
+   all of them -- this is the single `.edsl-question-text` div it has always
+   been, and the markup is unchanged. With them, the reference wraps the list in
+   a bare div and each block in a bare div of its own, and the text blocks carry
+   the same `.edsl-question-text` class the whole question used to.
+
+   Class strings are inline here rather than passed in, for the same reason they
+   are in every other question template: the stylesheet build scans templates,
+   so a class named only in a .py file would have its rules dropped. See README.
+
+   The empty-comment separator lines suppress whitespace between literal
+   elements; JSX discards that whitespace, so emitting it would break parity.
+
+   `question_text_html` is pre-rendered markdown and `block.content_html` is the
+   same per block -- both are marked safe by the caller, since autoescape would
+   otherwise escape the markup they exist to carry. #}
+{% if question_text_blocks %}
+<div>
+{#- -#}
+{% for block in question_text_blocks %}
+<div>
+{#- -#}
+{% if block.type == 'text' %}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ block.content_html }}</div>
+{#- -#}
+{% elif block.type == 'file' and block.file_type == 'image' %}
+<img class="edsl-question-image mb-3" src="{{ block.file_load_link }}" alt="Image"/>
+{#- -#}
+{% elif block.type == 'file' and block.file_type == 'video' %}
+<div class="flex justify-center items-center mb-3">
+{#- -#}
+<video controls="" class="max-w-full h-auto" src="{{ block.file_load_link }}">Your browser does not support this video. Please contact support.</video>
+{#- -#}
+</div>
+{#- -#}
+{% elif block.type == 'file' and block.file_type == 'pdf' %}
+<div class="flex justify-center items-center mb-3">
+{#- -#}
+<object class="w-full h-screen border border-gray-300 rounded-md" data="{{ block.file_load_link }}" type="application/pdf">
+{#- -#}
+<p>Your browser does not support PDF viewing.</p>
+{#- -#}
+</object>
+{#- -#}
+</div>
+{#- -#}
+{% elif block.type == 'file' %}
+Unsupported file type
+{#- -#}
+{% else %}
+Unsupported block type
+{#- -#}
+{% endif %}
+</div>
+{#- -#}
+{% endfor %}
+</div>
+{%- else %}
+<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{%- endif %}

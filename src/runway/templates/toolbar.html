@@ -28,6 +28,27 @@
 {%- endfor %}
 </select>
 {#- -#}
+{% if scenarios %}
+{# The second axis. Question and scenario are independent choices -- you switch
+   scenario to see *this* question under a different binding -- so they are two
+   selects rather than one list of every pairing, which would be unreadable past
+   two scenarios.
+
+   The value is the scenario list's own index, not this dropdown's position, so
+   `--scenario-index 0,17,204` reads 0, 17 and 204. That is the number the live
+   survey identifies a scenario by, and renumbering it here would invent a
+   second naming for the one thing a preview and a real response share. #}
+<label for="preview-scenario-select" class="sr-only">Scenario</label>
+{#- -#}
+<select id="preview-scenario-select" class="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-900">
+{#- -#}
+{%- for scenario in scenarios %}
+<option value="{{ scenario.index }}">{{ scenario.label }}</option>
+{#- -#}
+{%- endfor %}
+</select>
+{#- -#}
+{% endif %}
 <noscript><span class="text-gray-500">JavaScript is off — showing the first question only.</span></noscript>
 {#- -#}
 </div>

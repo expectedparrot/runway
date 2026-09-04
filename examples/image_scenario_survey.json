@@ -1,0 +1,80 @@
+{
+  "questions": [
+    {
+      "question_name": "reaction",
+      "question_text": "Here is **{{ colour }}**.\n\n{{ swatch }}\n\nHow does it strike you?",
+      "question_options": [
+        "I would live with it",
+        "Only as an accent",
+        "Not for me"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "room",
+      "question_text": "Which room would you put {{ scenario.colour }} in?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "namespaced",
+      "question_text": "The swatch again, through the namespace: {{ scenario.swatch }} -- the same image, because the render rebuilds the namespace from the keys around it.",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "reaction",
+      "room",
+      "namespaced"
+    ],
+    "survey_question_texts": [
+      "Here is **{{ colour }}**.\n\n{{ swatch }}\n\nHow does it strike you?",
+      "Which room would you put {{ scenario.colour }} in?",
+      "The swatch again, through the namespace: {{ scenario.swatch }} -- the same image, because the render rebuilds the namespace from the keys around it."
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "reaction": 0,
+      "room": 1,
+      "namespaced": 2
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 3
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}

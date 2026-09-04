@@ -32,6 +32,7 @@ from __future__ import annotations
 from markupsafe import Markup
 
 from .. import icons
+from ..blocks import prepared, prepared_option
 from ..markdown import render_option_text, render_question_text
 from ..templating import render as render_template
 from .values import as_text, option_labels
@@ -78,6 +79,13 @@ def _axis(question: dict, key: str) -> list[object]:
     return list(values)
 
 
+def _blocks_at(blocks: object, index: int) -> list[dict]:
+    """One row's or column's blocks out of the positional list, if it has any."""
+    if not isinstance(blocks, list) or index >= len(blocks):
+        return []
+    return prepared_option(blocks[index])
+
+
 def _items(question: dict) -> list[dict[str, object]]:
     """The rows: a label each, and nothing else.
 
@@ -85,9 +93,13 @@ def _items(question: dict) -> list[dict[str, object]]:
     builds every id and radio-group name that way on purpose -- a row piped from
     a file reads ``<see file dog>``, and an id may not contain whitespace.
     """
+    item_blocks = question.get("question_items_blocks")
     return [
-        {"label_html": Markup(render_option_text(as_text(item)))}
-        for item in _axis(question, "question_items")
+        {
+            "label_html": Markup(render_option_text(as_text(item))),
+            "blocks": _blocks_at(item_blocks, index),
+        }
+        for index, item in enumerate(_axis(question, "question_items"))
     ]
 
 
@@ -102,20 +114,29 @@ def _options(question: dict) -> list[dict[str, object]]:
     scale are typically the only points named.
     """
     labels = option_labels(question)
+    option_blocks = question.get("question_options_blocks")
     columns = []
-    for option in _axis(question, "question_options"):
+    for index, option in enumerate(_axis(question, "question_options")):
         text = as_text(option)
         label = labels.get(text)
-        # The reference's own format, spaces included. It folds the label in
-        # only when the option has no media to fold it into, and a preview never
-        # resolves media, so this is the only branch reachable here.
-        stacked = f"{text} - {label}" if label else text
+        blocks = _blocks_at(option_blocks, index)
+        # The reference's own format, spaces included -- but it folds the
+        # author's word into the option text only when there is text to fold it
+        # into. An option that resolved to an image has none, so there the word
+        # *follows* the media instead of being dropped, as a bare text node
+        # after the label. Both branches are reachable now that a scenario's
+        # files are drawn.
+        stacked = f"{text} - {label}" if label and not blocks else text
         columns.append(
             {
                 "value": text,
                 "header_label": label,
                 "label_html": Markup(render_option_text(text)),
                 "row_label_html": Markup(render_option_text(stacked)),
+                # Escaped as text by the template, which is what the reference
+                # does with it -- it is a string beside the label, not markup.
+                "row_label_suffix": f" - {label}" if label and blocks else "",
+                "blocks": blocks,
             }
         )
     return columns
@@ -169,6 +190,7 @@ def _render_carousel(question: dict) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         items=_items(question),
         options=_options(question),
         chevron_left=Markup(
@@ -199,6 +221,7 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_html=Markup(
             render_question_text(question.get("question_text", ""))
         ),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         items=_items(question),
         options=options,
         # The one part of the grid a stylesheet cannot know, handed to the table

@@ -68,6 +68,34 @@ toolbar to move between them. `-o DIR` to change it, `--split` for one file per
 question (much larger; the stylesheet is re-inlined each time). Several surveys
 may be given at once, so long as their names differ.
 
+## Scenarios
+
+A humanized survey can be bound to a scenario list, and a respondent is assigned
+**one scenario for their whole response** — so each scenario is a different
+rendering of the survey, and previewing one is previewing a page somebody is
+actually served.
+
+```bash
+runway render survey.ep --scenarios scenarios.ep
+runway render survey.ep --scenarios scenarios.ep --scenario-index 0,17,204
+```
+
+The bundle gains a second dropdown beside the question one; picking a scenario
+keeps the question you are on. A scenario list opens from the same three formats
+a survey does, through `ScenarioList.load()`.
+
+Both spellings resolve — `{{ city }}` and `{{ scenario.city }}` — as do piped
+`question_options` and matrix `question_items`.
+
+**A question that pipes nothing renders once** and is shown for every scenario,
+so the file grows only where the survey actually differs. A twenty-question
+survey with three piped questions, under ten scenarios, is 17 + 30 panels rather
+than 200.
+
+The indices are the scenario list's own and stay so in the dropdown, since that
+is what the live survey identifies a scenario by. A list of more than 25 is
+refused rather than truncated — pick from it with `--scenario-index`.
+
 `check` writes nothing and is the fast way to see what you'll get:
 
 ```
@@ -105,15 +133,16 @@ and position are still checkable.
 
 ## Caveats
 
-- Piped values are not resolved. `{{ agent.x }}`, `{{ scenario.x }}` render as
-  written.
+- Scenario values resolve with `--scenarios`; without it they render as
+  written. Agent traits and prior answers always render as written.
 - A matrix carousel (`format: {type: carousel}`) is drawn, but you cannot swipe
   it — use the arrows, and try it on a phone before sending the survey out.
 - Position is inferred from authored order, so skip logic will differ.
 - Controls tick but mostly don't behave. Checkbox Select-all and exclusive
   options do work; validation, limits and Next do not.
-- Media is not resolved — an option referencing a file previews as its
-  reference text.
+- Media in question text is drawn — an image, video or PDF held in a scenario
+  is inlined into the page, so the file's bytes are in the HTML. An *option*
+  referencing a file still previews as its reference text.
 ````
 
 ## Install
@@ -318,9 +347,33 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   reading the layout and using it — preview the format here, then try a real
   one on a phone before the survey goes out.
 - **Option randomization.** Not applied; the authored order is shown.
-- **Piped values.** `{{ agent.x }}`, `{{ scenario.x }}` and `{{ q_name.answer }}`
-  render as written. Resolving them means binding a survey to agent and scenario
-  data, which would be a per-binding rendering.
+- **Agent traits and prior answers.** `{{ agent.x }}` and `{{ q_name.answer }}`
+  render as written — there is no agent and no earlier answer to resolve them
+  from. Scenario values *do* resolve, given `--scenarios`; see above.
+- **A filter on one of those stops the question piping.** `{{ q.answer | length }}`
+  makes the whole question render as written, scenario keys in it included. The
+  alternative was a stand-in that answers `length` from its own placeholder text,
+  which puts a plausible wrong number on the page instead of a visible
+  unsubstituted one.
+- **A scenario key the list does not carry fails silently**, exactly as it does
+  on the live page: `{{ typo }}` renders as nothing, and `{{ typo.attr }}` leaves
+  the whole question unpiped. Neither leaves a mark on the page, so
+  `check --scenarios` names them.
+- **A file-valued scenario key is drawn**, not named. The question text is split
+  around each `<see file key>` marker and the file goes in between: an `<img>`
+  for an image, a `<video>` for a video, an `<object>` for a PDF, and the live
+  page's own "Unsupported file type" for anything else, audio included. Where
+  the live page has a link to a file it has fetched, a preview has the bytes —
+  a scenario list carries each file base64-encoded, so it is inlined as a
+  `data:` URI. **The page is therefore as large as the media in it**: a survey
+  of small images costs nothing, twenty scenarios of video does not. A marker
+  naming a key that holds no file draws as unsupported, which is what it is.
+  Option labels are not split this way — only question text.
+- **Markup in a scenario value shows as plaintext**, which is right, but the live
+  page shows slightly less of it: question text is sanitized server-side there
+  before it is rendered, so a tag outside its allowlist (`<div>`, `<script>`) is
+  dropped where a preview shows it. Nothing executes in either — HTML is not
+  supported in scenarios.
 - **Position is inferred** from the authored item list, where the live page
   resolves it from survey flow — so a survey with skip logic will differ, the
   further a respondent skips the more so. The renderings themselves are exact.

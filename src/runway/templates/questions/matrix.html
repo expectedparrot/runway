@@ -30,7 +30,7 @@
    comment early.) #}
 <div class="edsl-question edsl-matrix-question mb-6">
 {#- -#}
-<div class="edsl-question-text text-xl mb-3 whitespace-pre-wrap">{{ question_text_html }}</div>
+{% include "questions/_question_text.html" %}
 {#- -#}
 {# The gap under the question text is set here, once, so the two views open
    alike -- and it is the same gap the stacked list keeps between its rows,
@@ -47,7 +47,7 @@
 {%- set row = loop.index0 %}
 <div class="edsl-matrix-stack-row mt-7 border-t border-gray-200 pt-7 first:mt-0 first:border-t-0 first:pt-0 dark:border-gray-700">
 {#- -#}
-<div id="{{ question_name }}_stack_{{ row }}_label" class="edsl-matrix-stack-item mb-3 text-base text-gray-900 dark:text-white"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></div>
+<div id="{{ question_name }}_stack_{{ row }}_label" class="edsl-matrix-stack-item mb-3 text-base text-gray-900 dark:text-white">{% with label_html = item.label_html, blocks = item.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</div>
 {#- -#}
 <div role="radiogroup" aria-labelledby="{{ question_name }}_stack_{{ row }}_label" class="edsl-options space-y-1.5">
 {#- -#}
@@ -60,7 +60,7 @@
 {#- -#}
 </span>
 {#- -#}
-<span class="edsl-option-label min-w-0 text-sm text-gray-900 dark:text-gray-100"><span class="edsl-option-content"><span class="edsl-option-text">{{ option.row_label_html }}</span></span></span>
+<span class="edsl-option-label min-w-0 text-sm text-gray-900 dark:text-gray-100">{% with label_html = option.row_label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}{{ option.row_label_suffix }}</span>
 {#- -#}
 </label>
 {%- endfor %}
@@ -109,7 +109,7 @@
 <span class="break-words text-center">{{ option.header_label }}</span>
 {#- -#}
 {%- endif %}
-<span><span class="edsl-option-content"><span class="edsl-option-text">{{ option.label_html }}</span></span></span>
+<span>{% with label_html = option.label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}</span>
 {#- -#}
 </div>
 {#- -#}
@@ -125,7 +125,7 @@
 {%- set row = loop.index0 %}
 <tr class="edsl-matrix-row group transition-colors">
 {#- -#}
-<td class="edsl-matrix-label-cell sticky left-0 z-10 px-4 py-3 text-sm text-gray-900 dark:text-white align-middle bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30 border-b border-r border-gray-200 dark:border-gray-700"><span class="edsl-option-content"><span class="edsl-option-text">{{ item.label_html }}</span></span></td>
+<td class="edsl-matrix-label-cell sticky left-0 z-10 px-4 py-3 text-sm text-gray-900 dark:text-white align-middle bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30 border-b border-r border-gray-200 dark:border-gray-700">{% with label_html = item.label_html, blocks = item.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</td>
 {#- -#}
 {%- for option in options %}
 <td class="edsl-matrix-cell px-2 py-3 text-center align-middle border-b border-gray-200 dark:border-gray-700 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30">

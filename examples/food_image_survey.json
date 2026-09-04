@@ -1,0 +1,188 @@
+{
+  "questions": [
+    {
+      "question_name": "food_category",
+      "question_text": "Pick one.",
+      "question_options": [
+        "Baked goods {{ scenario.baked_img }}",
+        "Grilled {{ scenario.grilled_img }}",
+        "Noodles {{ scenario.noodles_img }}",
+        "Dessert {{ scenario.dessert_img }}"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "dish",
+      "question_text": "You picked {{ food_category.answer.split('<see file')[0] | trim }}. Name one dish in that category.",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "img_watercolor",
+      "question_text": "A loose watercolor painting of {{ dish.answer }}, on a plain background.",
+      "model": "gemini-3.1-flash-image",
+      "service_name": "google",
+      "generation_parameters": {},
+      "question_type": "image_generation",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "img_photo",
+      "question_text": "A photorealistic overhead studio photograph of {{ dish.answer }}, on a plain background.",
+      "model": "gemini-3.1-flash-image",
+      "service_name": "google",
+      "generation_parameters": {},
+      "question_type": "image_generation",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "img_cartoon",
+      "question_text": "A bold flat-color cartoon illustration of {{ dish.answer }}, on a plain background.",
+      "model": "gemini-3.1-flash-image",
+      "service_name": "google",
+      "generation_parameters": {},
+      "question_type": "image_generation",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "ratings",
+      "question_text": "Rate each image.",
+      "question_items": [
+        "Watercolor {{ img_watercolor.answer }}",
+        "Photo {{ img_photo.answer }}",
+        "Cartoon {{ img_cartoon.answer }}"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Terrible",
+        "3": "Fine",
+        "5": "Delicious"
+      },
+      "question_type": "matrix",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "favorite",
+      "question_text": "Which would you actually want to eat?",
+      "question_options": [
+        "Watercolor {{ img_watercolor.answer }}",
+        "Photo {{ img_photo.answer }}",
+        "Cartoon {{ img_cartoon.answer }}"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "food_category",
+      "dish",
+      "img_watercolor",
+      "img_photo",
+      "img_cartoon",
+      "ratings",
+      "favorite"
+    ],
+    "survey_question_texts": [
+      "Pick one.",
+      "You picked {{ food_category.answer.split('<see file')[0] | trim }}. Name one dish in that category.",
+      "A loose watercolor painting of {{ dish.answer }}, on a plain background.",
+      "A photorealistic overhead studio photograph of {{ dish.answer }}, on a plain background.",
+      "A bold flat-color cartoon illustration of {{ dish.answer }}, on a plain background.",
+      "Rate each image.",
+      "Which would you actually want to eat?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "food_category": 0,
+      "dish": 1,
+      "img_watercolor": 2,
+      "img_photo": 3,
+      "img_cartoon": 4,
+      "ratings": 5,
+      "favorite": 6
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 5,
+        "expression": "True",
+        "next_q": 6,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 6,
+        "expression": "True",
+        "next_q": 7,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 7
+  },
+  "question_groups": {},
+  "questions_to_randomize": [
+    "food_category",
+    "favorite"
+  ],
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}

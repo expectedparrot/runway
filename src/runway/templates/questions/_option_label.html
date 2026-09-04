@@ -1,0 +1,50 @@
+{# Transcription of the reference implementation's option label.
+
+   Every option goes through here, with blocks or without. The wrapper and the
+   text span are emitted either way: a styling hook that appeared only on
+   options that happen to reference a file would mean an author's rule works on
+   one question and silently does nothing on the next. Only what is inside
+   differs, and only the layout utilities vary -- an option stacking a caption
+   over a picture needs a column, where a plain text option must stay ordinary
+   inline text so a long label wraps in its row as it always has.
+
+   **Only images draw inline.** A video or a PDF in an option label would put a
+   control inside a control, where every play or scroll is also a click on the
+   radio, so those degrade to the placeholder instead of becoming a trap. So
+   does a file with no source -- a mistyped scenario key, or a file whose bytes
+   live somewhere this package cannot fetch: the option stays selectable and
+   labelled rather than drawing a broken image.
+
+   `compact` is the matrix's column headers, whose labels sit above a grid of
+   radios and cannot afford a full-height picture.
+
+   Class strings are inline for the same reason as every other question
+   template: the stylesheet build scans templates, so a class named only in a
+   .py file would have its rules dropped. See README. The empty-comment
+   separators suppress whitespace JSX discards.
+
+   Callers pass `label_html` (pre-rendered option markdown), `blocks` (or none)
+   and `compact`. #}
+{% set compact = compact | default(false) %}
+{% set has_media = blocks and blocks | selectattr('type', 'equalto', 'file') | first %}
+{#- -#}
+<span class="edsl-option-content{% if has_media %} inline-flex flex-col items-start gap-1 align-middle{% endif %}">
+{#- -#}
+{% if blocks %}
+{% for block in blocks %}
+{% if block.type == 'text' %}
+<span class="edsl-option-text">{{ block.content_html }}</span>
+{#- -#}
+{% elif block.file_type != 'image' or not block.file_load_link %}
+<span class="edsl-option-media-unavailable text-sm italic text-gray-500 dark:text-gray-400">(image unavailable)</span>
+{#- -#}
+{% else %}
+<img class="edsl-option-image {% if compact %}max-h-16{% else %}max-h-40{% endif %} w-auto max-w-full rounded-md border border-gray-200 dark:border-gray-700" src="{{ block.file_load_link }}" alt="{{ block.filename }}"/>
+{#- -#}
+{% endif %}
+{% endfor %}
+{% else %}
+<span class="edsl-option-text">{{ label_html }}</span>
+{#- -#}
+{% endif %}
+</span>

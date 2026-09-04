@@ -1,0 +1,38 @@
+{
+  "scenarios": [
+    {
+      "city": "Boston",
+      "transport": [
+        "The T",
+        "Commuter rail",
+        "Bike share",
+        "None of these"
+      ],
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "Scenario"
+    },
+    {
+      "city": "Austin",
+      "transport": [
+        "The bus",
+        "None of these"
+      ],
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "Scenario"
+    },
+    {
+      "city": "Chicago",
+      "transport": [
+        "The L",
+        "Metra",
+        "The bus",
+        "Divvy",
+        "None of these"
+      ],
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "Scenario"
+    }
+  ],
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "ScenarioList"
+}

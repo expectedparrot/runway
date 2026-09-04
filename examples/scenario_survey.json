@@ -1,0 +1,81 @@
+{
+  "questions": [
+    {
+      "question_name": "familiar",
+      "question_text": "How well do you know **{{ city }}**?",
+      "question_options": [
+        "I have never been",
+        "I have visited",
+        "I have lived there"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "modes",
+      "question_text": "Which of these have you used to get around {{ scenario.city }}?",
+      "question_options": "{{ transport }}",
+      "question_type": "checkbox",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "anything",
+      "question_text": "Anything else we should know about getting around?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "familiar",
+      "modes",
+      "anything"
+    ],
+    "survey_question_texts": [
+      "How well do you know **{{ city }}**?",
+      "Which of these have you used to get around {{ scenario.city }}?",
+      "Anything else we should know about getting around?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "familiar": 0,
+      "modes": 1,
+      "anything": 2
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 3
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}
