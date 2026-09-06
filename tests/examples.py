@@ -44,6 +44,25 @@ def scenarios_path(survey: Path) -> Path:
 
 def load_example(survey: Path) -> tuple[list[dict], dict]:
     """A survey's questions and its schema, from the two files."""
-    questions = load(survey)
+    return load(survey).get("questions") or [], load_example_schema(survey)
+
+
+def load_example_schema(survey: Path) -> dict:
+    """A survey's schema, or ``{}`` where it needs none."""
     sidecar = schema_path(survey)
-    return questions, load_schema(sidecar) if sidecar.is_file() else {}
+    return load_schema(sidecar) if sidecar.is_file() else {}
+
+
+def load_grouped_example(survey: Path) -> tuple[list[dict], dict, dict]:
+    """The same, plus the survey's own question groups.
+
+    A third thing an example is made of, and unlike the schema it *is* in the
+    survey file -- so it comes out of the same read rather than from a sidecar.
+    Empty for the surveys that define none, which is all but one of them.
+    """
+    document = load(survey)
+    return (
+        document.get("questions") or [],
+        load_example_schema(survey),
+        document.get("question_groups"),
+    )

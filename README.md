@@ -64,8 +64,8 @@ runway version
 ```
 
 `render` writes `./previews/<survey>.html` — one file, all questions, with a
-toolbar to move between them. `-o DIR` to change it, `--split` for one file per
-question (much larger; the stylesheet is re-inlined each time). Several surveys
+toolbar to move between the pages. `-o DIR` to change it, `--split` for one file
+per page (much larger; the stylesheet is re-inlined each time). Several surveys
 may be given at once, so long as their names differ.
 
 ## Scenarios
@@ -96,6 +96,21 @@ The indices are the scenario list's own and stay so in the dropdown, since that
 is what the live survey identifies a scenario by. A list of more than 25 is
 refused rather than truncated — pick from it with `--scenario-index`.
 
+## Question groups
+
+A survey whose schema says `{"survey": {"presentation": "group"}}` is served a
+whole question group per page, and previews that way: one panel per group, one
+file per group under `--split`, progress read from where the page begins. The
+groups come from the survey file and `presentation` from `--schema`; one without
+the other pages per question, as the live survey does.
+
+`.edsl-survey-item` wraps each item of a page — the `custom_css` hook for
+separating them, since nothing separates them by default.
+
+A question in no group is never served. Its page is drawn all the same, with the
+question's text and a warning in place of the control, and `check` reports it as
+a warning. `examples/src/group_survey.py` is the worked example.
+
 `check` writes nothing and is the fast way to see what you'll get:
 
 ```
@@ -119,7 +134,9 @@ Four outcomes, and they mean different things:
   `thinking_question()`. Nobody is ever asked it; nothing is missing.
 - `note` — a type a human survey supports but runway hasn't transcribed yet.
   The survey is fine; the tool is behind.
-- `warning` — no human-survey rendering exists anywhere. Fix the survey.
+- `warning` — nothing a respondent could be served: a type with no
+  human-survey rendering anywhere, or a question no page carries because it is
+  in no question group. Fix the survey.
 
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
@@ -211,7 +228,7 @@ Four verdicts, and they are genuinely different news:
 | **drawn** | previews with its real control |
 | **automatic** | answered on the server, so nobody is ever shown it and nothing is missing |
 | **note** | no control transcribed for the type yet — the survey is fine, the preview is behind |
-| **warning** | the type has no human-survey rendering anywhere, so no preview could exist |
+| **warning** | nothing a respondent could be served — a type with no human-survey rendering anywhere, or a question left out of every question group |
 
 Only **warning** exits non-zero, and it is the only one that is about the survey
 rather than about this package.
@@ -229,7 +246,7 @@ the case worth having a command for at all:
 ```bash
 runway render examples/mixed_survey.json            # -> previews/mixed_survey.html
 runway render survey.ep                             # -> previews/survey.html
-runway render examples/mixed_survey.json --split    # -> one file per question
+runway render examples/mixed_survey.json --split    # -> one file per page
 runway render examples/*.json                       # -> one .html per survey
 runway render examples/*.json -o build/review       # -> somewhere else
 ```
@@ -241,7 +258,7 @@ replacing the other.
 
 By default the whole survey lands in **one HTML file**, with a toolbar
 across the top to jump between questions (arrows, a dropdown, arrow keys).
-`--split` writes one file per question instead, which is far larger for anything
+`--split` writes one file per page instead, which is far larger for anything
 but a short survey because each file re-inlines the stylesheet. `--json` on
 `check`, `types` and `version` gives machine-readable output.
 
@@ -254,6 +271,39 @@ never sees, where it is suppressed rather than implying the survey shows it.
 Runway is importable too: `load`, `load_schema`, `render_bundle`, `render_page`
 and `render_survey` are the public surface — see
 [SPEC.md](SPEC.md#python-api).
+
+## Question groups
+
+A survey can be served a **question group** at a time rather than a question at
+a time — the groups come from the survey, and
+`humanize_schema["survey"]["presentation"] = "group"` asks for them. Runway
+previews it the way it is served: one panel per group in the bundle, one file
+per group under `--split` (named after the group), and the progress indicator
+read from where each page begins rather than from each question.
+
+Both halves are needed and they arrive in different files — the groups in the
+survey, `presentation` with `--schema`. Given one without the other, runway
+pages per question, which is what the live survey does too; `check` says which
+of the two is missing rather than leaving you to guess.
+
+Two things worth knowing:
+
+- **A question in no group is never served.** A survey paging by group serves
+  its groups and nothing else, and EDSL refuses to create a human survey that
+  leaves a question out. Runway still draws the page, because you have to see
+  which question fell out, but it draws the question's *text* with a warning
+  where the control would be — the treatment a question nobody is asked gets —
+  and `check` reports it as a `warning`, so a build that checks its previews
+  fails. `check` also gains a column naming the group each question is served
+  on.
+- **Nothing separates the questions on a page by default.** The live survey
+  wraps each item in `.edsl-survey-item`; what goes between them is `custom_css`.
+  `examples/src/group_survey.py` shows one way to write it.
+
+Instructions are the gap: they have no preview here yet, so a group page draws
+its questions and leaves any instruction out. Where it sits still counts, since
+that is where the page begins. A `survey_message` — text with nothing to answer
+— is drawn, and is an ordinary member of a group.
 
 ## Question types
 

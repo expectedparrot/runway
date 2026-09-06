@@ -14,26 +14,32 @@ shape it: byte parity with the reference implementation's server-rendered
 output, and escaping that matches it exactly. Both are documented in SPEC.md.
 
     from runway import load, render_page
-    questions = load(Path("survey.ep"))
-    html = render_page(questions[0], humanize_schema={"format": {"type": "dropdown"}})
+    survey = load(Path("survey.ep"))
+    question = survey["questions"][0]
+    html = render_page(question, humanize_schema={"format": {"type": "dropdown"}})
 
 :func:`load` reads any of the formats edsl saves a survey as -- ``.ep``,
 ``.json.gz`` and ``.json``, all of them through ``Survey.load()`` -- and raises
-:class:`SurveyLoadError` for anything it cannot. It returns questions and only
-questions; a humanize schema is not part of an EDSL survey, and comes from
+:class:`SurveyLoadError` for anything it cannot. It gives back the survey as
+``Survey.to_dict()`` writes it: ``questions`` is the item list a preview is
+built from, and ``question_groups`` says which of them share a page. A humanize
+schema is *not* in there -- it is not part of an EDSL survey -- and comes from
 :func:`load_schema` and its own file.
 """
 
 from __future__ import annotations
 
-from . import inspection, progress, scenarios
+from . import inspection, pages, progress, scenarios
 from .markdown import render_option_text, render_question_text
 from .question_types import RENDERERS, get_renderer
 from .renderer import (
     render_body,
     render_bundle,
     render_comment,
+    render_item,
     render_page,
+    render_page_body,
+    render_page_of,
     render_progress,
     render_question,
     render_question_with_comment,
@@ -59,14 +65,18 @@ __all__ = [
     "iter_questions",
     "load",
     "load_schema",
+    "pages",
     "previewable",
     "progress",
     "scenarios",
     "render_body",
     "render_bundle",
     "render_comment",
+    "render_item",
     "render_option_text",
     "render_page",
+    "render_page_body",
+    "render_page_of",
     "render_progress",
     "render_question_text",
     "render_question",

@@ -23,7 +23,7 @@
 <select id="preview-question-select" class="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-gray-900">
 {#- -#}
 {%- for item in items %}
-<option value="{{ loop.index0 }}">{{ loop.index }}. {{ item.name }} — {{ item.pretty_type }}{% if item.is_background %} (automatic){% endif %}</option>
+<option value="{{ loop.index0 }}">{{ loop.index }}. {{ item.name }} — {{ item.pretty_type }}{% if item.is_unserved %} (no group){% elif item.is_background %} (automatic){% endif %}</option>
 {#- -#}
 {%- endfor %}
 </select>

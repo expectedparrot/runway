@@ -32,6 +32,7 @@ TEMPLATES = (
     "page.html",
     "panel.html",
     "progress.html",
+    "survey_item.html",
     "toolbar.html",
     "questions/background.html",
     "questions/checkbox.html",
@@ -40,6 +41,7 @@ TEMPLATES = (
     "questions/free_text.html",
     "questions/matrix.html",
     "questions/survey_message.html",
+    "questions/ungrouped.html",
     "questions/unsupported.html",
 )
 

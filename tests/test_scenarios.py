@@ -349,7 +349,7 @@ def test_piping_leaves_a_question_that_references_nothing_exactly_as_it_was():
     """
     checked = 0
     for survey in examples.paths():
-        questions = load(survey)
+        questions = load(survey)["questions"]
         for before, after in zip(
             questions, scenarios.pipe(questions, {}), strict=True
         ):
@@ -550,7 +550,7 @@ def test_one_scenario_names_files_the_way_no_scenario_does():
     """A segment saying "scenario 0" on the only scenario there is would be
     noise, and would rename every file of anyone who bound a single-scenario
     list."""
-    questions = load(EXAMPLE)
+    questions = load(EXAMPLE)["questions"]
     assert output_paths(questions, Path("."), split=True, name="s") == output_paths(
         questions, Path("."), split=True, name="s", scenario_indices=[0]
     )

@@ -107,12 +107,20 @@ here that parses survey JSON itself. A survey does not survive JSON unchanged
 drift from edsl's and make one format preview differently from another;
 `tests/test_formats.py` holds the three to byte-identical output.
 
-`survey.load` returns questions and nothing else. **A humanize schema is not
-part of an EDSL survey** — edsl neither writes one nor reads one — so it is not
-something a survey file can carry in any format, and a `humanize_schema` key
-written into a survey document is ignored rather than honoured. `load_schema`
-and `--schema` are the only route. Do not add an inline form back: it would be a
-runway-only extension to a format runway does not own.
+`survey.load` returns the survey document — `Survey.to_dict()` verbatim — and
+is the only loader. Read what you need out of it and ignore the rest:
+`questions` is the item list a preview is built from, `question_groups` says
+which of them share a page. **Do not add a second loader** for some other part
+of it, and do not read the same file twice: opening a `.ep` shells out to `git`
+and, for a package Coop holds, syncs it against the remote and rewrites it on
+disk.
+
+**A humanize schema is not part of an EDSL survey** — edsl neither writes one
+nor reads one — so it is not something a survey file can carry in any format,
+and a `humanize_schema` key written into a survey document is ignored rather
+than honoured. `load_schema` and `--schema` are the only route. Do not add an
+inline form back: it would be a runway-only extension to a format runway does
+not own.
 
 Survey JSON is parsed here in exactly one place, `survey._json_document`, and
 only to explain a *failure* — never on the path that succeeds. It turns edsl's
@@ -147,6 +155,22 @@ format it now draws — and it is kept all the same: both `render_question` and
 `classify` ask `declined()` before the registry, which is what keeps the two
 from disagreeing, and a new partial renderer belongs there rather than in
 either caller.
+
+## Pages
+
+A panel, a split file and a progress reading are all per **page**, and a page is
+one question only because most surveys page that way. `pages.resolve` is the one
+place that decides, and everything else takes the list it returns; a survey with
+no question groups resolves to a page per question, so there is no separate code
+path for the ordinary case. If you are adding something that walks the questions
+of a survey and treats each as a screen, walk the pages instead.
+
+The arithmetic in `pages` mirrors the reference implementation's own
+author-side preview, decision for decision — group ranges index questions
+rather than items, an instruction joins the page of the question after it, an
+ungrouped question is previewed on a page of its own though it is never served.
+Those are not judgement calls to re-make here; if the reference changes one,
+change it here to match and say so in the docstring.
 
 ## Scope
 

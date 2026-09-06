@@ -1,0 +1,215 @@
+{
+  "questions": [
+    {
+      "question_name": "work_location",
+      "question_text": "Where do you usually work?",
+      "question_options": [
+        "At home",
+        "In an office",
+        "A mix of both"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "role",
+      "question_text": "What is your role?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "years_experience",
+      "question_text": "How many years have you been doing it?",
+      "question_options": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "0": "Under a year",
+        "5": "Five or more"
+      },
+      "question_type": "linear_scale",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "about_this_page",
+      "question_text": "These questions ask about your working arrangement today. Answer for your own situation.",
+      "question_type": "survey_message",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "satisfaction",
+      "question_text": "I am satisfied with how I work today.",
+      "question_options": [
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree"
+      ],
+      "question_type": "likert_five",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "improvements",
+      "question_text": "What would improve it? Select all that apply.",
+      "question_options": [
+        "More days at home",
+        "A quieter place to work",
+        "Better equipment",
+        "Fewer meetings",
+        "None of the above"
+      ],
+      "question_type": "checkbox",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "commute_days",
+      "question_text": "How many days a week do you travel to an office?",
+      "question_options": [
+        "None",
+        "One or two",
+        "Three or four",
+        "Five"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "anything_else",
+      "question_text": "Anything else you would like to tell us?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "work_location",
+      "role",
+      "years_experience",
+      "about_this_page",
+      "satisfaction",
+      "improvements",
+      "commute_days",
+      "anything_else"
+    ],
+    "survey_question_texts": [
+      "Where do you usually work?",
+      "What is your role?",
+      "How many years have you been doing it?",
+      "These questions ask about your working arrangement today. Answer for your own situation.",
+      "I am satisfied with how I work today.",
+      "What would improve it? Select all that apply.",
+      "How many days a week do you travel to an office?",
+      "Anything else you would like to tell us?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "work_location": 0,
+      "role": 1,
+      "years_experience": 2,
+      "about_this_page": 3,
+      "satisfaction": 4,
+      "improvements": 5,
+      "commute_days": 6,
+      "anything_else": 7
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 3,
+        "expression": "True",
+        "next_q": 4,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 4,
+        "expression": "True",
+        "next_q": 5,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 5,
+        "expression": "True",
+        "next_q": 6,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 6,
+        "expression": "True",
+        "next_q": 7,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 7,
+        "expression": "True",
+        "next_q": 8,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 8
+  },
+  "question_groups": {
+    "background": [
+      0,
+      2
+    ],
+    "about_choices": [
+      3,
+      5
+    ],
+    "wrap_up": [
+      7,
+      7
+    ]
+  },
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}

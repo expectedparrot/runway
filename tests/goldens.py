@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from runway import render_question, render_question_with_comment
+from runway import render_item, render_question, render_question_with_comment
 from runway.question_types import get_renderer
 
 HERE = Path(__file__).resolve().parent
@@ -45,15 +45,18 @@ def load_goldens() -> dict[str, str]:
     return json.loads(GOLDENS.read_text(encoding="utf-8"))
 
 
-# The renderer each recorded case is compared against. "question" and
-# "controlled_question" cases record a question on its own -- they differ only
-# in which component was rendered to get it -- while "question_block" cases
-# record what the survey page puts on the page, which is the question plus any
-# comment box.
+# The renderer each recorded case is compared against, in the order they nest.
+# "question" and "controlled_question" cases record a question on its own --
+# they differ only in which component was rendered to get it. "question_block"
+# cases record what the survey page puts on the page: the question plus any
+# comment box. "survey_item" cases record the block the page wraps that in,
+# which is one item of a page -- the whole of the page when the survey serves
+# one question at a time, and one of several when it serves a question group.
 RENDER_BY_KIND = {
     "question": render_question,
     "controlled_question": render_question,
     "question_block": render_question_with_comment,
+    "survey_item": render_item,
 }
 
 # Types whose recorded ``value`` is a state this package can render, rather than

@@ -7,12 +7,10 @@ import json
 import re
 from pathlib import Path
 
+from . import pages as pages_module
 from . import progress as progress_module
-from .renderer import render_bundle, render_page
-
-# Non-question items in an EDSL survey's item list. Skipped for now; they are
-# not questions and have no preview yet.
-NON_QUESTION_CLASSES = {"Instruction", "ChangeInstruction"}
+from .pages import NON_QUESTION_CLASSES
+from .renderer import render_bundle, render_page_of
 
 # The formats edsl saves a survey as, and so the only ones read here. ``.ep`` is
 # the package ``Survey.save()`` writes by default -- a git repository in a zip,
@@ -106,15 +104,13 @@ def _explain(path: Path, exc: Exception) -> str:
     return f"{path} could not be opened by edsl ({detail})."
 
 
-def load(path: Path) -> list[dict]:
-    """The questions in a survey file, whatever format it is in.
+def load(path: Path) -> dict:
+    """A survey file, as ``Survey.to_dict()`` gives it, whatever format it is in.
 
     A ``.ep`` package, a ``.json.gz`` dump and a ``.json`` dump are all opened by
     ``Survey.load()``, which dispatches on the file name itself -- so what a
     ``.ep`` package actually is stays edsl's business, and a ``.json`` is read by
-    the code that wrote it rather than by a second, lookalike reader here. The
-    survey that comes back is flattened with ``to_dict()`` into question dicts,
-    which is what everything downstream renders from.
+    the code that wrote it rather than by a second, lookalike reader here.
 
     Loading through edsl is also what makes the formats agree. A survey does not
     survive JSON unchanged -- integer ``option_labels`` keys come back as
@@ -123,11 +119,19 @@ def load(path: Path) -> list[dict]:
     Reading both the same way is what stops that; ``tests/test_formats.py``
     holds them to it.
 
-    Only the questions come back, because only the questions are in the file. A
-    humanize schema is not part of an EDSL survey -- edsl neither writes one nor
-    reads one -- so it reaches a preview through :func:`load_schema` and nowhere
-    else. A ``humanize_schema`` key written into a survey document is not a
-    survey's to carry and is ignored, as it would be by edsl.
+    The whole document comes back rather than a part of it, because which part
+    matters depends on the caller: ``questions`` is the item list every preview
+    is built from, ``question_groups`` decides what shares a page with what, and
+    a caller that wants neither of those two ignores the key it does not need.
+    One reader, one read -- which is worth insisting on here, since opening a
+    package is not free (see below). Everything else in the document is survey
+    flow: skip logic is not applied, and position is taken from authored order.
+
+    A humanize schema is the one thing that is *not* in here, because it is not
+    part of an EDSL survey -- edsl neither writes one nor reads one -- so it
+    reaches a preview through :func:`load_schema` and nowhere else. A
+    ``humanize_schema`` key written into a survey document is not a survey's to
+    carry and is ignored, as it would be by edsl.
 
     edsl is imported here rather than at module scope. Rendering never touches
     it, so `types`, `version`, `guide` and every library call that starts from a
@@ -153,7 +157,7 @@ def load(path: Path) -> list[dict]:
         survey = Survey.load(str(path))
     except Exception as exc:
         raise SurveyLoadError(_explain(path, exc)) from exc
-    return survey.to_dict().get("questions") or []
+    return survey.to_dict()
 
 
 def load_schema(path: Path) -> dict:
@@ -223,10 +227,16 @@ def item_names(questions: list[dict]) -> list[str]:
     ]
 
 
-def _page_name(page_num: int, question: dict) -> str:
-    """The file name one split page takes, without its prefix or directory."""
-    question_name = question.get("question_name") or f"question-{page_num}"
-    return f"{page_num:02d}-{_slug(question_name)}.html"
+def _page_name(page: pages_module.Page) -> str:
+    """The file name one split page takes, without its prefix or directory.
+
+    Numbered by where the page begins among the survey's items, which is what it
+    has always been: a survey served a question at a time numbers its files
+    01, 02, 03, and one served by group numbers them by where each group starts,
+    so a file name still says where in the survey its page is. Named after the
+    group, where there is one, and after the question otherwise.
+    """
+    return f"{page.index + 1:02d}-{_slug(page.name)}.html"
 
 
 def output_paths(
@@ -235,6 +245,7 @@ def output_paths(
     split: bool = False,
     name: str | None = None,
     scenario_indices: list[int] | None = None,
+    pages: list[pages_module.Page] | None = None,
 ) -> list[Path]:
     """The files :func:`render_survey` would write, without writing them.
 
@@ -245,6 +256,10 @@ def output_paths(
 
     :func:`render_survey` writes to exactly these paths, in this order, so the
     two cannot disagree about where a preview lands.
+
+    ``pages`` is what :mod:`pages` resolved for this survey, and must be the
+    same list the render is given -- a survey paging by group writes a file per
+    group, not per question. Given none, a page is one question.
 
     Split pages take a scenario segment when there is more than one scenario,
     scenario-major so a directory listing groups them the way it sorts them.
@@ -262,15 +277,12 @@ def output_paths(
         if scenario_indices and len(scenario_indices) > 1
         else [None]
     )
+    pages = pages if pages is not None else pages_module.resolve(questions)
     return [
         out_dir
-        / (
-            prefix
-            + ("" if index is None else f"s{index:02d}-")
-            + _page_name(page_num, question)
-        )
+        / (prefix + ("" if index is None else f"s{index:02d}-") + _page_name(page))
         for index in bindings
-        for page_num, question in iter_questions(questions)
+        for page in pages
     ]
 
 
@@ -300,26 +312,33 @@ def render_survey(
     title: str = "Survey preview",
     name: str | None = None,
     scenarios: list[tuple[int, dict]] | None = None,
+    groups: dict | None = None,
 ) -> list[Path]:
     """Write a survey preview into ``out_dir``. Returns the paths written.
 
-    By default this is a single ``index.html`` holding every question, with a
-    toolbar to jump between them. ``split=True`` writes one file per question
-    instead -- useful for handing someone a single question, at the cost of
+    By default this is a single ``index.html`` holding every page, with a
+    toolbar to jump between them. ``split=True`` writes one file per page
+    instead -- useful for handing someone a single page, at the cost of
     re-inlining the stylesheet in each file.
 
     ``name`` is the stem the written files take, so several surveys can share
     an output directory without overwriting each other: the bundle becomes
-    ``<name>.html`` and split pages ``<name>-01-<question>.html``. The CLI
-    passes the survey file's own name, and refuses a set whose names agree.
-    Omitted, the bundle is ``index.html`` and split pages are numbered alone --
-    right for a directory holding the one survey.
+    ``<name>.html`` and split pages ``<name>-01-<page>.html``. The CLI passes
+    the survey file's own name, and refuses a set whose names agree. Omitted,
+    the bundle is ``index.html`` and split pages are numbered alone -- right for
+    a directory holding the one survey.
 
     ``scenarios`` are ``(index, scenario)`` pairs -- see
     :func:`scenarios.load_selection`, which is where the index comes from and
     why it is the scenario list's own rather than a position in this list. A
     bundle gains a second dropdown; split pages gain a file each. Given none,
     nothing about this function's output changes at all.
+
+    ``groups`` is the survey's own ``question_groups``, straight off the document
+    :func:`load` returns -- lists or tuples, either way. It pages the preview by
+    group where the schema asks for that presentation, and does nothing at all
+    otherwise: a page is one question unless both halves say so. See
+    :mod:`pages`.
     """
     humanize_schema = humanize_schema or {}
     out_dir = Path(out_dir or "previews")
@@ -327,9 +346,15 @@ def render_survey(
 
     names = item_names(questions)
     items = previewable(questions)
+    survey_pages = pages_module.resolve(questions, groups, humanize_schema)
     indices = [index for index, _ in scenarios] if scenarios else None
     written = output_paths(
-        questions, out_dir, split=split, name=name, scenario_indices=indices
+        questions,
+        out_dir,
+        split=split,
+        name=name,
+        scenario_indices=indices,
+        pages=survey_pages,
     )
     if not split:
         from .scenarios import label
@@ -349,6 +374,7 @@ def render_survey(
                     if scenarios
                     else None
                 ),
+                pages=survey_pages,
             ),
             encoding="utf-8",
         )
@@ -367,23 +393,27 @@ def render_survey(
 
     # strict: output_paths and this loop walk the same pages, and a
     # disagreement would silently drop or misname one.
-    pages = [
-        (page_num, question)
-        for binding in bindings
-        for (page_num, _), question in zip(
-            iter_questions(questions), binding, strict=True
-        )
+    written_pages = [
+        (page, binding) for binding in bindings for page in survey_pages
     ]
-    for (page_num, question), path in zip(pages, written, strict=True):
-        question_name = question.get("question_name") or f"question-{page_num}"
+    for (page, binding), path in zip(written_pages, written, strict=True):
         path.write_text(
-            render_page(
-                question,
-                humanize_schema=per_question.get(question_name),
+            render_page_of(
+                [
+                    (
+                        binding[position],
+                        per_question.get(
+                            binding[position].get("question_name") or ""
+                        ),
+                    )
+                    for position in page.positions
+                ],
                 custom_css=custom_css,
                 progress=progress_module.resolve(
-                    progress_config, page_num - 1, total, names
+                    progress_config, page.index, total, names
                 ),
+                title=page.name,
+                unserved=page.unserved,
             ),
             encoding="utf-8",
         )

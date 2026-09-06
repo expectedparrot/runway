@@ -1,0 +1,24 @@
+{# One item's block on the page.
+
+   The reference wraps every item of a page in this div, whether the page holds
+   one question or a whole question group. It carries no styling: like
+   `edsl-survey-container`, `edsl-survey-item` is a hook for the survey author's
+   own stylesheet, and how the questions on a group page are separated is their
+   call rather than one made here.
+
+   Recorded rather than transcribed: the `survey_item` cases hold this block to
+   the component's own output, wrapper and contents together.
+
+   `preview-item` is the outer wrapper, and it is preview chrome rather than
+   part of the page -- `display: contents`, so it drops out of layout entirely
+   and the block below stays a direct child of the page's flex column. It exists
+   only to carry `data-exclusive` for a checkbox that shares its page with other
+   questions: the behaviour script reads that off the nearest ancestor carrying
+   it, which on a one-question page is the panel (or `#root`), and a panel
+   holding several questions could only speak for one of them. So it is emitted
+   for exactly the case the panel cannot cover, and an ordinary page carries the
+   markup it always has.
+
+   Styled inline because a split page has no preview stylesheet to put it in,
+   and this must be right on every kind of page it can appear on. #}
+{% if exclusive is not none %}<div class="preview-item" style="display:contents" data-exclusive="{{ exclusive }}">{% endif %}<div class="edsl-survey-item">{{ item_html }}</div>{% if exclusive is not none %}</div>{% endif %}

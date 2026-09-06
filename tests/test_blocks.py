@@ -247,7 +247,7 @@ def test_the_image_example_draws_its_swatch_rather_than_a_marker():
     from runway.survey import load
 
     examples = Path(__file__).resolve().parent.parent / "examples"
-    questions = load(examples / "image_scenario_survey.json")
+    questions = load(examples / "image_scenario_survey.json")["questions"]
     scenario = scenarios_module.load(examples / "scenarios" / "image_scenario_survey.json")[0]
 
     piped = scenarios_module.pipe(questions, scenario)
