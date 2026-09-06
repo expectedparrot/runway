@@ -34,9 +34,12 @@ preview, and both draw ``IMAGE_PLACEHOLDER`` rather than words:
   scenario key does.
 
 Both draw as ordinary image blocks, in the shape and the place the real picture
-will occupy. **Only images**: a video with no bytes has no picture coming and a
-marker naming something that is not a file at all is a mistake, so those keep
-the reference's own "unavailable" rendering, which is what they mean.
+will occupy. **Only those two.** A video, offloaded or not, has no picture
+coming; a marker naming something that is not a file at all is a mistake; and an
+image carrying no bytes *without* the offloaded receipt is broken rather than
+elsewhere -- the live survey has nothing to show for it either, so drawing it as
+a picture on its way would report a broken scenario list as a working one. All
+three keep the reference's own "unavailable" rendering, which is what they mean.
 
 An **audio** file previews as "Unsupported file type", which is not an omission
 here: the reference's own block renderer draws images, video and PDFs and says
@@ -159,6 +162,18 @@ def pending_image_entries(names: Iterable[str]) -> dict[str, dict]:
     }
 
 
+def offloaded(value: dict) -> bool:
+    """Whether a file's bytes were moved out of the scenario, leaving a receipt.
+
+    The one shape this package recognizes, and the same one :func:`data_uri`
+    refuses to encode: ``base64_string`` holding the literal word rather than
+    base64. Kept apart from "resolves to no source", which is a wider thing --
+    a file can also carry no bytes because it never had any, and that is a
+    broken scenario rather than an uploaded one.
+    """
+    return value.get("base64_string") == OFFLOADED
+
+
 def data_uri(value: dict) -> str:
     """A file's bytes as a ``data:`` URI, or ``""`` if it carries none.
 
@@ -209,15 +224,20 @@ def file_entries(scenario: dict) -> dict[str, dict]:
             continue
         file_type = file_type_of(value)
         link = data_uri(value)
-        # An image whose bytes are somewhere this package cannot reach --
-        # offloaded after an upload, most often. The picture exists; it is the
-        # preview that cannot fetch it, so the placeholder is the accurate
-        # thing to draw: an image goes here, and this page does not have it.
-        # Only for images. A video with no bytes has no picture coming, and a
-        # marker naming something that is not a file at all is an author
-        # mistake -- both keep the reference's own "unavailable" rendering,
-        # which is what they mean.
-        if not link and file_type == "image":
+        # An image that is *offloaded*: the picture exists and the live survey
+        # fetches it back, and only this package cannot. The placeholder is the
+        # accurate thing to draw for that -- an image goes here, and this page
+        # does not have it.
+        #
+        # Gated on the receipt, not on the link coming back empty, which is a
+        # wider set: a file carrying no `base64_string`, an empty one, a
+        # non-string where the bytes should be. Those are *broken* rather than
+        # elsewhere -- the live survey has nothing to show for them either --
+        # and drawing them as a picture on its way would tell an author their
+        # scenario list is fine when it is not. They keep the reference's own
+        # "unavailable", and so does a video with no bytes, which has no picture
+        # coming at all.
+        if file_type == "image" and not link and offloaded(value):
             link = IMAGE_PLACEHOLDER
         entries[key] = {"file_store_type": file_type, "file_load_link": link}
     return entries

@@ -27,6 +27,7 @@ from runway.blocks import (
     data_uri,
     file_entries,
     file_type_of,
+    offloaded,
     options_to_blocks,
     pending_image_entries,
     prepared,
@@ -357,6 +358,19 @@ def test_an_offloaded_image_draws_the_placeholder_rather_than_words():
         "file_store_type": "image",
         "file_load_link": IMAGE_PLACEHOLDER,
     }
+
+
+def test_an_image_that_is_broken_rather_than_offloaded_stays_unavailable():
+    """The placeholder says "the picture exists and this page cannot fetch it",
+    which is true of an offloaded file and false of one carrying no bytes at
+    all. The live survey has nothing to show for those either, so drawing them
+    as a picture on its way would report a broken scenario list as a fine one.
+    """
+    for missing in ("", None):
+        entry = file_entries({"photo": {**_a_file(), "base64_string": missing}})
+        assert entry["photo"]["file_load_link"] == "", missing
+    assert offloaded({**_a_file(), "base64_string": "offloaded"})
+    assert not offloaded({**_a_file(), "base64_string": ""})
 
 
 def test_only_images_stand_in_for_themselves():

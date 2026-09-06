@@ -344,9 +344,15 @@ a placeholder from a real picture for an author who wants to.
 The same placeholder stands in for an **offloaded** scenario image, whose bytes
 were moved out of the list after an upload and are fetchable only by the live
 survey. Two different absences, one accurate rendering: an image goes here and
-this page does not have it. Only images get it — a video with no bytes has no
-picture coming, and a marker naming something that is not a file is a mistake,
-so both keep the reference's own "(image unavailable)".
+this page does not have it.
+
+Only those two get it, and the offloaded half is gated on the **receipt** —
+`base64_string` holding the literal word — rather than on resolving to no
+source, which is wider. An image with no bytes and no receipt is *broken* rather
+than elsewhere: the live survey has nothing to show for it either, so a
+placeholder there would report a broken scenario list as a working one. That, a
+video with no bytes, and a marker naming something that is not a file all keep
+the reference's own "(image unavailable)".
 
 It is a **placeholder for the bytes, not a new kind of block**. What reaches a
 template is an ordinary image block, so the option label, the question text, the

@@ -383,11 +383,12 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   a scenario list carries each file base64-encoded, so it is inlined as a
   `data:` URI. **The page is therefore as large as the media in it**: a survey
   of small images costs nothing, twenty scenarios of video does not. An *image*
-  whose bytes are not in the list — offloaded to the platform after an upload —
-  draws the same placeholder a generated image does, at the size the real one
-  will be; the picture exists, and it is the preview that cannot fetch it. A
-  marker naming a key that holds no file draws as unsupported, which is what it
-  is.
+  the list has **offloaded** to the platform after an upload draws the same
+  placeholder a generated image does, at the size the real one will be: the
+  picture exists, and it is only the preview that cannot fetch it. An image
+  carrying no bytes and no offload receipt is broken rather than elsewhere, so
+  it stays "(image unavailable)" — as does a marker naming a key that holds no
+  file.
   Option labels split the same way, images only — see above.
 - **Markup in a scenario value shows as plaintext**, which is right, but the live
   page shows slightly less of it: question text is sanitized server-side there
