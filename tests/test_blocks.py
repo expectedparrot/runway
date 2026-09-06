@@ -23,7 +23,7 @@ import pytest
 
 from runway import render_question
 from runway.blocks import (
-    PENDING_IMAGE,
+    IMAGE_PLACEHOLDER,
     data_uri,
     file_entries,
     file_type_of,
@@ -348,6 +348,33 @@ def test_an_offloaded_file_carries_no_bytes():
     assert data_uri({**_a_file(), "base64_string": "offloaded"}) == ""
 
 
+def test_an_offloaded_image_draws_the_placeholder_rather_than_words():
+    """The picture exists -- it is the preview that cannot fetch it -- so the
+    accurate thing to draw is an image the page does not have, in the shape and
+    the place it will occupy."""
+    entries = file_entries({"photo": {**_a_file(), "base64_string": "offloaded"}})
+    assert entries["photo"] == {
+        "file_store_type": "image",
+        "file_load_link": IMAGE_PLACEHOLDER,
+    }
+
+
+def test_only_images_stand_in_for_themselves():
+    """A video with no bytes has no picture coming, and a key that is not a file
+    at all is a mistake. Both keep the reference's own unavailable rendering,
+    which is what they mean."""
+    offloaded_video = {**_a_file("mp4", "video/mp4"), "base64_string": "offloaded"}
+    assert file_entries({"clip": offloaded_video})["clip"]["file_load_link"] == ""
+    assert text_to_blocks("<see file gone>", {})[0]["file_load_link"] == ""
+
+
+def test_a_file_that_has_its_bytes_is_untouched_by_any_of_this():
+    """The placeholder stands in for bytes that are missing, and only those."""
+    link = file_entries({"photo": _a_file()})["photo"]["file_load_link"]
+    assert link.startswith("data:image/png;base64,")
+    assert link != IMAGE_PLACEHOLDER
+
+
 # --------------------------------------------------------------------------
 # The image a survey has not generated yet
 # --------------------------------------------------------------------------
@@ -361,7 +388,7 @@ def test_a_pending_image_is_an_ordinary_image_entry():
     entries = pending_image_entries(["img_watercolor", "img_photo"])
     assert entries["img_watercolor"] == {
         "file_store_type": "image",
-        "file_load_link": PENDING_IMAGE,
+        "file_load_link": IMAGE_PLACEHOLDER,
     }
     assert set(entries) == {"img_watercolor", "img_photo"}
 
@@ -369,7 +396,7 @@ def test_a_pending_image_is_an_ordinary_image_entry():
 def test_the_placeholder_is_an_inline_svg_needing_nothing_fetched():
     """A preview has one external reference and it is a stylesheet. A
     placeholder pulling an icon off a CDN would be a second one."""
-    assert PENDING_IMAGE.startswith("data:image/svg+xml;base64,")
+    assert IMAGE_PLACEHOLDER.startswith("data:image/svg+xml;base64,")
 
 
 def test_a_pending_image_draws_the_same_img_a_real_one_draws():
@@ -378,7 +405,7 @@ def test_a_pending_image_draws_the_same_img_a_real_one_draws():
     html = _option_html(
         [
             {"type": "text", "content": "Watercolor"},
-            _a_file_block("image", PENDING_IMAGE, "img_watercolor"),
+            _a_file_block("image", IMAGE_PLACEHOLDER, "img_watercolor"),
         ]
     )
     assert 'class="edsl-option-image max-h-40 w-auto max-w-full' in html

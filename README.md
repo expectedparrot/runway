@@ -356,8 +356,9 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
 - **An image a survey has not generated yet is still drawn.** The one exception
   to the line above: `image_generation` answers with a picture and with nothing
   else, so `{{ img.answer }}` piped into a later question's text or options
-  draws a placeholder image — in the shape, the size and the place the generated
-  one will occupy — rather than the template text. Nothing else about a prior
+  draws a placeholder image — the same one an offloaded scenario image draws, in
+  the shape, the size and the place the real one will occupy — rather than the
+  template text. Nothing else about a prior
   answer is knowable from its type, so nothing else resolves. Your CSS sizes and
   frames it exactly as it will the real picture (it is an ordinary `<img>`), but
   cannot reach inside it: the tint, icon and label are fixed, since an SVG loaded
@@ -379,8 +380,12 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   the live page has a link to a file it has fetched, a preview has the bytes —
   a scenario list carries each file base64-encoded, so it is inlined as a
   `data:` URI. **The page is therefore as large as the media in it**: a survey
-  of small images costs nothing, twenty scenarios of video does not. A marker
-  naming a key that holds no file draws as unsupported, which is what it is.
+  of small images costs nothing, twenty scenarios of video does not. An *image*
+  whose bytes are not in the list — offloaded to the platform after an upload —
+  draws the same placeholder a generated image does, at the size the real one
+  will be; the picture exists, and it is the preview that cannot fetch it. A
+  marker naming a key that holds no file draws as unsupported, which is what it
+  is.
   Option labels split the same way, images only — see above.
 - **Markup in a scenario value shows as plaintext**, which is right, but the live
   page shows slightly less of it: question text is sanitized server-side there

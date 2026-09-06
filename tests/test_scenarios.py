@@ -240,7 +240,7 @@ def test_a_generated_image_answer_pipes_to_a_marker_and_a_placeholder():
     """The whole point: `{{ img.answer }}` becomes the same `<see file>` marker
     a file-valued scenario key becomes, and resolves to a placeholder picture
     sized and placed where the generated one will be."""
-    from runway.blocks import PENDING_IMAGE
+    from runway.blocks import IMAGE_PLACEHOLDER
 
     piped = scenarios.pipe(_image_survey(), {})
     rate = piped[1]
@@ -250,7 +250,7 @@ def test_a_generated_image_answer_pipes_to_a_marker_and_a_placeholder():
         "type": "file",
         "filename": "img",
         "file_type": "image",
-        "file_load_link": PENDING_IMAGE,
+        "file_load_link": IMAGE_PLACEHOLDER,
     }
     # The option that names no image is left alone, as any other would be.
     assert rate["question_options_blocks"][1] == []
@@ -270,7 +270,7 @@ def test_a_scenario_file_wins_a_collision_with_an_image_question_name():
     """Both resolve to `<see file img>`, and only one of them has bytes: the
     file the list actually carries. A placeholder drawn in front of a real
     picture would be a preview hiding something it was handed."""
-    from runway.blocks import PENDING_IMAGE, file_entries
+    from runway.blocks import IMAGE_PLACEHOLDER, file_entries
 
     scenario = {
         "img": {
@@ -285,7 +285,7 @@ def test_a_scenario_file_wins_a_collision_with_an_image_question_name():
     piped = scenarios.pipe(questions, scenario)
     link = piped[1]["question_options_blocks"][0][1]["file_load_link"]
     assert link == file_entries(scenario)["img"]["file_load_link"]
-    assert link != PENDING_IMAGE
+    assert link != IMAGE_PLACEHOLDER
 
 
 def test_a_survey_with_no_image_question_is_piped_exactly_as_before():

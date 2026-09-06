@@ -21,14 +21,22 @@ carrying large media inlines all of it, so the page is as big as the files are.
 A survey of small images costs nothing; twenty scenarios of video is a very
 large file.
 
-**An image a survey has not generated yet is still an image.** A question of
-type ``image_generation`` answers with a picture, so a later question piping
-``{{ img.answer }}`` is piping one -- and unlike every other deferred name,
-which is left as written because nothing here knows what it will become, this
-one's type says. Those pipe to a marker like a scenario file does, resolve to
-``PENDING_IMAGE``, and draw as an ordinary image block: a placeholder in the
-shape and the place the generated picture will occupy, rather than the template
-text spelling out where it would have gone.
+**An image this package cannot show is still an image.** Two of them reach a
+preview, and both draw ``IMAGE_PLACEHOLDER`` rather than words:
+
+* a file that is *offloaded* -- its bytes moved out of the scenario after an
+  upload, and fetchable only by the live survey. The picture exists; the preview
+  cannot reach it.
+* the answer of an ``image_generation`` question piped into a later one. That
+  type answers with a picture and with nothing else, so unlike every other
+  deferred name -- left as written because nothing here knows what it will
+  become -- this one's type says. It pipes to a marker exactly as a file-valued
+  scenario key does.
+
+Both draw as ordinary image blocks, in the shape and the place the real picture
+will occupy. **Only images**: a video with no bytes has no picture coming and a
+marker naming something that is not a file at all is a mistake, so those keep
+the reference's own "unavailable" rendering, which is what they mean.
 
 An **audio** file previews as "Unsupported file type", which is not an omission
 here: the reference's own block renderer draws images, video and PDFs and says
@@ -74,9 +82,10 @@ _UNRESOLVED = {"file_store_type": "", "file_load_link": ""}
 
 # A file whose bytes were moved out of the scenario and left a receipt behind:
 # `base64_string` says so literally. The live survey fetches it back; nothing here
-# can, so the file resolves to no source and draws as the reference draws a file
-# it cannot show. Taking the word for base64 would emit `src="data:...,offloaded"`
-# -- a broken image on every page, which is worse than saying so.
+# can, so the file resolves to no source -- and an image with no source draws the
+# placeholder, since the picture exists and it is the preview that cannot reach
+# it. Taking the word for base64 would emit `src="data:...,offloaded"` -- a
+# broken image on every page, which is worse than either.
 OFFLOADED = "offloaded"
 
 
@@ -111,7 +120,7 @@ OFFLOADED = "offloaded"
 # Base64 rather than a percent-encoded SVG so the URI needs no escaping thought
 # at any of those sites, and so it is built the same way every other inline file
 # in a preview is.
-_PENDING_IMAGE_SVG = (
+_PLACEHOLDER_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" '
     'viewBox="0 0 160 160" role="img" aria-label="Generated image">'
     '<defs><linearGradient id="g" x1="0" y1="0" x2="0.6" y2="1">'
@@ -130,8 +139,8 @@ _PENDING_IMAGE_SVG = (
     "</g></svg>"
 )
 
-PENDING_IMAGE = "data:image/svg+xml;base64," + base64.b64encode(
-    _PENDING_IMAGE_SVG.encode("utf-8")
+IMAGE_PLACEHOLDER = "data:image/svg+xml;base64," + base64.b64encode(
+    _PLACEHOLDER_SVG.encode("utf-8")
 ).decode("ascii")
 
 
@@ -140,12 +149,12 @@ def pending_image_entries(names: Iterable[str]) -> dict[str, dict]:
 
     The counterpart of :func:`file_entries`, and the same shape, so the two
     merge into one table and a marker resolves against it without knowing which
-    half it came from. A real scenario file wins a collision: it has bytes, and
+    half it came from. A scenario file wins a collision: it may carry bytes, and
     a placeholder standing in front of an actual picture would be a preview
     hiding something it was given.
     """
     return {
-        name: {"file_store_type": "image", "file_load_link": PENDING_IMAGE}
+        name: {"file_store_type": "image", "file_load_link": IMAGE_PLACEHOLDER}
         for name in names
     }
 
@@ -194,14 +203,24 @@ def file_entries(scenario: dict) -> dict[str, dict]:
     """
     from .scenarios import _is_file_value
 
-    return {
-        key: {
-            "file_store_type": file_type_of(value),
-            "file_load_link": data_uri(value),
-        }
-        for key, value in scenario.items()
-        if _is_file_value(value)
-    }
+    entries = {}
+    for key, value in scenario.items():
+        if not _is_file_value(value):
+            continue
+        file_type = file_type_of(value)
+        link = data_uri(value)
+        # An image whose bytes are somewhere this package cannot reach --
+        # offloaded after an upload, most often. The picture exists; it is the
+        # preview that cannot fetch it, so the placeholder is the accurate
+        # thing to draw: an image goes here, and this page does not have it.
+        # Only for images. A video with no bytes has no picture coming, and a
+        # marker naming something that is not a file at all is an author
+        # mistake -- both keep the reference's own "unavailable" rendering,
+        # which is what they mean.
+        if not link and file_type == "image":
+            link = IMAGE_PLACEHOLDER
+        entries[key] = {"file_store_type": file_type, "file_load_link": link}
+    return entries
 
 
 def text_to_blocks(text: str, files: dict[str, dict]) -> list[dict]:

@@ -323,7 +323,7 @@ knowable without a model, an answer or a respondent. It is the only deferred
 name this package can say anything about, and `scenarios.GeneratedImage` is the
 stand-in that does: its `.answer` resolves to the same `<see file key>` marker a
 file-valued scenario key resolves to, so the question is split into blocks
-around it and the block draws `blocks.PENDING_IMAGE` — an inline SVG placeholder
+around it and the block draws `blocks.IMAGE_PLACEHOLDER` — an inline SVG placeholder
 in the shape, the size and the place the generated picture will occupy. Only
 `.answer`: `{{ img.width }}` is an ordinary `Unresolved` and still previews as
 written. The marker is a plain `str`, which is what `Unresolved` refuses to be
@@ -340,6 +340,13 @@ document, though, so page rules, custom properties and `currentColor` stop at it
 edge and the gradient, icon and label are fixed. They are picked to sit with the
 reference's palette for that reason. `[src^="data:image/svg+xml"]` distinguishes
 a placeholder from a real picture for an author who wants to.
+
+The same placeholder stands in for an **offloaded** scenario image, whose bytes
+were moved out of the list after an upload and are fetchable only by the live
+survey. Two different absences, one accurate rendering: an image goes here and
+this page does not have it. Only images get it — a video with no bytes has no
+picture coming, and a marker naming something that is not a file is a mistake,
+so both keep the reference's own "(image unavailable)".
 
 It is a **placeholder for the bytes, not a new kind of block**. What reaches a
 template is an ordinary image block, so the option label, the question text, the

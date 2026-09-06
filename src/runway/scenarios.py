@@ -145,7 +145,7 @@ class GeneratedImage(Unresolved):
 
     ``.answer`` therefore resolves to the same ``<see file key>`` marker a
     file-valued scenario key resolves to, which is what puts a placeholder image
-    where the generated one will be -- see :data:`blocks.PENDING_IMAGE`. Only
+    where the generated one will be -- see :data:`blocks.IMAGE_PLACEHOLDER`. Only
     that one attribute: ``{{ img.width }}`` is still an :class:`Unresolved` and
     still previews as written, because nothing here knows what it would be.
 
