@@ -112,13 +112,46 @@ def test_the_notice_is_neither_the_note_nor_the_warning():
         assert "Not supported in human surveys" not in html, name
 
 
-def test_a_background_questions_prompt_is_not_shown():
-    # It is a prompt for a model or an expression for the server. Rendering it
-    # in the usual question-text markup would imply a page the survey never
-    # serves.
+def test_a_background_questions_prompt_is_shown_like_any_other_text():
+    # Nobody reads it -- it is a prompt for a model -- but it is the one part of
+    # one of these an author can get wrong, and the notice underneath says who
+    # answers it, so the page claims nothing about being served.
     html = _render("pet_portrait")
-    assert "watercolour portrait" not in html
+    assert "watercolour portrait" in html
+    assert 'class="edsl-question-text text-xl mb-3 whitespace-pre-wrap"' in html
+    assert NOTICE in html
+
+
+def test_the_prompt_goes_through_the_same_markdown_and_block_passes():
+    # The same rendering as any question text, not a second one: a prompt
+    # naming a scenario image draws the image, and markdown reads as markdown.
+    html = render_question(
+        {
+            "question_name": "shot",
+            "question_type": "image_generation",
+            "question_text": "In *this* style: <see file ref>",
+            "question_text_blocks": [
+                {"type": "text", "content": "In *this* style:"},
+                {
+                    "type": "file",
+                    "filename": "ref",
+                    "file_type": "image",
+                    "file_load_link": "data:image/png;base64,AA",
+                },
+            ],
+        }
+    )
+    assert "<em>this</em>" in html
+    assert 'class="edsl-question-image mb-3"' in html
+    assert NOTICE in html
+
+
+def test_a_question_with_no_text_draws_no_empty_text_div():
+    html = render_question(
+        {"question_name": "c", "question_type": "compute", "question_text": ""}
+    )
     assert "edsl-question-text" not in html
+    assert NOTICE in html
 
 
 def test_an_undrawn_type_that_is_shown_still_gets_the_plain_note():

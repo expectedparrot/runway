@@ -543,6 +543,13 @@ system prompt. All three are run by the survey navigator, and their pages carry 
 third notice saying so — neither "no preview yet" nor "not supported", since
 nothing is missing and nothing is wrong.
 
+The question's **text is drawn above that notice**, in the markup every other
+question's text uses and through the same markdown and block passes — so a
+prompt naming a scenario image shows the image. Nobody reads it: it is a prompt
+for a model or an expression for the server. But it is the one part of one of
+these an author can get wrong, so withholding it would hide the only thing on
+the page worth checking, and the notice directly beneath says who answers it.
+
 The thinking wrapper is the one to watch: it leaves the question's type alone, so
 a wrapped `multiple_choice` is still `multiple_choice` and would otherwise be
 drawn with a radio list for a page no respondent is ever served. It is detected

@@ -289,7 +289,9 @@ changing is the survey.
 
 `compute`, `image_generation` and anything wrapped by `thinking_question()` are
 marked *automatic* — the survey answers them itself and no respondent ever sees
-them. `examples/background_survey.json` has all three.
+them. Their pages still show the question's text, since a prompt for a model is
+the one part of one of these that can be wrong; the notice under it says who
+answers. `examples/background_survey.json` has all three.
 
 `survey_message` is the one type drawn with **no control at all**, and that is
 the whole page rather than a gap in it: a message is text a respondent reads and
