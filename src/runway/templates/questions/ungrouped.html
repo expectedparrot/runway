@@ -1,0 +1,42 @@
+{# Warning for a question no page of a grouped survey carries.
+
+   A survey presented by question group serves its groups. A question in none of
+   them is served by nothing: the response records it as skipped, and EDSL
+   refuses to create a human survey from the survey at all, naming the questions
+   it would drop. So this is a survey that cannot run as written, not a preview
+   that is behind -- which is why it takes the loud amber warning
+   `unsupported.html` gives a type no respondent could answer, rather than the
+   informational blue `background.html` gives a question nobody is *meant* to
+   answer.
+
+   The question text is drawn above it, in the same markup every other
+   question's text is drawn in. Nobody is served this wording, but it is how an
+   author will recognise which question has fallen out of the survey, and a page
+   naming no question would be a warning about nothing in particular. Only the
+   control is replaced: drawing one would show a page that cannot exist.
+
+   Both `edsl-preview-warning` and a class of its own: the first is what makes
+   this the same kind of news as an unanswerable type -- `check` reports both as
+   a warning, and the two must not be able to disagree -- and the second is what
+   tells the two apart. #}
+<div class="edsl-question mb-6">
+{#- -#}
+{% if has_question_text %}
+{% include "questions/_question_text.html" %}
+{#- -#}
+{% endif %}
+<div class="edsl-preview-warning edsl-preview-ungrouped flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+{#- -#}
+{{ icon }}
+{#- -#}
+<div class="text-base text-amber-900">
+{#- -#}
+<p class="font-semibold">Never served — this question is in no question group</p>
+{#- -#}
+<p class="mt-1">This survey is presented one question group per page, and no group holds this question, so no page carries it. A respondent would never be asked it and their response would record it as skipped. Add it to a group: EDSL refuses to create a human survey from a grouped survey that leaves a question out.</p>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>

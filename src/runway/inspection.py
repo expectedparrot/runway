@@ -18,17 +18,24 @@ news:
     A human survey can be configured for this type, but no control is
     transcribed here yet. The preview is behind; the survey is fine.
 ``warning``
-    The type has no human-survey rendering anywhere, so no preview could
-    exist. What needs changing is the survey, not this package.
+    Nothing a respondent could be served. Either the type has no human-survey
+    rendering anywhere, or the survey pages by question group and this question
+    is in none of them, so no page carries it. What needs changing is the
+    survey, not this package.
 
 The order below mirrors ``renderer.render_question`` exactly, and has to:
 a thinking-wrapped ``multiple_choice`` is still ``multiple_choice``, so asking
 the registry first would report a radio list for a page no respondent is served.
+
+The one thing that cannot be read off the question is whether a page carries it
+at all -- that is a fact about the survey's grouping, and the caller resolves the
+pages and passes it in. It is asked first, ahead of even the background test: a
+question no page holds is not run for its answer either.
 """
 
 from __future__ import annotations
 
-from .question_types import RENDERERS, background, declined, unsupported
+from .question_types import RENDERERS, background, declined, ungrouped, unsupported
 
 # Ordered worst-news-last, which is also the order a summary reads best in.
 STATUSES = ("drawn", "automatic", "note", "warning")
@@ -41,13 +48,22 @@ EXPLANATIONS = {
 }
 
 
-def classify(question: dict, humanize_schema: dict | None = None) -> str:
+def classify(
+    question: dict, humanize_schema: dict | None = None, unserved: bool = False
+) -> str:
     """Which of :data:`STATUSES` this question will render as.
 
     The schema is part of the answer, not decoration: it can ask for a layout
     this package has not transcribed, and a renderer that declines the question
     on those grounds leaves it as undrawn as an unregistered type would.
+
+    ``unserved`` says no page of this survey carries the question -- see
+    :mod:`question_types.ungrouped`, and :func:`pages.resolve`, which works it
+    out. A warning, because the survey is what needs changing: EDSL will not
+    create a human survey from it as written.
     """
+    if unserved:
+        return "warning"
     if background.is_background_question(question):
         return "automatic"
     question_type = question.get("question_type") or ""
@@ -59,7 +75,10 @@ def classify(question: dict, humanize_schema: dict | None = None) -> str:
 
 
 def describe(
-    question: dict, position: int, humanize_schema: dict | None = None
+    question: dict,
+    position: int,
+    humanize_schema: dict | None = None,
+    unserved: bool = False,
 ) -> dict:
     """A question's classification as plain data, for reporting.
 
@@ -67,7 +86,7 @@ def describe(
     the progress indicator counts against -- not its index among the questions
     alone.
     """
-    status = classify(question, humanize_schema)
+    status = classify(question, humanize_schema, unserved)
     entry = {
         "position": position,
         "name": question.get("question_name") or f"question-{position}",
@@ -75,6 +94,12 @@ def describe(
         "status": status,
         "explanation": EXPLANATIONS[status],
     }
+    if unserved:
+        # Said in the same words the page says it in, from the same constant:
+        # a report and a preview describing one problem two ways is how an
+        # author ends up thinking they are two problems.
+        entry["reason"] = ungrouped.REASON
+        return entry
     if status == "automatic":
         # Which of the three, since "automatic" alone does not say whether a
         # model was involved -- and a thinking wrapper is the surprising one.

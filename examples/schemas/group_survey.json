@@ -1,0 +1,30 @@
+{
+  "survey": {
+    "presentation": "group",
+    "custom_css": ".edsl-survey-item + .edsl-survey-item {\n    border-top: 1px solid #e5e7eb;\n    padding-top: 1.5rem;\n}\n",
+    "progress": {
+      "type": "steps",
+      "marker": "number",
+      "steps": [
+        {
+          "label": "About you",
+          "complete_after": "years_experience"
+        },
+        {
+          "label": "Your setup",
+          "complete_after": "improvements"
+        },
+        {
+          "label": "Anything else"
+        }
+      ]
+    }
+  },
+  "questions": {
+    "improvements": {
+      "exclusive_options": [
+        "None of the above"
+      ]
+    }
+  }
+}

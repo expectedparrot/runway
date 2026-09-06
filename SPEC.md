@@ -84,6 +84,12 @@ includes an option with an apostrophe. React escapes `'` as `&#x27;` and `"` as
 `&#39;`/`&#34;`; a golden with no quotes in it passes while the escaping path is
 silently broken. That happened once already.
 
+The recorded cases nest, and `goldens.RENDER_BY_KIND` says which of this
+package's functions each kind is compared against: a `question` on its own, a
+`question_block` (the question plus its comment box), and a `survey_item` (the
+block the page wraps that in, one per item of a page). Adding a kind there is
+what teaches every parity test at once.
+
 `react_goldens.json` also holds one shell case, recorded around a literal
 content marker so the markup before and after a question can be checked without
 the recording knowing what a question looks like.
@@ -134,6 +140,15 @@ edsl's `ValueError` about sequence lengths into "this is a bare list of question
 dicts" and its bare `KeyError` into "this has no memory_plan". Keep that reader
 on the error path — the moment it reads something the happy path depends on, the
 two readers can drift.
+
+`load` hands back the whole document rather than a chosen part of it, and there
+is no second loader. Which part matters depends on the caller: `questions` is
+the item list every preview is built from, `question_groups` decides what shares
+a page with what, and a caller wanting neither ignores the key. Narrowing it
+here would mean a second reader the moment something else in a survey was
+needed, and reading a survey twice is not free — opening a `.ep` shells out to
+`git`, and for a package Coop holds it syncs against the remote and rewrites the
+file.
 
 A humanize schema is the one thing `Survey.load()` does not return, because it is
 not part of an EDSL survey at all: `to_dict()` writes no `humanize_schema`, so a
@@ -274,6 +289,11 @@ weight and a bundle inlines it once:
 instead. Useful for handing someone a single question; each file carries its own
 stylesheet copy.
 
+A panel is a **page**, which is one question until the survey pages by question
+group — see below. The toolbar then lists the pages, named after the groups, and
+a split render writes one file per group, numbered by where the group begins
+among the survey's items.
+
 ## Scenarios
 
 A humanized survey can be bound to a scenario list, and a respondent is assigned
@@ -395,6 +415,67 @@ it is on. The attribute is present on every checkbox, the empty list included:
 its absence means "not a checkbox", not "nothing is exclusive". That replaced a
 regex reverse-engineering a question name out of a DOM id, so the one
 reimplementation in the package got shorter.
+
+## Question groups
+
+A page holds one question unless the survey and its schema together say
+otherwise. `question_groups` on the survey names the pages — a first and last
+question, inclusive — and `humanize_schema["survey"]["presentation"]` set to
+`"group"` asks to be served them:
+
+```python
+survey.add_question_group("work_location", "years_experience", "background")
+humanize_schema = {"survey": {"presentation": "group"}}
+```
+
+**Neither half means anything alone**, and that is the live behaviour rather
+than a simplification here: the navigator branches on both, so groups without
+the schema, or the schema without groups, are served a question at a time. EDSL
+rejects the second combination at push time, where it can see the survey and the
+schema at once; nothing here can, since the two arrive as separate files, so
+`check` reports it instead.
+
+`pages.resolve` turns the item list into pages, and everything downstream reads
+that list rather than the questions — panels, split files, the toolbar, and the
+position each page's progress indicator is resolved at. A survey with no groups
+resolves to one page per question, so there is no second code path for the
+ordinary case: it is the same walk with pages of one.
+
+Three details of the arithmetic, all of them shared with the reference
+implementation's own author-side preview, and none of them guessable from the
+group ranges alone:
+
+- **A range indexes the survey's questions, not its items.** An instruction
+  between two questions does not shift a group.
+- **An instruction belongs to the page of the question after it**, which is how
+  EDSL attaches one when it serves a page; a trailing instruction takes the last
+  group. Instructions have no preview here yet, so what this decides is where a
+  page *begins* — which is the position its progress reading is measured at.
+- **A question in no group gets a page of its own, and that page says so.**
+  Paging by group, the live survey serves the groups and nothing else, so such
+  a question is never asked; EDSL's `validate_humanize_schema` refuses to build
+  a human survey from the survey at all, naming the questions it would drop.
+  Dropping it from the preview would leave the author with nothing showing what
+  they had done, and drawing it as an ordinary page would claim a page that
+  cannot exist — so the page draws the question's text with the same amber
+  warning an unanswerable type gets, and `check` reports it as a `warning`.
+  This is the one thing about a question that is not in the question:
+  `render_item` and `inspection.classify` are both handed it by the page.
+
+Two things a group page needs that a page of one question does not:
+
+- `edsl-survey-item` wraps every item. The reference emits it on every page,
+  one question or several, and it carries no styling: separating the questions
+  on a page is `custom_css`'s job, and this is its hook. Recorded, like
+  everything else the page is built from — `survey_item_with_comment` and
+  `survey_item_without_comment` are the cases.
+- **Exclusive options move off the panel.** They are a rule rather than markup
+  (see below), read by the page script off the nearest ancestor carrying
+  `data-exclusive`. A panel holding four questions cannot answer for one of
+  them, so on such a page each item is wrapped in a `preview-item` — preview
+  chrome, `display: contents`, inline-styled because a split page has no
+  preview stylesheet — and the panel carries nothing. A page of one question is
+  untouched: its panel carries the attribute as it always has.
 
 ## The progress indicator
 
@@ -571,7 +652,8 @@ shown questions of the same types.
 from pathlib import Path
 from runway import load, load_schema, render_bundle, render_page, render_survey
 
-questions       = load(Path("survey.ep"))            # or .json.gz, or .json
+survey          = load(Path("survey.ep"))            # or .json.gz, or .json
+questions       = survey["questions"]                # items, instructions and all
 humanize_schema = load_schema(Path("schema.json"))   # always its own file
 
 html  = render_bundle(questions, humanize_schema)                # one document
@@ -582,12 +664,18 @@ paths = render_survey(questions, humanize_schema, name="my_survey")   # -> my_su
 from runway import scenarios
 chosen = scenarios.load_selection(Path("scenarios.json"), "0-9")   # [(index, dict), ...]
 paths = render_survey(questions, humanize_schema, scenarios=chosen)
+
+from runway import render_page_of
+paths = render_survey(questions, humanize_schema,    # pages by question group
+                      groups=survey["question_groups"])
+html  = render_page_of([(question, schema), ...])    # one page, several questions
 ```
 
-`load` returns the questions and nothing else, in any format edsl saves a survey
-as, and raises `SurveyLoadError` for a file it cannot read — one exception to
-catch rather than one per format. `render_page` takes a lone question dict, which
-is how a single question is previewed without a survey around it.
+`load` returns the survey as `Survey.to_dict()` writes it, in any format edsl
+saves one as, and raises `SurveyLoadError` for a file it cannot read — one
+exception to catch rather than one per format. `render_page` takes a lone
+question dict, which is how a single question is previewed without a survey
+around it, and `render_page_of` is the same for a page holding a whole group.
 
 `render_survey` defaults to writing `index.html` unless `name=` is passed; the
 CLI passes the survey file's own name so that several surveys can share an

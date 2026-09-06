@@ -212,6 +212,35 @@
       "comment": null
     }
   },
+  "survey_item_without_comment": {
+    "kind": "survey_item",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Don't know"
+      ]
+    }
+  },
+  "survey_item_with_comment": {
+    "kind": "survey_item",
+    "question": {
+      "question_name": "pref",
+      "question_type": "multiple_choice",
+      "question_text": "Which do you prefer?",
+      "question_options": [
+        "Option A",
+        "Don't know"
+      ]
+    },
+    "humanize_schema": {
+      "comment": {
+        "label": "Why? Say as much or as little as you'd like."
+      }
+    }
+  },
   "progress_bar_zero": {
     "kind": "progress",
     "progress": {

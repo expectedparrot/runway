@@ -89,9 +89,11 @@ def test_a_compressed_dump_renders_the_same_page_as_its_json(tmp_path):
 
 
 @needs_git
-def test_loading_a_package_yields_questions_and_nothing_else(tmp_path):
-    """A survey file has questions in it; a schema is not a survey's to carry."""
-    assert load(_saved_as(tmp_path, "mixed_survey.ep"))
+def test_loading_a_package_yields_a_survey_and_no_schema(tmp_path):
+    """A survey file has a survey in it; a schema is not a survey's to carry."""
+    document = load(_saved_as(tmp_path, "mixed_survey.ep"))
+    assert document["questions"]
+    assert "humanize_schema" not in document
 
 
 # --------------------------------------------------------------------------

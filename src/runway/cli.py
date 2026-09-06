@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, inspection, scenarios
+from . import __version__, inspection, pages, scenarios
 from .question_types import RENDERERS, background, unsupported
 from .survey import (
     SurveyLoadError,
@@ -73,9 +73,16 @@ problem with the survey; the rest are a problem with this tool, or with
 nothing.
 
 Then `render`. It writes ./previews/<survey>.html unless `-o DIR` says
-otherwise: one file holding every question, with a toolbar to move between them.
-`--split` writes one file per question instead, which is much larger -- the
+otherwise: one file holding every page, with a toolbar to move between them.
+`--split` writes one file per page instead, which is much larger -- the
 stylesheet is most of a page's weight and a bundle inlines it once.
+
+A page is one question unless the survey groups them. A survey that names
+question groups, and whose schema asks for them with
+{"survey": {"presentation": "group"}}, is served a whole group per page and is
+previewed that way: one panel, or one split file, per group. Both halves are
+needed -- groups without the schema, and the schema without groups, are served a
+question at a time -- and `check` says which of the two is missing.
 
 A survey may also be bound to a scenario list. A respondent is assigned one
 scenario for their whole response, so each scenario is a different rendering of
@@ -117,7 +124,7 @@ def cmd_render(args: argparse.Namespace) -> int:
         return 1
 
     written: list[Path] = []
-    for path, questions, humanize_schema in surveys:
+    for path, questions, humanize_schema, groups in surveys:
         name = name_for(path)
         written.extend(
             _render_survey(
@@ -128,6 +135,7 @@ def cmd_render(args: argparse.Namespace) -> int:
                 title=args.title or name,
                 name=name,
                 scenarios=scenarios,
+                groups=groups,
             )
         )
     for path in written:
@@ -144,27 +152,38 @@ def cmd_check(args: argparse.Namespace) -> int:
     surveys, scenarios = loaded
 
     reports = []
-    for path, questions, humanize_schema in surveys:
+    for path, questions, humanize_schema, groups in surveys:
         # The schema is read here rather than ignored because it can change the
         # answer: a layout this package has not transcribed leaves a question
         # undrawn however ordinary its type is.
         per_question = humanize_schema.get("questions") or {}
+        # Resolved before the questions are described, because one thing about a
+        # question is not in the question: whether any page of this survey
+        # carries it. See `pages` and `question_types.ungrouped`.
+        survey_pages = pages.resolve(questions, groups, humanize_schema)
+        unserved = {
+            position for page in survey_pages if page.unserved for position in page.positions
+        }
         entries = [
             inspection.describe(
                 question,
                 position,
                 per_question.get(question.get("question_name") or ""),
+                unserved=index in unserved,
             )
-            for position, question in iter_questions(questions)
+            for index, (position, question) in enumerate(iter_questions(questions))
         ]
         if scenarios:
             _add_piping(entries, questions, scenarios)
+        _add_pages(entries, survey_pages)
         reports.append(
             {
                 "survey": str(path),
                 "items": len(questions),
+                "pages": len(survey_pages),
                 "questions": entries,
                 "summary": inspection.summarize(entries),
+                "notes": _group_notes(humanize_schema, groups),
             }
         )
 
@@ -253,7 +272,7 @@ def _load_all(
     schema_path: Path | None = None,
     scenarios_path: Path | None = None,
     index_spec: str | None = None,
-) -> tuple[list[tuple[Path, list[dict], dict]], list[tuple[int, dict]]] | None:
+) -> tuple[list[tuple[Path, list[dict], dict, dict]], list[tuple[int, dict]]] | None:
     """Read every input before any is acted on, or report and return None.
 
     Reading first means a bad path among several leaves the output directory as
@@ -301,21 +320,65 @@ def _load_all(
         )
         return None
 
-    surveys: list[tuple[Path, list[dict], dict]] = []
+    surveys: list[tuple[Path, list[dict], dict, dict]] = []
     for path in paths:
         if not path.exists():
             print(f"error: no such survey file: {path}", file=sys.stderr)
             return None
         try:
-            questions = load(path)
+            document = load(path)
         except SurveyLoadError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return None
+        questions = document.get("questions") or []
         if not questions:
             print(f"error: no questions found in {path}", file=sys.stderr)
             return None
-        surveys.append((path, questions, schema))
+        # The groups travel alongside: a survey's own, which page the preview
+        # where the schema asks for that presentation and are ignored otherwise.
+        surveys.append((path, questions, schema, document.get("question_groups")))
     return surveys, chosen
+
+
+def _add_pages(entries: list[dict], survey_pages: list[pages.Page]) -> None:
+    """Record which group each question is served on, in place.
+
+    Recorded only for a survey that pages by group. Telling every question of an
+    ordinary survey that it is alone on a page of its own would be a column
+    saying nothing, for every survey ever written.
+
+    Entries are in the order ``iter_questions`` yields them, which is the order
+    a page's ``positions`` index into, so the two line up by position rather
+    than by name -- a name is not something a question dict is guaranteed to
+    carry.
+    """
+    for page in survey_pages:
+        if page.group is None:
+            continue
+        for position in page.positions:
+            if position < len(entries):
+                entries[position]["group"] = page.group
+
+
+def _group_notes(humanize_schema: dict, groups: dict) -> list[str]:
+    """What is worth saying about how this survey pages, if anything.
+
+    One case, and it is here rather than against a question because it is not
+    about any one of them: a schema asking for grouped pages from a survey that
+    defines no groups. Nothing on any page can show it -- every page is what it
+    would have been -- and the live survey does the same thing quietly, so the
+    report is the only place it can be said.
+
+    The other grouping mistake, a question no group holds, is a warning against
+    that question instead: it has a page of its own to be said on.
+    """
+    notes = []
+    if pages.presentation(humanize_schema) == pages.PER_GROUP and not groups:
+        notes.append(
+            "the schema asks for grouped pages, but the survey defines no "
+            "question groups -- it will be served a question at a time"
+        )
+    return notes
 
 
 def _add_piping(
@@ -362,7 +425,7 @@ def _add_piping(
             entry["unresolved"] = missing
 
 
-def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
+def _without_repeats(surveys: list[tuple[Path, list[dict], dict, dict]]):
     """Drop repeats of the same file, keeping the first.
 
     Naming one survey twice is not a collision -- it is a list with something
@@ -383,7 +446,7 @@ def _without_repeats(surveys: list[tuple[Path, list[dict], dict]]):
 
 
 def _colliding(
-    surveys: list[tuple[Path, list[dict], dict]],
+    surveys: list[tuple[Path, list[dict], dict, dict]],
     out_dir: Path,
     split: bool,
     scenarios: list[tuple[int, dict]] | None = None,
@@ -409,13 +472,18 @@ def _colliding(
     indices = [index for index, _ in scenarios] if scenarios else None
     claimed: dict[Path, Path] = {}
     clashes: dict[Path, list[Path]] = {}
-    for source, questions, _ in surveys:
+    for source, questions, humanize_schema, groups in surveys:
         for target in output_paths(
             questions,
             out_dir,
             split=split,
             name=name_for(source),
             scenario_indices=indices,
+            # The same pages the render will write, since that is what a
+            # collision is about: a survey paging by group writes a file per
+            # group, and two surveys' groups may collide where their questions
+            # would not.
+            pages=pages.resolve(questions, groups, humanize_schema),
         ):
             first = claimed.setdefault(target, source)
             if first != source:
@@ -447,7 +515,12 @@ def _render_survey(*args, **kwargs) -> list[Path]:
 def _print_check(report: dict) -> None:
     entries = report["questions"]
     name = Path(report["survey"]).name
-    print(f"\n{name}  -  {report['items']} items")
+    grouped = any(entry.get("group") for entry in entries)
+    # Pages are worth counting only where they are not the questions counted
+    # again: a survey served a question at a time has as many pages as it has
+    # questions, and saying so twice reads as though it meant something.
+    paging = f", {report['pages']} pages" if grouped else ""
+    print(f"\n{name}  -  {report['items']} items{paging}")
     if not entries:
         print("  (no previewable questions)")
         return
@@ -455,7 +528,12 @@ def _print_check(report: dict) -> None:
     print()
     name_width = max(len(entry["name"]) for entry in entries)
     type_width = max(len(entry["type"]) for entry in entries)
+    # A column only where there is something to put in it -- see `_add_pages`.
+    group_width = (
+        max(len(entry.get("group") or "") for entry in entries) if grouped else 0
+    )
     for entry in entries:
+        page = f"{entry.get('group') or '':<{group_width}}  " if grouped else ""
         detail = ""
         if entry.get("reason"):
             detail = f"  ({entry['reason']})"
@@ -472,6 +550,7 @@ def _print_check(report: dict) -> None:
             piping += f"  {', '.join(entry['unresolved'])} (unresolved)"
         print(
             f"  {entry['status']:<{_STATUS_WIDTH}}  "
+            f"{page}"
             f"{entry['name']:<{name_width}}  "
             f"{entry['type']:<{type_width}}{detail}{piping}"
         )
@@ -495,6 +574,12 @@ def _print_check(report: dict) -> None:
                 "so nothing in them pipes at all"
             )
         print(", ".join(said))
+
+    # Last, and a third kind of news again: not about a question at all, but
+    # about how the survey is paged -- which the page cannot show, because it
+    # looks the same either way.
+    for note in report.get("notes") or []:
+        print(f"note: {note}")
 
 
 # --------------------------------------------------------------------------

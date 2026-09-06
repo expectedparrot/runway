@@ -4,15 +4,18 @@ Markup lives in ``templates/``; this module prepares context and composes the
 fragments. The shell reproduces the **respondent-facing survey page** -- what
 someone taking the survey sees -- rather than the authoring-side preview.
 
-Two entry points:
+Three entry points:
 
 ``render_page``
     One question, one document. No preview chrome at all.
+``render_page_of``
+    The same, for a page holding several questions -- a survey that pages by
+    question group. ``render_page`` is this with a single item.
 ``render_bundle``
-    A whole survey in one document: every question rendered into its own copy
-    of the survey shell, one shown at a time, with a toolbar to jump between
-    them. Preferred for anything longer than a single question -- the
-    stylesheet is the bulk of a page's weight and a bundle pays for it once.
+    A whole survey in one document: every page rendered into its own copy of
+    the survey shell, one shown at a time, with a toolbar to jump between them.
+    Preferred for anything longer than a single question -- the stylesheet is
+    the bulk of a page's weight and a bundle pays for it once.
 """
 
 from __future__ import annotations
@@ -23,6 +26,7 @@ from pathlib import Path
 from markupsafe import Markup
 
 from . import icons
+from . import pages as pages_module
 from . import progress as progress_module
 from .question_types import (
     background,
@@ -30,6 +34,7 @@ from .question_types import (
     declined,
     get_renderer,
     matrix,
+    ungrouped,
     unsupported,
 )
 from .templating import render as render_template
@@ -204,17 +209,88 @@ def render_progress(payload: dict | None = None) -> str:
     )
 
 
+def render_item(
+    question: dict,
+    humanize_schema: dict | None = None,
+    exclusive: str | None = None,
+    unserved: bool = False,
+) -> str:
+    """One item's block on the page: the question, its comment, its wrapper.
+
+    The reference wraps every item of a page in an ``edsl-survey-item`` div,
+    whether the page holds one question or a whole group, so this is not
+    something only a group page grows.
+
+    ``unserved`` is the one thing about a question that its own dict cannot say:
+    that no page of this survey carries it, because it is in no question group
+    -- see :mod:`question_types.ungrouped`. The page composing this knows, and
+    hands the answer down; the control is then replaced by a warning, since
+    drawing one would show a page that cannot exist. No comment box either: a
+    comment on an answer nobody gives is furniture from a page nobody is served.
+    """
+    body = (
+        ungrouped.render(question, humanize_schema)
+        if unserved
+        else render_question_with_comment(question, humanize_schema)
+    )
+    return render_template(
+        "survey_item.html",
+        item_html=Markup(body),
+        exclusive=exclusive,
+    )
+
+
+def render_page_body(
+    items: list[tuple[dict, dict | None]],
+    progress: dict | None = None,
+    unserved: bool = False,
+) -> str:
+    """Render the respond page's body markup around a page's items.
+
+    ``items`` is ``(question, its humanize schema)`` per question on the page:
+    one of them for an ordinary survey, a whole question group's worth for a
+    survey that pages by group.
+
+    Where a page holds several questions, each checkbox among them carries its
+    own exclusive positions -- see ``survey_item.html``. On a page holding one,
+    nothing is emitted here and the panel (or ``#root``) carries them, which is
+    where they have always been.
+
+    ``unserved`` says this whole page is one nobody is shown -- a question in no
+    question group, in a survey paged by them. It is a property of the page
+    rather than of any question on it, which is why it arrives here and not in
+    the question dicts; such a page is always one question, since a group is
+    what puts two of them together.
+    """
+    several = len(items) > 1
+    return render_template(
+        "body.html",
+        progress_html=Markup(render_progress(progress)),
+        items_html=Markup(
+            "".join(
+                render_item(
+                    question,
+                    schema,
+                    exclusive=(
+                        _positions_attribute(exclusive_positions(question, schema))
+                        if several
+                        else None
+                    ),
+                    unserved=unserved,
+                )
+                for question, schema in items
+            )
+        ),
+    )
+
+
 def render_body(
     question: dict,
     humanize_schema: dict | None = None,
     progress: dict | None = None,
 ) -> str:
     """Render the respond page's body markup around one question."""
-    return render_template(
-        "body.html",
-        progress_html=Markup(render_progress(progress)),
-        question_html=Markup(render_question_with_comment(question, humanize_schema)),
-    )
+    return render_page_body([(question, humanize_schema)], progress)
 
 
 def exclusive_positions(
@@ -260,6 +336,21 @@ def _positions_attribute(positions: list[int] | None) -> str | None:
     if positions is None:
         return None
     return " ".join(str(position) for position in positions)
+
+
+def page_exclusive(items: list[tuple[dict, dict | None]]) -> str | None:
+    """What the container around a page carries, or ``None`` if it carries none.
+
+    A page of one question puts its exclusive positions on the panel in a bundle
+    and on ``#root`` on a split page, which is where the behaviour script has
+    always found them. A page of several cannot: the attribute would speak for
+    one question and be read by all of them, so each item carries its own
+    instead and the container carries nothing.
+    """
+    if len(items) != 1:
+        return None
+    question, schema = items[0]
+    return _positions_attribute(exclusive_positions(question, schema))
 
 
 def has_checkbox(questions: list[dict]) -> bool:
@@ -361,14 +452,18 @@ def _document(
     )
 
 
-def _as_survey_schema(question: dict, humanize_schema: dict | None) -> dict:
-    """One question's schema, in the survey-wide shape the page helpers read.
+def _as_survey_schema(items: list[tuple[dict, dict | None]]) -> dict:
+    """A page's schemas, in the survey-wide shape the page helpers read.
 
-    ``render_page`` takes the schema for its single question; everything that
-    assembles a page reads the survey's, keyed by question name. Wrapping it
+    A page is given the schema for each question on it; everything that
+    assembles a page reads the survey's, keyed by question name. Wrapping them
     once here keeps the two callers from spelling the same nesting differently.
     """
-    return {"questions": {question.get("question_name", ""): humanize_schema}}
+    return {
+        "questions": {
+            question.get("question_name", ""): schema for question, schema in items
+        }
+    }
 
 
 def render_page(
@@ -387,16 +482,42 @@ def render_page(
     ``progress`` is a payload from :mod:`progress`; omitting it draws the bar at
     0%, and ``progress.HIDDEN`` leaves the indicator off the page entirely.
     """
-    positions = exclusive_positions(question, humanize_schema)
+    return render_page_of(
+        [(question, humanize_schema)], custom_css=custom_css, progress=progress
+    )
+
+
+def render_page_of(
+    items: list[tuple[dict, dict | None]],
+    custom_css: str | None = None,
+    progress: dict | None = None,
+    title: str | None = None,
+    unserved: bool = False,
+) -> str:
+    """Render one page of a survey -- its whole run of items -- as a document.
+
+    A page is one question unless the survey pages by question group, in which
+    case it is the group; ``items`` is ``(question, its humanize schema)`` for
+    each question on it. :func:`render_page` is this with a single item, and
+    that page's markup is unchanged by the existence of this one.
+
+    ``title`` defaults to the page's own name -- the group's, where a caller
+    knows it, and otherwise the first question's. ``unserved`` marks a page no
+    respondent is shown; see :func:`render_page_body`.
+    """
+    questions = [question for question, _ in items]
+    first = questions[0] if questions else {}
     return _document(
-        title=question.get("question_name") or "Survey preview",
-        body_html=render_body(question, humanize_schema, progress),
+        title=title or first.get("question_name") or "Survey preview",
+        body_html=render_page_body(items, progress, unserved=unserved),
         custom_css=custom_css,
-        carousels=carousel_questions(
-            [question], _as_survey_schema(question, humanize_schema)
+        # Neither applies to a page that draws a warning instead of its control:
+        # there is no carousel to move and no checkbox to tick.
+        carousels=(
+            [] if unserved else carousel_questions(questions, _as_survey_schema(items))
         ),
-        checkbox_present=positions is not None,
-        root_exclusive=_positions_attribute(positions),
+        checkbox_present=not unserved and has_checkbox(questions),
+        root_exclusive=None if unserved else page_exclusive(items),
     )
 
 
@@ -407,17 +528,22 @@ def render_bundle(
     item_names: list[str] | None = None,
     variants: list[list[dict]] | None = None,
     scenarios: list[dict] | None = None,
+    pages: list[pages_module.Page] | None = None,
 ) -> str:
     """Render a whole survey as one standalone document.
 
-    Each question gets its own copy of the survey shell -- so its progress bar
+    Each page gets its own copy of the survey shell -- so its progress bar
     reads correctly -- wrapped in a panel that the toolbar shows one at a time.
-    Repeating the shell costs ~1.5 KB per question against a stylesheet that is
-    inlined once, which is why this is cheaper than a file per question.
+    Repeating the shell costs ~1.5 KB per page against a stylesheet that is
+    inlined once, which is why this is cheaper than a file per page.
 
     With JavaScript unavailable the first panel stays visible and the rest stay
-    hidden, so the document degrades to "the first question" rather than to a
-    wall of every question at once.
+    hidden, so the document degrades to "the first page" rather than to a wall
+    of every question at once.
+
+    ``pages`` says which questions land on a page together -- see :mod:`pages`,
+    whose ``Page.positions`` index into ``questions``. Given none, a page is one
+    question, which is what a survey without question groups is served as.
 
     ``item_names`` is the survey's full item order -- instructions included --
     used to place each question in the survey and to resolve the boundaries of a
@@ -433,11 +559,11 @@ def render_bundle(
     position here, since that is the number the live survey identifies a
     scenario by.
 
-    **Panels are deduplicated by what they render to.** A question that pipes
+    **Panels are deduplicated by what they render to.** A page that pipes
     nothing renders identically under every scenario and gets one panel, marked
-    as serving all of them; only a question that actually varies is repeated. So
-    a survey that pipes nothing collapses to exactly the panel list it has
-    without scenarios, and a bundle grows only where the survey really differs.
+    as serving all of them; only a page that actually varies is repeated. So a
+    survey that pipes nothing collapses to exactly the panel list it has without
+    scenarios, and a bundle grows only where the survey really differs.
     """
     humanize_schema = humanize_schema or {}
     per_question = humanize_schema.get("questions") or {}
@@ -461,19 +587,33 @@ def render_bundle(
         else list(range(len(variants)))
     )
 
+    # A page per question, for a caller that has not resolved any. Built here
+    # rather than by `pages.resolve`, which walks a survey's *items*: what
+    # reaches this function is the previewable questions, and where each of them
+    # sits among the items is what `item_names` was given for.
+    if pages is None:
+        pages = [
+            pages_module.Page(
+                positions=(index,),
+                index=position_of.get(names[index], index),
+                group=None,
+                name=names[index],
+            )
+            for index in range(len(questions))
+        ]
+
     panels: list[str] = []
     items: list[dict] = []
     carousels: list[dict] = []
 
-    for index, question in enumerate(questions):
-        name = names[index]
-        schema = per_question.get(name)
+    for number, page in enumerate(pages):
+        schemas = [per_question.get(names[position]) for position in page.positions]
         progress = progress_module.resolve(
             progress_config,
-            # Where this question sits among every item, which is what both
-            # readings measure against. A question the caller did not list
-            # falls back to its position among the questions.
-            position_of.get(name, index),
+            # Where this page begins among every item, which is what both
+            # readings measure against: a respondent on it has everything before
+            # it behind them, and a step it crosses is the step they are on.
+            page.index,
             total,
             item_names,
         )
@@ -482,51 +622,74 @@ def render_bundle(
         grouped: dict[tuple[str, str | None], list[int]] = {}
         # The rendering each group was formed from, so the carousel rows parked
         # for a panel come from the same binding as the row on it.
-        formed_by: dict[tuple[str, str | None], dict] = {}
+        formed_by: dict[tuple[str, str | None], list[dict]] = {}
         for slot, variant in enumerate(variants):
-            variant_question = variant[index]
+            bound_items = [
+                (variant[position], schema)
+                for position, schema in zip(page.positions, schemas, strict=True)
+            ]
             key = (
-                render_body(variant_question, schema, progress=progress),
-                _positions_attribute(exclusive_positions(variant_question, schema)),
+                render_page_body(
+                    bound_items, progress=progress, unserved=page.unserved
+                ),
+                None if page.unserved else page_exclusive(bound_items),
             )
             grouped.setdefault(key, []).append(scenario_ids[slot])
-            formed_by.setdefault(key, variant_question)
+            formed_by.setdefault(key, [question for question, _ in bound_items])
         for (body, exclusive), serves in grouped.items():
             serving = " ".join(str(one) for one in serves) if bound else None
-            entry = carousel_entry(
-                formed_by[(body, exclusive)], per_question, scenario_indices=serving
-            )
-            if entry is not None:
-                carousels.append(entry)
+            # Nothing to park for a page drawing a warning in place of its
+            # control: the carousel it would have had is not on the page.
+            for question in [] if page.unserved else formed_by[(body, exclusive)]:
+                entry = carousel_entry(question, per_question, serving)
+                if entry is not None:
+                    carousels.append(entry)
             panels.append(
                 render_template(
                     "panel.html",
                     body_html=Markup(body),
-                    question_name=name,
+                    question_name=page.name,
                     # Both omitted without scenarios, so an ordinary bundle
                     # carries the markup it always has: the panels are then one
-                    # per question and their order is the answer.
-                    question_index=index if bound else None,
+                    # per page and their order is the answer.
+                    question_index=number if bound else None,
                     scenario_indices=serving,
                     exclusive=exclusive,
                     is_active=not panels,
                 )
             )
+        on_page = [questions[position] for position in page.positions]
         items.append(
             {
-                "name": name,
-                "pretty_type": pretty_type(question.get("question_type", "")),
+                "name": page.name,
+                # A page of one question is named by its type, as it always has
+                # been. A group is named by how much is on it: listing four
+                # types in a dropdown entry says less than the count does.
+                "pretty_type": (
+                    pretty_type(on_page[0].get("question_type", ""))
+                    if len(on_page) == 1
+                    else f"{len(on_page)} questions"
+                ),
                 # Marked in the toolbar as well as on the page: a thinking
                 # question keeps the type it wrapped, so "Multiple Choice"
                 # alone would not distinguish the page nobody is served from
-                # the one before it.
-                "is_background": background.is_background_question(question),
+                # the one before it. A group counts as automatic only when
+                # every question on it is -- a group holding one human question
+                # is a page a respondent is served.
+                "is_background": all(
+                    background.is_background_question(question)
+                    for question in on_page
+                ),
+                # Marked apart from the above, and ahead of it in the template:
+                # a question in no group is not served whoever would have
+                # answered it, and that is the news an author has to act on.
+                "is_unserved": page.unserved,
             }
         )
 
-    # The toolbar counts questions, not panels: it is preview chrome for moving
-    # between the questions in this document, and a question bound to four
-    # scenarios is still one question.
+    # The toolbar counts pages, not panels: it is preview chrome for moving
+    # between the pages in this document, and a page bound to four scenarios is
+    # still one page.
     toolbar = (
         render_template(
             "toolbar.html",
