@@ -21,6 +21,15 @@ carrying large media inlines all of it, so the page is as big as the files are.
 A survey of small images costs nothing; twenty scenarios of video is a very
 large file.
 
+**An image a survey has not generated yet is still an image.** A question of
+type ``image_generation`` answers with a picture, so a later question piping
+``{{ img.answer }}`` is piping one -- and unlike every other deferred name,
+which is left as written because nothing here knows what it will become, this
+one's type says. Those pipe to a marker like a scenario file does, resolve to
+``PENDING_IMAGE``, and draw as an ordinary image block: a placeholder in the
+shape and the place the generated picture will occupy, rather than the template
+text spelling out where it would have gone.
+
 An **audio** file previews as "Unsupported file type", which is not an omission
 here: the reference's own block renderer draws images, video and PDFs and says
 exactly that for everything else.
@@ -28,7 +37,9 @@ exactly that for everything else.
 
 from __future__ import annotations
 
+import base64
 import re
+from collections.abc import Iterable
 
 # Which control draws a file, chosen by its extension. Transcribed from the
 # reference's own table, including that audio is classified and then not drawn --
@@ -67,6 +78,76 @@ _UNRESOLVED = {"file_store_type": "", "file_load_link": ""}
 # it cannot show. Taking the word for base64 would emit `src="data:...,offloaded"`
 # -- a broken image on every page, which is worse than saying so.
 OFFLOADED = "offloaded"
+
+
+# The picture an image question has not been asked for yet.
+#
+# `QuestionImageGeneration` answers with an image and with nothing else -- that
+# is what the type is for -- so a later question piping `{{ img.answer }}` is
+# piping a picture, even here where no model has been called and no respondent
+# exists to call one for. Every other deferred name is left as written because
+# nothing here knows what it will become; this one is the exception, because the
+# *type* says.
+#
+# Drawn as a real image with a stand-in for its bytes rather than as a new kind
+# of block, which is the whole reason it is a few lines: the block reaching the
+# template is an ordinary image block, so the option label, the question text,
+# the matrix row and the carousel slide all already draw it, and an author's CSS
+# for `.edsl-option-image` sizes and frames the placeholder exactly as it will
+# the picture that replaces it. A branch for it in the templates would have been
+# markup the reference does not emit -- see AGENTS.md.
+#
+# **What CSS reaches it, and what does not.** Everything about the *box* does,
+# because the box is an ordinary `<img>`: width, height, `aspect-ratio`,
+# `object-fit`, `border`, `border-radius`, `opacity`, a filter. Nothing *inside*
+# does -- an SVG referenced by `src` is an isolated document, so page rules,
+# custom properties and `currentColor` all stop at its edge, and the gradient,
+# the icon and the label are fixed. That is the reason the colours below are
+# chosen to sit with the reference's own palette rather than left to inherit
+# something they cannot: they have to look right in a page nobody restyled.
+# `[src^="data:image/svg+xml"]` is the selector for an author who wants the box
+# treated differently from a real picture.
+#
+# Base64 rather than a percent-encoded SVG so the URI needs no escaping thought
+# at any of those sites, and so it is built the same way every other inline file
+# in a preview is.
+_PENDING_IMAGE_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" '
+    'viewBox="0 0 160 160" role="img" aria-label="Generated image">'
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="0.6" y2="1">'
+    '<stop offset="0" stop-color="#eef3fe"/><stop offset="1" stop-color="#dfe8fb"/>'
+    "</linearGradient></defs>"
+    '<rect width="160" height="160" fill="url(#g)"/>'
+    # lucide's `image`, its own 24x24 grid scaled up and centred, drawn thinner
+    # than lucide's default 2 because it is displayed several times its own
+    # size. ISC -- see LICENSES.md, and `icons.py` for the copies the reference
+    # itself draws.
+    '<g transform="translate(56 56) scale(2)" fill="none" stroke="#5b8cea" '
+    'stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">'
+    '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>'
+    '<circle cx="9" cy="9" r="2"/>'
+    '<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'
+    "</g></svg>"
+)
+
+PENDING_IMAGE = "data:image/svg+xml;base64," + base64.b64encode(
+    _PENDING_IMAGE_SVG.encode("utf-8")
+).decode("ascii")
+
+
+def pending_image_entries(names: Iterable[str]) -> dict[str, dict]:
+    """Drawable entries for the images a survey generates but has not generated.
+
+    The counterpart of :func:`file_entries`, and the same shape, so the two
+    merge into one table and a marker resolves against it without knowing which
+    half it came from. A real scenario file wins a collision: it has bytes, and
+    a placeholder standing in front of an actual picture would be a preview
+    hiding something it was given.
+    """
+    return {
+        name: {"file_store_type": "image", "file_load_link": PENDING_IMAGE}
+        for name in names
+    }
 
 
 def data_uri(value: dict) -> str:

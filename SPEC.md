@@ -315,6 +315,41 @@ is the length of the placeholder text. A question that filters a deferred name
 therefore does not pipe at all, which is the intended trade: an unsubstituted
 scenario key is visible on the page, a fabricated number is not.
 
+### The one answer whose kind is known
+
+`image_generation` answers with a picture and with nothing else — that is what
+the type is — so a later question piping `{{ img.answer }}` is piping an image,
+knowable without a model, an answer or a respondent. It is the only deferred
+name this package can say anything about, and `scenarios.GeneratedImage` is the
+stand-in that does: its `.answer` resolves to the same `<see file key>` marker a
+file-valued scenario key resolves to, so the question is split into blocks
+around it and the block draws `blocks.PENDING_IMAGE` — an inline SVG placeholder
+in the shape, the size and the place the generated picture will occupy. Only
+`.answer`: `{{ img.width }}` is an ordinary `Unresolved` and still previews as
+written. The marker is a plain `str`, which is what `Unresolved` refuses to be
+for every other deferred name — deliberate here, because a marker is also what
+stands in that spot once the image has really been generated, so `| length` and
+`.answer.attr` behave as they do on a file-valued scenario key rather than on a
+name standing in for nothing.
+
+**Box CSS reaches it; interior CSS does not.** Width, `aspect-ratio`,
+`object-fit`, `border`, `border-radius`, `opacity` and filters all apply, because
+the box is an ordinary `<img>` — which is what makes the placeholder occupy the
+exact space the generated picture will. An SVG referenced by `src` is an isolated
+document, though, so page rules, custom properties and `currentColor` stop at its
+edge and the gradient, icon and label are fixed. They are picked to sit with the
+reference's palette for that reason. `[src^="data:image/svg+xml"]` distinguishes
+a placeholder from a real picture for an author who wants to.
+
+It is a **placeholder for the bytes, not a new kind of block**. What reaches a
+template is an ordinary image block, so the option label, the question text, the
+matrix row and the carousel slide all draw it with the markup they already have,
+and an author's CSS for `.edsl-option-image` sizes the placeholder exactly as it
+will size the picture that replaces it. A branch in the templates would have
+been markup the reference does not emit — see AGENTS.md. A real scenario file
+wins a name collision with an image question, since it has bytes and the
+placeholder does not.
+
 A name that is *neither* a scenario key nor deferred fails silently in one of two
 ways — `{{ typo }}` renders as nothing, `{{ typo.attr }}` unpipes the whole
 question. Both are what the live page does, so neither is worked around;

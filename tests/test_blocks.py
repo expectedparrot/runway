@@ -23,10 +23,12 @@ import pytest
 
 from runway import render_question
 from runway.blocks import (
+    PENDING_IMAGE,
     data_uri,
     file_entries,
     file_type_of,
     options_to_blocks,
+    pending_image_entries,
     prepared,
     text_to_blocks,
 )
@@ -344,3 +346,40 @@ def test_an_offloaded_file_carries_no_bytes():
     """Its `base64_string` is a receipt, not base64. Taking the word for it
     would put `src="data:...,offloaded"` on the page."""
     assert data_uri({**_a_file(), "base64_string": "offloaded"}) == ""
+
+
+# --------------------------------------------------------------------------
+# The image a survey has not generated yet
+# --------------------------------------------------------------------------
+
+
+def test_a_pending_image_is_an_ordinary_image_entry():
+    """The whole design in one assertion. It is the same shape `file_entries`
+    returns, so the marker resolves against one merged table and every place
+    that draws a picture already draws this one -- no new block type, no branch
+    in a template the reference does not have."""
+    entries = pending_image_entries(["img_watercolor", "img_photo"])
+    assert entries["img_watercolor"] == {
+        "file_store_type": "image",
+        "file_load_link": PENDING_IMAGE,
+    }
+    assert set(entries) == {"img_watercolor", "img_photo"}
+
+
+def test_the_placeholder_is_an_inline_svg_needing_nothing_fetched():
+    """A preview has one external reference and it is a stylesheet. A
+    placeholder pulling an icon off a CDN would be a second one."""
+    assert PENDING_IMAGE.startswith("data:image/svg+xml;base64,")
+
+
+def test_a_pending_image_draws_the_same_img_a_real_one_draws():
+    """Which is what makes an author's CSS for `.edsl-option-image` size the
+    placeholder exactly as it will size the picture that replaces it."""
+    html = _option_html(
+        [
+            {"type": "text", "content": "Watercolor"},
+            _a_file_block("image", PENDING_IMAGE, "img_watercolor"),
+        ]
+    )
+    assert 'class="edsl-option-image max-h-40 w-auto max-w-full' in html
+    assert "(image unavailable)" not in html

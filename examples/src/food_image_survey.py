@@ -26,12 +26,19 @@ them `automatic`, which is the outcome that means *nothing is missing*.
 
 **Answers piped into a later question's options.** `ratings` and `favorite`
 reference `{{ img_watercolor.answer }}` and its siblings. A preview has no
-answers, so those stay as written -- the same rendering they get when a scenario
-is bound but a prior answer is not. `dish` shows the sharper edge of that: it
-*filters* a prior answer (`| trim` over a `.split(...)`), and a filter applied to
-a name standing in for something absent takes the whole question's render down
-with it, so `dish` previews entirely unpiped. That is the documented trade -- a
-visible untouched template rather than a plausible wrong number.
+answers -- but these are `image_generation` questions, and that type answers with
+a picture and with nothing else, so the *kind* of each answer is known where its
+value is not. Each draws a placeholder image, in the place and at the size the
+generated one will have, rather than the template text saying where it would have
+gone. It is the only prior answer that gets that, which is what makes the
+question pair worth having beside `food_category`: one page's pictures are
+missing and say so, the next page's have not been made yet and show their shape.
+
+`dish` is the other half of the trade. It pipes an ordinary prior answer and
+*filters* it (`| trim` over a `.split(...)`), and a filter applied to a name
+standing in for something absent takes the whole question's render down with it,
+so `dish` previews entirely unpiped -- a visible untouched template rather than a
+plausible wrong number.
 
 The schema also asks for a stepped progress indicator and a carousel-formatted
 matrix, so the example covers both alongside the media.
@@ -255,11 +262,14 @@ humanize_schema = {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 0.5rem;
+    border: none;   /* the card already has one; two is a frame in a frame */
 }
 
 /* ---- Matrix rows, one slide each: caption above a large thumbnail ---- */
 /* The row label owns the full width of the slide now, so the picture finally
-    gets the size the sticky label column never had room for. */
+    gets the size the sticky label column never had room for. The slide keeps
+    its frame: it is what says how far one row reaches, which a carousel showing
+    one at a time has nothing else to say with. */
 .edsl-matrix-question .edsl-matrix-carousel-item {
     text-align: center;
 }
@@ -275,13 +285,20 @@ humanize_schema = {
     font-weight: 600;
 }
 
+/* Wide here and square in the option cards above, on purpose: the two shapes
+    are the same picture under different CSS, which is the thing worth being
+    able to see. A generated image has not been generated during a preview, so
+    what fills this box is the placeholder -- and it has to survive a box that
+    is not the square it was drawn as, cropped by `cover` like any photograph
+    would be. */
 .edsl-matrix-question .edsl-matrix-carousel-item .edsl-option-image {
     max-height: none;
     width: 100%;
-    max-width: 14rem;
-    aspect-ratio: 1 / 1;
+    max-width: 30rem;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
     border-radius: 0.5rem;
+    border: none;
     margin-inline: auto;
 }
 

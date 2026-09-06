@@ -134,15 +134,17 @@ and position are still checkable.
 ## Caveats
 
 - Scenario values resolve with `--scenarios`; without it they render as
-  written. Agent traits and prior answers always render as written.
+  written. Agent traits and prior answers render as written — except the answer
+  of an `image_generation` question, which draws a placeholder picture, since
+  that type answers with an image and nothing else.
 - A matrix carousel (`format: {type: carousel}`) is drawn, but you cannot swipe
   it — use the arrows, and try it on a phone before sending the survey out.
 - Position is inferred from authored order, so skip logic will differ.
 - Controls tick but mostly don't behave. Checkbox Select-all and exclusive
   options do work; validation, limits and Next do not.
-- Media in question text is drawn — an image, video or PDF held in a scenario
-  is inlined into the page, so the file's bytes are in the HTML. An *option*
-  referencing a file still previews as its reference text.
+- Media in question text and in option labels is drawn — an image, video or
+  PDF held in a scenario is inlined into the page, so the file's bytes are in
+  the HTML.
 ````
 
 ## Install
@@ -336,9 +338,10 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
 - **Fonts.** Plus Jakarta Sans is linked from Google Fonts, matching the live
   survey — the one external request a page makes, so it renders with fallback
   metrics offline.
-- **Rich question text and option labels.** Images, video and PDFs referenced
-  from question or option text are resolved server-side during a live run; here
-  such an option previews as the reference text it was written as.
+- **Video and PDFs in an option label.** Question text draws all three; an
+  option label draws images only. A player or a scroller inside a `<label>`
+  makes every play or scroll a click on the radio, so those degrade to
+  "(image unavailable)" rather than becoming a trap.
 - **Dragging a matrix carousel.** The layout is drawn and the arrows work, and
   answering a row advances to the next one as the live page does. What is
   missing is the gesture: the live survey follows a finger through a swipe and
@@ -350,6 +353,16 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
 - **Agent traits and prior answers.** `{{ agent.x }}` and `{{ q_name.answer }}`
   render as written — there is no agent and no earlier answer to resolve them
   from. Scenario values *do* resolve, given `--scenarios`; see above.
+- **An image a survey has not generated yet is still drawn.** The one exception
+  to the line above: `image_generation` answers with a picture and with nothing
+  else, so `{{ img.answer }}` piped into a later question's text or options
+  draws a placeholder image — in the shape, the size and the place the generated
+  one will occupy — rather than the template text. Nothing else about a prior
+  answer is knowable from its type, so nothing else resolves. Your CSS sizes and
+  frames it exactly as it will the real picture (it is an ordinary `<img>`), but
+  cannot reach inside it: the tint, icon and label are fixed, since an SVG loaded
+  through `src` is an isolated document. `[src^="data:image/svg+xml"]` selects
+  one if you want the box treated differently from a real picture.
 - **A filter on one of those stops the question piping.** `{{ q.answer | length }}`
   makes the whole question render as written, scenario keys in it included. The
   alternative was a stand-in that answers `length` from its own placeholder text,
@@ -368,7 +381,7 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   `data:` URI. **The page is therefore as large as the media in it**: a survey
   of small images costs nothing, twenty scenarios of video does not. A marker
   naming a key that holds no file draws as unsupported, which is what it is.
-  Option labels are not split this way — only question text.
+  Option labels split the same way, images only — see above.
 - **Markup in a scenario value shows as plaintext**, which is right, but the live
   page shows slightly less of it: question text is sanitized server-side there
   before it is rendered, so a tag outside its allowlist (`<div>`, `<script>`) is

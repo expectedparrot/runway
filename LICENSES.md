@@ -3,7 +3,9 @@
 ## lucide (ISC)
 
 `src/runway/icons.py` contains inline SVG copies of icon geometry from
-[lucide](https://lucide.dev), version 0.539.0.
+[lucide](https://lucide.dev), version 0.539.0. `src/runway/blocks.py` carries
+one more, `image`, in the placeholder drawn for a picture the survey has not
+generated yet.
 
 > Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part
 > of Feather (MIT). All other copyright (c) for Lucide are held by Lucide

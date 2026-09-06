@@ -19,6 +19,14 @@ prevent.
 The sandbox is not optional. A survey's question text is researcher-authored
 Jinja, and this renders it on whoever's machine typed the command.
 
+**One deferred name is not deferred.** An ``image_generation`` question answers
+with a picture and with nothing else, so a later question piping
+``{{ img.answer }}`` is piping an image -- knowable from the type alone, with no
+model called and no respondent to call one for. Those resolve to a file marker
+like a scenario file does, and draw as the placeholder in
+:mod:`runway.blocks`. Every other deferred name still previews as itself, for
+the reason :class:`Unresolved` gives.
+
 ``edsl`` is imported inside the functions, as ``survey.load`` does: a render
 without ``--scenarios`` never reaches this module, and one that does should pay
 for edsl no earlier than it must.
@@ -28,6 +36,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from pathlib import Path
 
 from .survey import NON_QUESTION_CLASSES, SurveyLoadError
@@ -122,6 +131,39 @@ class Unresolved:
 
     def __getitem__(self, item: object) -> Unresolved:
         return Unresolved(f"{self._name}[{item!r}]")
+
+
+class GeneratedImage(Unresolved):
+    """A deferred name whose ``.answer`` is known to be a picture.
+
+    ``QuestionImageGeneration`` answers with an image and with nothing else, so
+    a later question writing ``{{ img.answer }}`` is writing a picture into
+    itself -- and that is knowable from the *type*, without a model, an answer
+    or a respondent. It is the one deferred name this package can say anything
+    about, and so the one that does not have to preview as its own template
+    text.
+
+    ``.answer`` therefore resolves to the same ``<see file key>`` marker a
+    file-valued scenario key resolves to, which is what puts a placeholder image
+    where the generated one will be -- see :data:`blocks.PENDING_IMAGE`. Only
+    that one attribute: ``{{ img.width }}`` is still an :class:`Unresolved` and
+    still previews as written, because nothing here knows what it would be.
+
+    The marker is a plain ``str``, which is exactly what the base class refuses
+    to hand back for every other deferred name -- taken deliberately here,
+    because a marker is also what stands in that spot once the image really has
+    been generated. So ``{{ img.answer | length }}`` pipes, to the length of the
+    marker, and reading an attribute off it (``{{ img.answer.width }}``) is a
+    string attribute and vanishes the way any undefined name does. Both are what
+    the same expression does to a file-valued scenario key, which is the point:
+    this is the file case early, not a new one.
+    """
+
+    __slots__ = ()
+
+    @property
+    def answer(self) -> str:
+        return f"<see file {self._name}>"
 
 
 def load(path: Path) -> list[dict]:
@@ -296,7 +338,11 @@ def label(index: int, scenario: dict) -> str:
     return f"{index} — {_clip(summary, LABEL_WIDTH)}" if summary else str(index)
 
 
-def replacements(scenario: dict, question_names: list[str]) -> dict:
+def replacements(
+    scenario: dict,
+    question_names: list[str],
+    generated_images: Iterable[str] = (),
+) -> dict:
     """The dictionary a question is rendered against.
 
     Reproduces the live page's construction, whose two load-bearing details are
@@ -318,10 +364,19 @@ def replacements(scenario: dict, question_names: list[str]) -> dict:
     key wins a collision with a question name: the live page would resolve that
     to the answer, which there is nothing here to supply, so the scenario value
     is the only reading that resolves to anything at all.
+
+    ``generated_images`` names the questions whose answers are pictures --
+    ``image_generation``, and nothing else. Those are seeded with a
+    :class:`GeneratedImage` instead, so ``{{ img.answer }}`` resolves to a file
+    marker and draws as a placeholder rather than as its own template text.
     """
     file_keys = [key for key, value in scenario.items() if _is_file_value(value)]
     plain = {key: value for key, value in scenario.items() if key not in file_keys}
-    deferred = {name: Unresolved(name) for name in (AGENT, *question_names)}
+    generated = set(generated_images)
+    deferred = {
+        name: (GeneratedImage if name in generated else Unresolved)(name)
+        for name in (AGENT, *question_names)
+    }
     return {
         **deferred,
         **{key: f"<see file {key}>" for key in file_keys},
@@ -442,6 +497,30 @@ def _sandbox():
     return SandboxedEnvironment()
 
 
+def generated_image_names(questions: list[dict]) -> list[str]:
+    """The questions whose answers are pictures, in survey order.
+
+    ``image_generation`` and only that: the answer's *kind* has to follow from
+    the question type alone, since there is no answer here to look at. A
+    ``file_upload`` question is deliberately not one of these -- its answer is a
+    file, but nothing says which kind, and a picture placeholder standing in for
+    a PDF would be a preview inventing a detail rather than deferring one.
+
+    Asked of the whole item list rather than of the questions that get drawn: an
+    image question is never shown to anybody, so every use of its answer is in
+    some *other* question, and the list it has to be found in is the one that
+    still holds it.
+    """
+    from .question_types import background
+
+    return [
+        question["question_name"]
+        for question in questions
+        if question.get("question_name")
+        and background.kind_of(question) == "image_generation"
+    ]
+
+
 def pipe(questions: list[dict], scenario: dict) -> list[dict]:
     """A survey's items, bound to one scenario.
 
@@ -450,15 +529,19 @@ def pipe(questions: list[dict], scenario: dict) -> list[dict]:
     them either -- but they hold their place in the list, because position is
     counted over every item.
     """
-    from .blocks import file_entries
+    from .blocks import file_entries, pending_image_entries
 
     names = [
         question["question_name"]
         for question in questions
         if question.get("question_name")
     ]
-    render_dict = replacements(scenario, names)
-    files = file_entries(scenario)
+    generated = generated_image_names(questions)
+    render_dict = replacements(scenario, names, generated)
+    # Scenario files second, so a scenario key that shares a name with an image
+    # question resolves to the file it actually has rather than to a stand-in
+    # for one it does not.
+    files = {**pending_image_entries(generated), **file_entries(scenario)}
     return [
         question
         if question.get("edsl_class_name") in NON_QUESTION_CLASSES
