@@ -15,6 +15,11 @@ needs changing. Here nothing is missing and nothing is wrong: there is no
 control because there is no respondent, and saying so is more useful than
 apologising for a control that will never exist.
 
+The question's **text is still drawn**, the way every other question's text is.
+Nobody reads it -- it is a prompt for a model or an expression for the server --
+but it is the one part of one of these an author can get wrong, and a page that
+withheld it would be hiding the only thing worth checking.
+
 Being a thinking question is a property of the *question*, not of its type: a
 ``multiple_choice`` wrapped by ``thinking_question()`` is still
 ``multiple_choice``, and left to the type registry it would be drawn with its
@@ -29,6 +34,8 @@ from __future__ import annotations
 from markupsafe import Markup
 
 from .. import icons
+from ..blocks import prepared
+from ..markdown import render_question_text
 from ..templating import render as render_template
 
 TEMPLATE = "questions/background.html"
@@ -76,10 +83,21 @@ def is_background_question(question: dict) -> bool:
 
 
 def render(question: dict, humanize_schema: dict | None = None) -> str:
-    """Render the notice for a question the survey answers on its own."""
+    """Render the notice for a question the survey answers on its own.
+
+    The question's text is drawn above it, through the same markdown pass and
+    the same block splitting every other question's text goes through -- so a
+    prompt naming a scenario image shows the image, and one written in markdown
+    reads as markdown. Nobody is asked this text, but it is the part of one of
+    these an author can get wrong, and the notice underneath says who answers.
+    """
     kind = kind_of(question)
+    text = question.get("question_text") or ""
     return render_template(
         TEMPLATE,
+        has_question_text=bool(text),
+        question_text_html=Markup(render_question_text(text)),
+        question_text_blocks=prepared(question.get("question_text_blocks")),
         reason=REASONS[kind] if kind else "",
         # Already-built markup; Markup keeps it from being escaped.
         icon=Markup(icons.render("info", size=24, class_name=ICON_CLASS)),

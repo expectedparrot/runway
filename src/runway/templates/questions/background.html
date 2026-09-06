@@ -11,12 +11,23 @@
    informational blue, and it says what the question actually does instead of
    apologising for a control it will never have.
 
-   No question text, for the same reason the hidden-text types have none: it is
-   a prompt for a model or an expression for the server, never something a
-   respondent reads, and putting it in the usual question-text markup would
-   imply a page the survey never shows. #}
+   The question text is drawn, in the same markup every other question's text is
+   drawn in -- markdown rendered the same way, split into blocks around a file
+   the same way. It is not something a respondent reads: it is a prompt for a
+   model or an expression for the server. But it is the only part of one of
+   these an author can get wrong, and checking that a generated image really
+   asks for what they meant is exactly what they opened a preview to do. The
+   notice sits directly beneath it and says who is answering, so nothing about
+   the page claims to be one somebody is served.
+
+   Omitted when the question carries none, rather than emitting the empty text
+   div that markup would otherwise leave behind. #}
 <div class="edsl-question mb-6">
 {#- -#}
+{% if has_question_text %}
+{% include "questions/_question_text.html" %}
+{#- -#}
+{% endif %}
 <div class="edsl-preview-background flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
 {#- -#}
 {{ icon }}

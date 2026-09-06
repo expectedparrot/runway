@@ -208,6 +208,94 @@ def test_a_name_nothing_can_resolve_is_reported_rather_than_hidden():
 
 
 # --------------------------------------------------------------------------
+# The one deferred name that is not deferred
+#
+# `image_generation` answers with a picture and with nothing else, so a later
+# question piping `{{ img.answer }}` is piping an image -- knowable from the
+# type, with no model called and no answer to look at.
+
+
+def _image_survey() -> list[dict]:
+    return [
+        {"question_name": "img", "question_type": "image_generation",
+         "question_text": "A watercolor of {{ dish.answer }}."},
+        {"question_name": "rate", "question_type": "multiple_choice",
+         "edsl_class_name": "QuestionMultipleChoice",
+         "question_text": "Pick.",
+         "question_options": ["Watercolor {{ img.answer }}", "Neither"]},
+    ]
+
+
+def test_only_image_questions_are_named_as_generating_one():
+    """The answer's kind has to follow from the type alone. A `file_upload`
+    answers with a file too, but nothing says which kind."""
+    questions = _image_survey() + [
+        {"question_name": "up", "question_type": "file_upload"},
+        {"question_name": "sum", "question_type": "compute"},
+    ]
+    assert scenarios.generated_image_names(questions) == ["img"]
+
+
+def test_a_generated_image_answer_pipes_to_a_marker_and_a_placeholder():
+    """The whole point: `{{ img.answer }}` becomes the same `<see file>` marker
+    a file-valued scenario key becomes, and resolves to a placeholder picture
+    sized and placed where the generated one will be."""
+    from runway.blocks import IMAGE_PLACEHOLDER
+
+    piped = scenarios.pipe(_image_survey(), {})
+    rate = piped[1]
+    assert rate["question_options"][0] == "Watercolor <see file img>"
+    blocks = rate["question_options_blocks"][0]
+    assert blocks[1] == {
+        "type": "file",
+        "filename": "img",
+        "file_type": "image",
+        "file_load_link": IMAGE_PLACEHOLDER,
+    }
+    # The option that names no image is left alone, as any other would be.
+    assert rate["question_options_blocks"][1] == []
+
+
+def test_only_the_answer_of_an_image_question_resolves():
+    """`.answer` is the one attribute the type says anything about. Everything
+    else is deferred exactly as it is on any other question, because nothing
+    here knows what `{{ img.width }}` would be either."""
+    assert str(scenarios.Unresolved("q1").answer) == "{{ q1.answer }}"
+    generated = scenarios.GeneratedImage("img")
+    assert generated.answer == "<see file img>"
+    assert str(generated.width) == "{{ img.width }}"
+
+
+def test_a_scenario_file_wins_a_collision_with_an_image_question_name():
+    """Both resolve to `<see file img>`, and only one of them has bytes: the
+    file the list actually carries. A placeholder drawn in front of a real
+    picture would be a preview hiding something it was handed."""
+    from runway.blocks import IMAGE_PLACEHOLDER, file_entries
+
+    scenario = {
+        "img": {
+            "path": "x.png",
+            "suffix": "png",
+            "base64_string": "AA",
+            "mime_type": "image/png",
+        }
+    }
+    questions = _image_survey()
+    questions[1] = {**questions[1], "question_options": ["A {{ img }}", "Neither"]}
+    piped = scenarios.pipe(questions, scenario)
+    link = piped[1]["question_options_blocks"][0][1]["file_load_link"]
+    assert link == file_entries(scenario)["img"]["file_load_link"]
+    assert link != IMAGE_PLACEHOLDER
+
+
+def test_a_survey_with_no_image_question_is_piped_exactly_as_before():
+    """The mechanism is off unless the survey has one, so the deferred-name
+    contract every other survey relies on is untouched."""
+    piped = _pipe_one(_a_question("{{ earlier.answer }}"), {})
+    assert piped["question_text"] == "{{ earlier.answer }}"
+
+
+# --------------------------------------------------------------------------
 # Piping a question
 # --------------------------------------------------------------------------
 

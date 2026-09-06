@@ -21,6 +21,26 @@ carrying large media inlines all of it, so the page is as big as the files are.
 A survey of small images costs nothing; twenty scenarios of video is a very
 large file.
 
+**An image this package cannot show is still an image.** Two of them reach a
+preview, and both draw ``IMAGE_PLACEHOLDER`` rather than words:
+
+* a file that is *offloaded* -- its bytes moved out of the scenario after an
+  upload, and fetchable only by the live survey. The picture exists; the preview
+  cannot reach it.
+* the answer of an ``image_generation`` question piped into a later one. That
+  type answers with a picture and with nothing else, so unlike every other
+  deferred name -- left as written because nothing here knows what it will
+  become -- this one's type says. It pipes to a marker exactly as a file-valued
+  scenario key does.
+
+Both draw as ordinary image blocks, in the shape and the place the real picture
+will occupy. **Only those two.** A video, offloaded or not, has no picture
+coming; a marker naming something that is not a file at all is a mistake; and an
+image carrying no bytes *without* the offloaded receipt is broken rather than
+elsewhere -- the live survey has nothing to show for it either, so drawing it as
+a picture on its way would report a broken scenario list as a working one. All
+three keep the reference's own "unavailable" rendering, which is what they mean.
+
 An **audio** file previews as "Unsupported file type", which is not an omission
 here: the reference's own block renderer draws images, video and PDFs and says
 exactly that for everything else.
@@ -28,7 +48,9 @@ exactly that for everything else.
 
 from __future__ import annotations
 
+import base64
 import re
+from collections.abc import Iterable
 
 # Which control draws a file, chosen by its extension. Transcribed from the
 # reference's own table, including that audio is classified and then not drawn --
@@ -63,10 +85,93 @@ _UNRESOLVED = {"file_store_type": "", "file_load_link": ""}
 
 # A file whose bytes were moved out of the scenario and left a receipt behind:
 # `base64_string` says so literally. The live survey fetches it back; nothing here
-# can, so the file resolves to no source and draws as the reference draws a file
-# it cannot show. Taking the word for base64 would emit `src="data:...,offloaded"`
-# -- a broken image on every page, which is worse than saying so.
+# can, so the file resolves to no source -- and an image with no source draws the
+# placeholder, since the picture exists and it is the preview that cannot reach
+# it. Taking the word for base64 would emit `src="data:...,offloaded"` -- a
+# broken image on every page, which is worse than either.
 OFFLOADED = "offloaded"
+
+
+# The picture an image question has not been asked for yet.
+#
+# `QuestionImageGeneration` answers with an image and with nothing else -- that
+# is what the type is for -- so a later question piping `{{ img.answer }}` is
+# piping a picture, even here where no model has been called and no respondent
+# exists to call one for. Every other deferred name is left as written because
+# nothing here knows what it will become; this one is the exception, because the
+# *type* says.
+#
+# Drawn as a real image with a stand-in for its bytes rather than as a new kind
+# of block, which is the whole reason it is a few lines: the block reaching the
+# template is an ordinary image block, so the option label, the question text,
+# the matrix row and the carousel slide all already draw it, and an author's CSS
+# for `.edsl-option-image` sizes and frames the placeholder exactly as it will
+# the picture that replaces it. A branch for it in the templates would have been
+# markup the reference does not emit -- see AGENTS.md.
+#
+# **What CSS reaches it, and what does not.** Everything about the *box* does,
+# because the box is an ordinary `<img>`: width, height, `aspect-ratio`,
+# `object-fit`, `border`, `border-radius`, `opacity`, a filter. Nothing *inside*
+# does -- an SVG referenced by `src` is an isolated document, so page rules,
+# custom properties and `currentColor` all stop at its edge, and the gradient,
+# the icon and the label are fixed. That is the reason the colours below are
+# chosen to sit with the reference's own palette rather than left to inherit
+# something they cannot: they have to look right in a page nobody restyled.
+# `[src^="data:image/svg+xml"]` is the selector for an author who wants the box
+# treated differently from a real picture.
+#
+# Base64 rather than a percent-encoded SVG so the URI needs no escaping thought
+# at any of those sites, and so it is built the same way every other inline file
+# in a preview is.
+_PLACEHOLDER_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" '
+    'viewBox="0 0 160 160" role="img" aria-label="Generated image">'
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="0.6" y2="1">'
+    '<stop offset="0" stop-color="#eef3fe"/><stop offset="1" stop-color="#dfe8fb"/>'
+    "</linearGradient></defs>"
+    '<rect width="160" height="160" fill="url(#g)"/>'
+    # lucide's `image`, its own 24x24 grid scaled up and centred, drawn thinner
+    # than lucide's default 2 because it is displayed several times its own
+    # size. ISC -- see LICENSES.md, and `icons.py` for the copies the reference
+    # itself draws.
+    '<g transform="translate(56 56) scale(2)" fill="none" stroke="#5b8cea" '
+    'stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">'
+    '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>'
+    '<circle cx="9" cy="9" r="2"/>'
+    '<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'
+    "</g></svg>"
+)
+
+IMAGE_PLACEHOLDER = "data:image/svg+xml;base64," + base64.b64encode(
+    _PLACEHOLDER_SVG.encode("utf-8")
+).decode("ascii")
+
+
+def pending_image_entries(names: Iterable[str]) -> dict[str, dict]:
+    """Drawable entries for the images a survey generates but has not generated.
+
+    The counterpart of :func:`file_entries`, and the same shape, so the two
+    merge into one table and a marker resolves against it without knowing which
+    half it came from. A scenario file wins a collision: it may carry bytes, and
+    a placeholder standing in front of an actual picture would be a preview
+    hiding something it was given.
+    """
+    return {
+        name: {"file_store_type": "image", "file_load_link": IMAGE_PLACEHOLDER}
+        for name in names
+    }
+
+
+def offloaded(value: dict) -> bool:
+    """Whether a file's bytes were moved out of the scenario, leaving a receipt.
+
+    The one shape this package recognizes, and the same one :func:`data_uri`
+    refuses to encode: ``base64_string`` holding the literal word rather than
+    base64. Kept apart from "resolves to no source", which is a wider thing --
+    a file can also carry no bytes because it never had any, and that is a
+    broken scenario rather than an uploaded one.
+    """
+    return value.get("base64_string") == OFFLOADED
 
 
 def data_uri(value: dict) -> str:
@@ -113,14 +218,29 @@ def file_entries(scenario: dict) -> dict[str, dict]:
     """
     from .scenarios import _is_file_value
 
-    return {
-        key: {
-            "file_store_type": file_type_of(value),
-            "file_load_link": data_uri(value),
-        }
-        for key, value in scenario.items()
-        if _is_file_value(value)
-    }
+    entries = {}
+    for key, value in scenario.items():
+        if not _is_file_value(value):
+            continue
+        file_type = file_type_of(value)
+        link = data_uri(value)
+        # An image that is *offloaded*: the picture exists and the live survey
+        # fetches it back, and only this package cannot. The placeholder is the
+        # accurate thing to draw for that -- an image goes here, and this page
+        # does not have it.
+        #
+        # Gated on the receipt, not on the link coming back empty, which is a
+        # wider set: a file carrying no `base64_string`, an empty one, a
+        # non-string where the bytes should be. Those are *broken* rather than
+        # elsewhere -- the live survey has nothing to show for them either --
+        # and drawing them as a picture on its way would tell an author their
+        # scenario list is fine when it is not. They keep the reference's own
+        # "unavailable", and so does a video with no bytes, which has no picture
+        # coming at all.
+        if file_type == "image" and not link and offloaded(value):
+            link = IMAGE_PLACEHOLDER
+        entries[key] = {"file_store_type": file_type, "file_load_link": link}
+    return entries
 
 
 def text_to_blocks(text: str, files: dict[str, dict]) -> list[dict]:
