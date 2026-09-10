@@ -159,7 +159,9 @@ def test_the_other_row_is_a_checkbox_like_any_other():
 
 def test_the_other_label_is_the_authors_word():
     html = render_question(a_question(other_option_text="Something else"))
-    assert ">Something else</label>" in html
+    # In a span: the row's label wraps the whole control, so the words sit in a
+    # span inside it rather than in a label of their own.
+    assert ">Something else</span>" in html
     # And it names the input for a screen reader, which is the same word again.
     assert 'aria-label="Something else, answer 1"' in html
 

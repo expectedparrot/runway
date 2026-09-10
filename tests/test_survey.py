@@ -77,6 +77,21 @@ def test_shell_around_a_question_matches_react():
     assert body.endswith(after)
 
 
+def test_the_nav_and_next_button_carry_their_styling_hooks():
+    """What the shell golden cannot reach.
+
+    That recording is the container around a marker, so everything between --
+    the form, the nav and its Next button -- is transcribed by eye rather than
+    held to a byte. These two class names are the hooks a survey's own CSS
+    targets to restyle or hide the button, so a preview missing them would
+    report an author's rule as having no effect on a page where it works.
+    """
+    cases = goldens.load_cases()
+    body = render_body(cases["multiple_choice_radio"]["question"])
+    assert '<div class="edsl-survey-nav flex justify-start">' in body
+    assert 'class="edsl-next-button flex items-center gap-2' in body
+
+
 # --------------------------------------------------------------------------
 # Bundling (the default)
 # --------------------------------------------------------------------------

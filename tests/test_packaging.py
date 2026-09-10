@@ -52,9 +52,22 @@ def test_every_template_ships():
 
 
 def test_the_stylesheet_ships():
-    """The bulk of a rendered page, and the only reason it looks like anything."""
+    """The bulk of a rendered page, and the only reason it looks like anything.
+
+    Bounded at both ends. Too small is a build that found no classes. Too large
+    is the quieter mistake: a rebuild whose component glob reached past the
+    respondent-facing components and swept the reference application's whole
+    tree, which draws every page correctly at several times the weight and so
+    announces itself nowhere else. ~62 KB today; the ceiling leaves room to grow
+    and still catches that.
+    """
     assert STYLESHEET.is_file(), f"no stylesheet at {STYLESHEET}"
-    assert STYLESHEET.stat().st_size > 10_000, "stylesheet is implausibly small"
+    size = STYLESHEET.stat().st_size
+    assert size > 10_000, "stylesheet is implausibly small"
+    assert size < 150_000, (
+        f"stylesheet is {size:,} bytes -- rebuilt with too wide a component "
+        "glob? See RUNWAY_REFERENCE_COMPONENTS in assets/tailwind.config.cjs"
+    )
 
 
 def test_the_package_data_sits_inside_the_package():

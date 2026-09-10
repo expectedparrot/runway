@@ -56,8 +56,14 @@
    creating markup nothing had recorded. Rendering it from the same file the
    answered-state golden is compared against means what the script inserts is
    the reference's markup, byte for byte. Preview chrome, outside #root, so it
-   is not part of any question. #}
+   is not part of any question.
+
+   Gated apart from the script below because the two stopped asking the same
+   question: `multiple_choice_with_other` wants the script and has nothing to
+   add a row to, its written answer being one field. #}
 <template id="preview-other-add">{% include "questions/_other_add.html" %}</template>
+{% endif %}
+{% if behaviour_present %}
 {% include "behaviour.html" %}
 {% endif %}
 {% if carousels %}

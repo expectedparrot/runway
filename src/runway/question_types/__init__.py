@@ -29,6 +29,8 @@ from . import (
     choice,
     free_text,
     matrix,
+    multiple_choice_with_other,
+    numerical,
     survey_message,
     unsupported,
 )
@@ -43,6 +45,8 @@ RENDERERS: dict[str, Renderer] = {
     "matrix": matrix.render,
     "checkbox": checkbox.render,
     "checkbox_with_other": checkbox_with_other.render,
+    "multiple_choice_with_other": multiple_choice_with_other.render,
+    "numerical": numerical.render,
     "free_text": free_text.render,
     "survey_message": survey_message.render,
 }
@@ -52,11 +56,13 @@ RENDERERS: dict[str, Renderer] = {
 # gap rather than a preview quietly showing a layout nobody is served -- and so
 # that one answer serves both the renderer and `check`.
 #
-# Empty, and kept: `matrix` was the entry, for the carousel format it now draws.
-# The mechanism is where the next partial renderer states its gap, and both
-# callers already ask -- putting it back later should not mean re-threading it
-# through `renderer.render_question` and `inspection.classify` again.
-DECLINES: dict[str, Callable[[dict, dict | None], str | None]] = {}
+# `numerical` is the entry: it draws the number field its type renders by
+# default, and declines the slider a humanize schema can ask for instead, which
+# is not transcribed. `matrix` was the previous one, for the carousel format it
+# now draws.
+DECLINES: dict[str, Callable[[dict, dict | None], str | None]] = {
+    "numerical": numerical.declines,
+}
 
 
 def declined(question: dict, humanize_schema: dict | None = None) -> str | None:

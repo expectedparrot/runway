@@ -2,10 +2,10 @@
 
 Two things here are not visible from the type alone.
 
-**Select all** is drawn by the wrapper the survey page mounts, whose default is
-the opposite of the presentational component's -- so the row belongs on the page
-even though nothing in the question asks for it. It appears only when more than
-one option could be ticked by it.
+**Select all** is drawn by the wrapper the survey page mounts, so the row
+belongs on the page even though nothing in the question asks for it. It appears
+only when more than one option could be ticked by it, and only when the schema
+has not taken it away.
 
 **Exclusive options** are the schema reaching into that count. An option like
 "None of the above" clears everything else when ticked, so it is not part of
@@ -28,6 +28,23 @@ from ..templating import render as render_template
 from .values import as_text
 
 TEMPLATE = "questions/checkbox.html"
+
+
+SELECT_ALL_LABEL = "Select all"
+
+
+def select_all_shown(humanize_schema: dict | None) -> bool:
+    """Whether the schema leaves the Select all box in place.
+
+    A stored schema is sparse, so an absent key means the author said nothing
+    and the box stays -- which is what a checkbox question draws by default. An
+    explicit null is the author removing it. Any object asks for the box, and
+    its only setting is the label, whose one accepted value is the wording this
+    template already emits.
+    """
+    if not humanize_schema or "select_all" not in humanize_schema:
+        return True
+    return humanize_schema["select_all"] is not None
 
 
 def exclusive_options(humanize_schema: dict | None) -> list[str]:
@@ -80,5 +97,6 @@ def render(question: dict, humanize_schema: dict | None = None) -> str:
         question_text_blocks=prepared(question.get("question_text_blocks")),
         options=_options(question),
         # One option has nothing to say "all" about, so the row is not drawn.
-        show_select_all=len(selectable) > 1,
+        show_select_all=len(selectable) > 1 and select_all_shown(humanize_schema),
+        select_all_label=SELECT_ALL_LABEL,
     )

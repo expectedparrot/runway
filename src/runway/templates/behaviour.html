@@ -1,13 +1,18 @@
-{# Checkbox behaviour: the part of these two types that is neither markup nor
+{# Option behaviour: the part of these three types that is neither markup nor
    browser default.
 
    Most of a preview is live for free. A radio group settles because the markup
    names it correctly; a checkbox ticks because that is what a checkbox does.
    What is left over are rules -- what "all" means, that "None of the above"
-   clears the rest, that typing an answer of one's own ticks the box above it --
-   and a rule has no markup to be recorded from. So this file is a
+   clears the rest, that typing an answer of one's own chooses the row above it
+   -- and a rule has no markup to be recorded from. So this file is a
    reimplementation -- one of two in the package, the other being
    `carousel.html`, which moves a matrix carousel between its rows.
+
+   The third type is here for the last of those rules and nothing else.
+   `multiple_choice_with_other` draws its "other" row as a radio in the options'
+   own group, so choosing between the two settles itself and `setUpChoiceOther`
+   at the foot of this file is the whole of what it needs.
 
    Two things keep that from being a second, unchecked copy of the application.
 
@@ -36,6 +41,62 @@
    checking it. #}
 <script>
 (function () {
+    /* Which control is chosen, published the way the reference publishes it.
+     *
+     * The real input is `sr-only`; what a respondent sees is the span drawn
+     * around it and the dot or tick inside. Those two read `data-checked` /
+     * `data-unchecked`, and over there React rewrites the pair on every
+     * re-render. A preview has no re-render, so left alone every control stays
+     * `data-unchecked` however often it is clicked: the outline stays grey, the
+     * dot stays hidden, and the page invites a click and then looks broken.
+     *
+     * This used to be three authored rules in `base.css` keyed off `:checked`.
+     * They drew the right thing and cost too much: beating the utility that
+     * hides the dot took more weight than a survey's own
+     * `.edsl-radio-indicator` rule had, so a survey hiding an indicator was
+     * overruled in a preview and obeyed on the live page. Rewriting the
+     * attribute has no such cost. The utilities the component already carries
+     * do all the drawing, an author's CSS meets exactly the cascade it meets
+     * live, and `[data-checked]` selectors -- the ones an author writes against
+     * the live page -- start meaning something in a preview at last.
+     *
+     * A full sweep rather than the control that changed: choosing a radio
+     * unchoses its whole group, and the browser reports that as one event on
+     * one input. Cheap enough at any page size to be worth not reasoning about.
+     * The attribute is only touched when it is actually wrong, so a page of
+     * untouched controls costs a read apiece. */
+    function publish(control, inputClass, chosen) {
+        var indicator = control.querySelector('.' + inputClass + '-indicator');
+        [control, indicator].forEach(function (element) {
+            if (!element) return;
+            if (element.hasAttribute('data-checked') === chosen) return;
+            element.setAttribute(
+                chosen ? 'data-checked' : 'data-unchecked', '');
+            element.removeAttribute(chosen ? 'data-unchecked' : 'data-checked');
+        });
+    }
+
+    function syncControls() {
+        ['edsl-radio', 'edsl-checkbox'].forEach(function (inputClass) {
+            Array.prototype.forEach.call(
+                document.querySelectorAll('.' + inputClass + '-control'),
+                function (control) {
+                    var input = control.querySelector('.' + inputClass);
+                    if (input) publish(control, inputClass, input.checked);
+                });
+        });
+    }
+
+    /* Every control on the page, whichever question drew it, and whatever moved
+     * it -- a click, or one of the rules below setting `checked` itself. A
+     * delegated listener catches the first; the rules that reach for `checked`
+     * without an event call `syncControls` where they finish. */
+    document.addEventListener('change', syncControls);
+
+    /* Once at load, for the state the markup did not come with: a browser
+     * restoring a form on reload sets `checked` back without firing anything. */
+    syncControls();
+
     function hasAnswer(texts) {
         return texts.some(function (text) { return text.trim() !== ''; });
     }
@@ -86,8 +147,15 @@
         }
 
         /* Everything that follows from the rows: how each is named, whether it
-         * can be removed, and whether there is anything to add another to. */
+         * can be removed, and whether there is anything to add another to.
+         *
+         * Every rule below finishes here, which is why the controls are
+         * published here too: the rules that tick and untick boxes themselves
+         * fire no `change` for the delegated listener to hear, and one of them
+         * is reached by a click on a remove button rather than by an event on a
+         * control at all. */
         function refresh() {
+            syncControls();
             var current = rows();
             var removable = current.length > 1;
             current.forEach(function (row, index) {
@@ -244,9 +312,48 @@
         refresh();
     }
 
+    /* `multiple_choice_with_other`, which needs one rule and none of the rest.
+     *
+     * Its "other" row is a radio in the same group as the options, so the two
+     * are exclusive of each other with no rule anywhere -- which is why nothing
+     * below clears an option, settles a Select all row, or adds and removes
+     * rows. This type takes one written answer, in one field.
+     *
+     * What is left is the rule `bindRow` states for the checkbox flavour, for
+     * the same reason: nobody should type something and have it ignored for
+     * want of a click.
+     *
+     * It only ever chooses, though, which is where it parts company with the
+     * checkbox one. Over there emptying every row unticks the box; here
+     * backspacing the field to nothing leaves the row chosen, because that is
+     * what the live survey does. The tempting symmetry -- an "other" with
+     * nothing written in it is not an answer, so release it -- would be this
+     * package inventing a rule and drawing a preview of a survey nobody is
+     * fielding. Whether an empty "other" should submit is the reference's
+     * question to answer, and it has.
+     *
+     * Deselecting is the browser's either way: choosing a listed option
+     * releases this radio, the two being one radio group, and the words the
+     * respondent typed are left where they can still see and clear them. */
+    function setUpChoiceOther(question) {
+        var other = question.querySelector('.edsl-other-option .edsl-radio');
+        var input = question.querySelector(
+            '.edsl-other-option .edsl-other-input');
+        if (!other || !input) return;
+        input.addEventListener('input', function () {
+            if (input.value.trim() !== '') other.checked = true;
+            // Typing fires `input`, not `change`, so the row this just chose
+            // would otherwise stay drawn as the unchosen one.
+            syncControls();
+        });
+    }
+
     Array.prototype.forEach.call(
         document.querySelectorAll(
             '.edsl-checkbox-question, .edsl-checkbox-with-other-question'),
         setUp);
+    Array.prototype.forEach.call(
+        document.querySelectorAll('.edsl-multiple-choice-with-other-question'),
+        setUpChoiceOther);
 })();
 </script>

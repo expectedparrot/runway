@@ -1,0 +1,59 @@
+{# Transcription of the reference implementation's multiple choice with other:
+   the radio list, then one more row the respondent writes their own answer into.
+
+   The "other" row is a radio in the same group as the options, so choosing it
+   clears whichever option was picked -- and choosing an option clears it -- with
+   no extra rule needed anywhere. Its label carries an id, because the text field
+   beneath it is named by `aria-labelledby` pointing at that label rather than by
+   a copy of the same words: the label is the author's, and a copy would drift the
+   moment it renders markdown.
+
+   The field cannot sit inside the label the way the radio does -- a text input
+   inside a label takes the label's clicks -- which is why it is a sibling in its
+   own indented div.
+
+   One text field, not a list: this type takes a single written answer, where the
+   checkbox flavour takes several and draws a row apiece.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-multiple-choice-with-other-question mb-6">
+{#- -#}
+{% include "questions/_question_text.html" %}
+{#- -#}
+<div class="edsl-options space-y-1">
+{#- -#}
+{%- for option in options %}
+<label class="edsl-option flex items-center">
+{#- -#}
+{% with control_class = "h-4 w-4", input_name = question_name, input_value = option.value %}{% include "questions/_radio_input.html" %}{% endwith %}
+{#- -#}
+<span class="edsl-option-label ml-2 py-1">{% with label_html = option.label_html, blocks = option.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</span>
+{#- -#}
+</label>
+{%- endfor %}
+<div class="edsl-other-option flex flex-col">
+{#- -#}
+<label class="edsl-option flex items-center">
+{#- -#}
+{% with control_class = "h-4 w-4", input_name = question_name, input_value = other_option_text %}{% include "questions/_radio_input.html" %}{% endwith %}
+{#- -#}
+<span id="{{ question_name }}-other-label" class="edsl-option-label ml-2 py-1">{{ other_option_text }}</span>
+{#- -#}
+</label>
+{#- -#}
+<div class="ml-6 mt-2">
+{#- -#}
+<input type="text" aria-labelledby="{{ question_name }}-other-label" class="edsl-other-input w-full p-2 border border-gray-400 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-600 focus:border-sky-600" value=""/>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>

@@ -52,15 +52,11 @@
 <div role="radiogroup" aria-labelledby="{{ question_name }}_stack_{{ row }}_label" class="edsl-options space-y-1.5">
 {#- -#}
 {%- for option in options %}
-<label for="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" class="edsl-option flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+<label for="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" class="edsl-option flex items-center">
 {#- -#}
-<span class="inline-flex shrink-0 rounded-full has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
+{% with control_class = "h-4 w-4", input_id = question_name ~ "_stack_" ~ row ~ "_" ~ loop.index0, input_name = question_name ~ "_stack_" ~ row, input_value = option.value %}{% include "questions/_radio_input.html" %}{% endwith %}
 {#- -#}
-<input type="radio" id="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" name="{{ question_name }}_stack_{{ row }}" class="edsl-radio h-5 w-5 cursor-pointer text-blue-600 border-gray-300 focus-visible:outline-none" value="{{ option.value }}"/>
-{#- -#}
-</span>
-{#- -#}
-<span class="edsl-option-label min-w-0 text-sm text-gray-900 dark:text-gray-100">{% with label_html = option.row_label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}{{ option.row_label_suffix }}</span>
+<span class="edsl-option-label ml-2 min-w-0 py-1">{% with label_html = option.row_label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}{{ option.row_label_suffix }}</span>
 {#- -#}
 </label>
 {%- endfor %}
@@ -132,14 +128,13 @@
 {#- -#}
 <label for="{{ question_name }}_{{ row }}_{{ loop.index0 }}" class="group/bubble flex items-center justify-center cursor-pointer w-full h-full min-h-[2rem]">
 {#- -#}
-{# The ring rides on the wrapper rather than the radio: a ring is a box-shadow
-   and follows the CSS radius, and a radio left with its native look ignores
-   `border-radius`, so a ring set on the input itself is drawn as a square
-   around the circle. The hover halo is a shadow and not a second ring, so the
-   two compose instead of overwriting each other. #}
-<span class="inline-flex rounded-full group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.200)] dark:group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.700)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
+{# The hover halo rides on a wrapper of its own rather than on the control: it
+   is a shadow, and the control's focus ring is a ring, so the two compose here
+   instead of overwriting each other. The ring itself belongs to the control,
+   which is where every question draws it. #}
+<span class="inline-flex rounded-full group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.200)] dark:group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.700)]">
 {#- -#}
-<input type="radio" id="{{ question_name }}_{{ row }}_{{ loop.index0 }}" name="{{ question_name }}_{{ row }}" class="edsl-radio w-5 h-5 cursor-pointer text-blue-600 border-gray-300 focus-visible:outline-none" value="{{ option.value }}"/>
+{% with control_class = "h-5 w-5 cursor-pointer", input_id = question_name ~ "_" ~ row ~ "_" ~ loop.index0, input_name = question_name ~ "_" ~ row, input_value = option.value %}{% include "questions/_radio_input.html" %}{% endwith %}
 {#- -#}
 </span>
 {#- -#}

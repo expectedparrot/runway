@@ -45,9 +45,20 @@ STYLESHEET = ASSETS_DIR / "questions.css"
 # Marker styles the stepped indicator has a shape for.
 MARKERS = ("number", "dot")
 
-# The types whose rules the page script implements. Both carry options that a
-# humanize schema can mark exclusive, and one of them draws a Select all row.
+# The types whose checkbox rules the page script implements. Both carry options
+# that a humanize schema can mark exclusive, and one of them draws a Select all
+# row. This is also what decides whether the "Add another" button is parked for
+# cloning, which is why `multiple_choice_with_other` is not one of them: its
+# written answer is a single field with nothing to add a row to.
 CHECKBOX_TYPES = ("checkbox", "checkbox_with_other")
+
+# What the page script publishes state for, found in the rendered body rather
+# than guessed from a list of types. Every question drawing a radio or a
+# checkbox needs it -- that is most of them, and the set grows whenever a new
+# type reaches for the shared control include -- so a list here would be a list
+# to forget to add to, and forgetting would look like a control that does not
+# respond to a click.
+CONTROL_CLASSES = ("edsl-radio-control", "edsl-checkbox-control")
 
 # The web survey loads this font, and Tailwind's preflight sets it as the html
 # font-family from theme.fontFamily.sans. Without it every metric shifts --
@@ -354,7 +365,7 @@ def page_exclusive(items: list[tuple[dict, dict | None]]) -> str | None:
 
 
 def has_checkbox(questions: list[dict]) -> bool:
-    """Whether anything here needs the behaviour script at all.
+    """Whether the "Add another" button has to be parked for cloning.
 
     Asked on its own rather than read off the positions, which used to carry
     this too: an ordinary survey should ship no script it has no use for, and
@@ -364,6 +375,22 @@ def has_checkbox(questions: list[dict]) -> bool:
     return any(
         question.get("question_type") in CHECKBOX_TYPES for question in questions
     )
+
+
+def has_behaviour(body_html: str) -> bool:
+    """Whether anything on this page needs the behaviour script at all.
+
+    Asked of the rendered body, not the questions: what the script publishes is
+    the chosen state of a control, so the question is literally whether one was
+    drawn. A page that draws a warning instead of its control answers no on its
+    own, with nothing here having to remember to ask.
+
+    A wider question than :func:`has_checkbox`, which stayed behind on the
+    types that park an "Add another" button. The two were one flag until a page
+    of nothing but `multiple_choice_with_other` got neither and left a typed
+    answer beside a row nothing had chosen.
+    """
+    return any(name in body_html for name in CONTROL_CLASSES)
 
 
 def carousel_questions(
@@ -421,6 +448,7 @@ def _document(
     toolbar_html: str = "",
     carousels: list[dict] | None = None,
     checkbox_present: bool = False,
+    behaviour_present: bool = False,
     root_exclusive: str | None = None,
 ) -> str:
     """Wrap composed body markup in the standalone document shell.
@@ -446,6 +474,7 @@ def _document(
         # them.
         carousels=carousels or [],
         checkbox_present=checkbox_present,
+        behaviour_present=behaviour_present,
         root_exclusive=root_exclusive,
         add_icon=Markup(icons.render("plus", class_name="w-4 h-4")),
         body_html=Markup(body_html),
@@ -507,9 +536,10 @@ def render_page_of(
     """
     questions = [question for question, _ in items]
     first = questions[0] if questions else {}
+    body_html = render_page_body(items, progress, unserved=unserved)
     return _document(
         title=title or first.get("question_name") or "Survey preview",
-        body_html=render_page_body(items, progress, unserved=unserved),
+        body_html=body_html,
         custom_css=custom_css,
         # Neither applies to a page that draws a warning instead of its control:
         # there is no carousel to move and no checkbox to tick.
@@ -517,6 +547,9 @@ def render_page_of(
             [] if unserved else carousel_questions(questions, _as_survey_schema(items))
         ),
         checkbox_present=not unserved and has_checkbox(questions),
+        # No `unserved` guard: such a page draws a warning where its control
+        # would be, so there is no control in the body to find.
+        behaviour_present=has_behaviour(body_html),
         root_exclusive=None if unserved else page_exclusive(items),
     )
 
@@ -701,11 +734,13 @@ def render_bundle(
         else ""
     )
 
+    body_html = "".join(panels)
     return _document(
         title=title,
-        body_html="".join(panels),
+        body_html=body_html,
         custom_css=custom_css,
         toolbar_html=toolbar,
         carousels=carousels,
         checkbox_present=has_checkbox(questions),
+        behaviour_present=has_behaviour(body_html),
     )

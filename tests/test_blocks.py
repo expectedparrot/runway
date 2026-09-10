@@ -340,7 +340,10 @@ def test_an_option_without_blocks_keeps_the_markup_it_always_had():
         }
     )
     assert '<span class="edsl-option-content"><span class="edsl-option-text">' in html
-    assert "inline-flex" not in html
+    # The column layout is the media form's alone -- a plain option's wrapper
+    # carries the hook and no utilities. Matched on the pair rather than on
+    # `inline-flex` by itself, which every radio control now carries.
+    assert "inline-flex flex-col" not in html
 
 
 def test_an_offloaded_file_carries_no_bytes():

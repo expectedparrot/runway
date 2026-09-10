@@ -1068,6 +1068,32 @@
     },
     "humanize_schema": null
   },
+  "multiple_choice_with_other": {
+    "kind": "controlled_question",
+    "component": "ControlledMultipleChoiceWithOtherQuestion",
+    "question": {
+      "question_name": "destination",
+      "question_type": "multiple_choice_with_other",
+      "question_text": "Where would you go?",
+      "question_options": [
+        "Beach",
+        "Mountains",
+        "City"
+      ],
+      "other_option_text": "Somewhere else"
+    },
+    "humanize_schema": null
+  },
+  "numerical_input": {
+    "kind": "question",
+    "component": "NumericalQuestion",
+    "question": {
+      "question_name": "visits",
+      "question_type": "numerical",
+      "question_text": "How many times have you visited?"
+    },
+    "humanize_schema": null
+  },
   "checkbox": {
     "kind": "controlled_question",
     "component": "ControlledCheckBoxQuestion",
@@ -1112,6 +1138,23 @@
       "exclusive_options": [
         "None of the above"
       ]
+    }
+  },
+  "checkbox_select_all_removed": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckBoxQuestion",
+    "question": {
+      "question_name": "courses",
+      "question_type": "checkbox",
+      "question_text": "Which did you order?",
+      "question_options": [
+        "Starters",
+        "Dessert",
+        "Couldn't say"
+      ]
+    },
+    "humanize_schema": {
+      "select_all": null
     }
   },
   "checkbox_with_other": {

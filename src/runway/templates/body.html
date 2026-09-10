@@ -1,5 +1,12 @@
 {# The respondent-facing survey page, inside the app's layout container.
 
+   No golden covers this file: the recorded shell case is the layout container
+   with a marker where the questions go, so everything here between that
+   container and the footer -- the form, the nav and its Next button -- is
+   transcribed by eye and checked by reading. `edsl-survey-nav` and
+   `edsl-next-button` are hooks an author writes CSS against, so a preview
+   missing them would report a survey's own styling as having no effect.
+
    The inner container's class list is NOT a concatenation of the two sources
    it comes from. The reference implementation merges the layout container's
    base classes with the page's own through a class-merging helper (clsx +
@@ -20,9 +27,9 @@
 {%- endif %}
 {{ items_html }}
 {#- -#}
-<div class="flex justify-start">
+<div class="edsl-survey-nav flex justify-start">
 {#- -#}
-<button class="flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 transition-colors rounded-md text-white font-medium disabled:opacity-50" type="submit">Next</button>
+<button class="edsl-next-button flex items-center gap-2 px-6 py-2.5 bg-green-700 hover:bg-green-800 transition-colors rounded-md text-white font-medium disabled:opacity-50" type="submit">Next</button>
 {#- -#}
 </div>
 {#- -#}
