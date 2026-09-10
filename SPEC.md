@@ -513,15 +513,19 @@ why each is a recorded case rather than an assumption.
 
 `checkbox` draws a **Select all** row that nothing in the question asks for: the
 survey page mounts a wrapper whose default supplies it, and it appears whenever
-more than one option could be ticked by it. A humanize schema's
-`exclusive_options` are the one thing that changes that — an option clearing the
-rest when ticked is not part of "all", so a question of two options with one
-exclusive loses the row.
+more than one option could be ticked by it. Two humanize schema keys change that.
+`exclusive_options` does, because an option clearing the rest when ticked is not
+part of "all", so a question of two options with one exclusive loses the row. And
+`select_all` does directly: an absent key leaves the row alone, since a sparse
+schema means the author said nothing, while an explicit `null` takes it away. The
+object form asks for the row, and its only setting is a label whose one accepted
+value is the wording already emitted.
 
 `checkbox_with_other` does **not** draw that row, however many options it has:
 its wrapper defaults the same setting the other way, and the survey page
-overrides neither. `exclusive_options` therefore changes nothing in its markup at
-all — the row was the only thing they reached.
+overrides neither. It has no `select_all` key at all, and `exclusive_options`
+therefore changes nothing in its markup — the row was the only thing they
+reached.
 
 **Select all** and `exclusive_options` are rules rather than markup, so a page
 holding a checkbox question ships ~40 lines of script for them — one of the two
@@ -583,21 +587,29 @@ moved; nothing here does either, so a swipe does nothing at all. The layout
 previews faithfully and the arrows work; the feel of it under a thumb does not
 preview, and a carousel is worth trying live before a survey goes out.
 
-### A clicked option only half responds
+### A clicked option responds through the stylesheet
 
-Radios in a preview are real, so clicking one fills it in — the browser does
-that. The *box* around it is a different matter: the live page swaps an option's
-classes when React re-renders, and a static page has no React, so the label keeps
-the unselected classes.
+Radios and checkboxes in a preview are real, and clicking one does check it —
+the browser does that. What a respondent *sees* is a different matter. The
+reference moves the input out of sight and draws the control as a span beside
+it, publishing which one is chosen as `data-checked` / `data-unchecked`
+attributes it rewrites on re-render. A static page has no re-render, so every
+control keeps `data-unchecked` however often it is clicked: left alone, the
+outline would stay grey and the dot or the tick would stay hidden, and the page
+would invite a click and then look broken.
 
-For the stacked matrix view, where that swap is the whole selected state,
-`base.css` restates it as a `:has(:checked)` rule so a click looks like a click.
-That rule is written at one class of weight, the same as the utility it
-overrides, so a survey's own `custom_css` still wins exactly as it does on the
-live page — with one exception, noted in the file: the hover rule needs three
-classes to beat the `hover:` utility Tailwind emits after it. Everywhere else the
-class swap is not reproduced, because everywhere else the reference shows
-selection through the radio alone.
+`base.css` restates that state as the one the DOM really has, `:checked` on the
+input, in three rules — the radio's outline, the checkbox's outline and fill, and
+the indicator inside either. The first two are written at one class of weight,
+the same as the plain utilities they override, so a survey's own `custom_css`
+still wins exactly as it does on the live page. The third cannot be: the utility
+hiding the indicator is a variant one, and Tailwind emits those after custom CSS,
+so that rule is won on weight instead and would override a survey's own rule for
+`.edsl-radio-indicator`. Both costs are stated in the file.
+
+What is still not reproduced is anything the reference does *only* on re-render
+and cannot be derived from the input: nothing in the transcribed markup depends
+on it today, which is why three rules are the whole of it.
 
 ### A message, which is a page with nothing on it
 
@@ -722,8 +734,8 @@ emitted before does; the stepped progress markers were one.
 
 `assets/base.css` is the build input. It is `@tailwind base` + `@tailwind
 utilities` plus **one hand-written block**, which is the only styling in this
-package not derived from a component: the selected state of a stacked matrix
-option. See *A clicked option only half responds* under
+package not derived from a component: the selected state of a radio or a
+checkbox. See *A clicked option responds through the stylesheet* under
 [Known gaps](README.md#known-gaps) for why it has to be hand-written, and read
 the comment in that file before changing it —
 the `:where()` wrapping is what keeps it from outranking a survey's own CSS.

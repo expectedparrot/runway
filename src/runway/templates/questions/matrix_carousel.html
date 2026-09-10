@@ -38,7 +38,7 @@
    radio the form would otherwise reach for may be on a slide that is off
    screen, and focusing it would scroll the viewport out from under the
    carousel. #}
-<div class="edsl-matrix-carousel mt-4" tabindex="-1" role="group" aria-roledescription="carousel" aria-label="{{ items|length }} items, one at a time">
+<div class="edsl-matrix-carousel relative mt-4" tabindex="-1" role="group" aria-roledescription="carousel" aria-label="{{ items|length }} items, one at a time">
 {#- -#}
 {# The arrows change what is on screen without moving focus, so nothing would
    announce the change otherwise. The count beside them says it on screen but

@@ -1,16 +1,15 @@
 {# Transcription of the reference implementation's checkbox question.
 
-   Unlike the choice family, an option here is a div holding a sibling input and
-   label rather than a label wrapping its input -- the label carries `grow` so a
-   long option fills the row, which it could not do as a wrapper. Ids are
-   `{question_name}-{index}`, and there is no `name`: a checkbox group is not a
-   radio group and the reference gives it none.
+   Every row is a label wrapping the control, with an explicit `for` naming the
+   input inside it -- the control is a span there, so the label cannot reach the
+   input by containment alone. Ids are `{question_name}-{index}`, and there is no
+   `name`: a checkbox group is not a radio group and the reference gives it none.
+   The label span carries `grow` so a long option fills its row.
 
-   The Select all row is drawn by the wrapper the survey page mounts, whose
-   default is the opposite of the presentational component's, so it belongs on
-   the page even though nothing in the question asks for it. Whether it appears
-   is worked out in checkbox.py, because it depends on the humanize schema's
-   exclusive options as well as on the option count.
+   The Select all row is the same control again under its own class, drawn last.
+   Whether it appears is worked out in checkbox.py: it depends on the humanize
+   schema, both on whether the box was asked for and on which options are
+   exclusive, as well as on the option count.
 
    Class strings are inline rather than passed in, so this file can be diffed
    against the reference component side by side; a class string in a .py file is
@@ -25,23 +24,23 @@
 <div class="edsl-options space-y-1">
 {#- -#}
 {%- for option in options %}
-<div class="edsl-option flex items-center">
+<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option flex items-center">
 {#- -#}
-<input type="checkbox" id="{{ question_name }}-{{ loop.index0 }}" class="edsl-checkbox w-4 h-4 shrink-0 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+{% with control_class = "h-4 w-4", input_id = question_name ~ "-" ~ loop.index0 %}{% include "questions/_checkbox_input.html" %}{% endwith %}
 {#- -#}
-<label for="{{ question_name }}-{{ loop.index0 }}" class="edsl-option-label grow ml-2 py-1">{% with label_html = option.label_html, blocks = option.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</label>
+<span class="edsl-option-label grow ml-2 py-1">{% with label_html = option.label_html, blocks = option.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</span>
 {#- -#}
-</div>
+</label>
 {%- endfor %}
 </div>
 {#- -#}
 {%- if show_select_all %}
-<div class="edsl-select-all mt-3 flex items-center">
+<label for="{{ question_name }}-select-all" class="edsl-select-all mt-3 flex items-center">
 {#- -#}
-<input type="checkbox" id="{{ question_name }}-select-all" class="edsl-checkbox w-4 h-4 shrink-0 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+{% with control_class = "h-4 w-4", input_id = question_name ~ "-select-all" %}{% include "questions/_checkbox_input.html" %}{% endwith %}
 {#- -#}
-<label for="{{ question_name }}-select-all" class="edsl-option-label grow ml-2 py-1">Select all</label>
+<span class="edsl-option-label grow ml-2 py-1">{{ select_all_label }}</span>
 {#- -#}
-</div>
+</label>
 {%- endif %}
 </div>

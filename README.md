@@ -318,8 +318,8 @@ survey can be checked meanwhile.
 | `budget`              | — not yet       |     | `list`                       | — not yet       |
 | `checkbox`            | **✅ available** |     | `matrix`                     | **✅ available** |
 | `checkbox_with_other` | **✅ available** |     | `multiple_choice`            | **✅ available** |
-| `compute`             | **✅ automatic** |     | `multiple_choice_with_other` | — not yet       |
-| `file_upload`         | — not yet       |     | `numerical`                  | — not yet       |
+| `compute`             | **✅ automatic** |     | `multiple_choice_with_other` | **✅ available** |
+| `file_upload`         | — not yet       |     | `numerical`                  | **✅ available** |
 | `free_text`           | **✅ available** |     | `rank`                       | — not yet       |
 | `image_generation`    | **✅ automatic** |     | `survey_message`             | **✅ available** |
 | `interview`           | — not yet       |     | `top_k`                      | — not yet       |
@@ -327,10 +327,12 @@ survey can be checked meanwhile.
 | `linear_scale`        | **✅ available** |     |                              |                 |
 
 
-Three results are worth expecting: `checkbox` draws a **Select all** row nothing
-in the question asked for, `checkbox_with_other` never draws it, and a `matrix`
-configured as a carousel draws neither the grid nor the stacked list — the
-carousel replaces the pair rather than joining them.
+Four results are worth expecting: `checkbox` draws a **Select all** row nothing
+in the question asked for unless the schema removes it, `checkbox_with_other`
+never draws one, a `matrix` configured as a carousel draws neither the grid nor
+the stacked list — the carousel replaces the pair rather than joining them — and
+a `numerical` configured as a slider gets the note rather than a control, since
+only its number-field form is transcribed.
 [SPEC.md](SPEC.md#what-a-preview-reproduces) has why.
 
 A type **outside** this table — `dict`, for instance — cannot be shown to a
@@ -454,9 +456,11 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   rendered.
 - **The Next button does nothing.** The `<form>` is rendered for layout parity
   but has no `action`. Use the toolbar to move between questions.
-- **A clicked option only half responds.** Clicking a radio fills it in, but the
-  box around it does not light up the way the live page's does. The stacked
-  matrix view is the exception.
+- **A clicked option responds through the stylesheet, not the page.** The live
+  page redraws a control when React re-renders it; a preview cannot, so one
+  hand-written rule fills the dot or the tick from the input's own `:checked`
+  state instead. What that rule does not restore is anything the reference
+  animates or measures on re-render.
 - **Only two checkbox rules work.** **Select all** and `exclusive_options` do;
   selection limits and validation do not.
 - **A Coop-linked `.ep` can change when you open it.** Previewing one may fetch a

@@ -1,0 +1,47 @@
+{# Transcription of the reference implementation's checkbox control.
+
+   The radio's twin -- see `_radio_input.html` for why the input is `sr-only`,
+   why the focus ring lives on the control span, and why every control in a
+   preview is `data-unchecked`. The differences are the two the reference draws:
+   a square corner radius with a filled checked state, and a tick instead of a
+   dot.
+
+   The tick is an inline SVG because the reference's icon set renders one: the
+   width and height attributes, the 24-unit viewBox and the `lucide lucide-check`
+   classes are all that library's, and the stroke width and size come from the
+   call site over there. Nothing here fetches an icon.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README.
+
+   Callers pass `control_class` -- the size and cursor, the only part of the
+   control the reference lets a call site decide -- and `input_id`, since a
+   checkbox is labelled by a sibling `for=` rather than by a wrapper. A checkbox
+   group is not a radio group, so there is no `name` and no `value`.
+
+   `checked` exists where the radio's counterpart does not, because one recorded
+   state is ticked: the answered `checkbox_with_other`, which is the page script's
+   markup rather than anything a preview opens with. React puts `checked` after
+   the class for the same reason it puts `value` there. #}
+{% set input_id = input_id | default(none) %}
+{% set checked = checked | default(false) %}
+{#- -#}
+<span class="edsl-checkbox-control relative inline-flex shrink-0 items-center justify-center border border-gray-500 bg-white dark:border-gray-600 dark:bg-gray-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-600 has-[:focus-visible]:ring-offset-2 dark:has-[:focus-visible]:ring-offset-gray-900 rounded-[3px] text-white data-[checked]:border-sky-600 data-[checked]:bg-sky-600 dark:data-[checked]:border-blue-500 dark:data-[checked]:bg-blue-500 {{ control_class }}" {% if checked %}data-checked=""{% else %}data-unchecked=""{% endif %}>
+{#- -#}
+<input type="checkbox"{% if input_id is not none %} id="{{ input_id }}"{% endif %} class="edsl-checkbox sr-only"{% if checked %} checked=""{% endif %}/>
+{#- -#}
+<span class="edsl-checkbox-indicator data-[unchecked]:hidden" {% if checked %}data-checked=""{% else %}data-unchecked=""{% endif %}>
+{#- -#}
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check h-3 w-3" aria-hidden="true">
+{#- -#}
+<path d="M20 6 9 17l-5-5"></path>
+{#- -#}
+</svg>
+{#- -#}
+</span>
+{#- -#}
+</span>

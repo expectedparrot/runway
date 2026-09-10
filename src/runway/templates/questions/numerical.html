@@ -1,0 +1,25 @@
+{# Transcription of the reference implementation's numerical question, in the
+   input format -- a single number field, which is what the type renders when its
+   humanize schema says nothing.
+
+   The other format the schema can ask for is a slider, and this file does not
+   draw one: it is not recorded, so a slider-configured question gets the
+   stand-in instead of a guess. See `numerical.py`.
+
+   `value=""` is the reference's, and it is there because a number input is a
+   controlled field over there while a textarea is not -- which is why the
+   free-text question emits no `value` and this one does.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-numerical-question mb-6">
+{#- -#}
+{% include "questions/_question_text.html" %}
+{#- -#}
+<input type="number" class="edsl-input w-full p-2 border border-gray-400 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-600 focus:border-sky-600" value=""/>
+{#- -#}
+</div>

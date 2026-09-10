@@ -1,0 +1,43 @@
+{# Transcription of the reference implementation's radio control.
+
+   The input is still the control -- focusable, in the tab order, announced, and
+   what a click on the surrounding label reaches. It is only moved out of sight
+   with `sr-only`, so what a respondent sees is the `-control` span drawn around
+   it and the `-indicator` dot inside. Because the input is invisible it can no
+   longer draw its own focus ring, which is why the control carries
+   `has-[:focus-visible]` utilities.
+
+   The reference emits this from one shared component used by every question
+   that asks for a radio, so it is one include here for the same reason: the
+   four choice types, the matrix grid and the stacked matrix would otherwise
+   each hold their own copy of a string none of them owns.
+
+   `data-checked`/`data-unchecked` are how the live page publishes which option
+   is chosen, and what an author's CSS styles against. A preview is always
+   unanswered, so every control here is `data-unchecked` -- and a click cannot
+   change that, since nothing re-renders. Restoring the dot for a clicked radio
+   is `base.css`'s job, the same as the stacked matrix's selected row.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README.
+
+   Callers pass `control_class` -- the size and cursor, which is the only part
+   of the control the reference lets a call site decide -- and whichever of
+   `input_id`, `input_name` and `input_value` that call site sets. React moves
+   `value` after `className` on a controlled input, which is why the attribute
+   order below is not the order the props are written in. #}
+{% set input_id = input_id | default(none) %}
+{% set input_name = input_name | default(none) %}
+{% set input_value = input_value | default(none) %}
+{#- -#}
+<span class="edsl-radio-control relative inline-flex shrink-0 items-center justify-center border border-gray-500 bg-white dark:border-gray-600 dark:bg-gray-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-600 has-[:focus-visible]:ring-offset-2 dark:has-[:focus-visible]:ring-offset-gray-900 rounded-full text-sky-600 data-[checked]:border-sky-600 dark:text-blue-400 dark:data-[checked]:border-blue-400 {{ control_class }}" data-unchecked="">
+{#- -#}
+<input type="radio"{% if input_id is not none %} id="{{ input_id }}"{% endif %}{% if input_name is not none %} name="{{ input_name }}"{% endif %} class="edsl-radio sr-only"{% if input_value is not none %} value="{{ input_value }}"{% endif %}/>
+{#- -#}
+<span class="edsl-radio-indicator h-3/5 w-3/5 rounded-full bg-current data-[unchecked]:hidden forced-colors:forced-color-adjust-none forced-colors:bg-[CanvasText]" data-unchecked=""></span>
+{#- -#}
+</span>
