@@ -14,11 +14,15 @@ Runs under pytest, or directly: python tests/test_multiple_choice_with_other.py
 from __future__ import annotations
 
 import goldens
-from runway import render_question, render_question_with_comment
+from runway import render_question, render_question_with_comment, renderer
 from runway.question_types import RENDERERS, multiple_choice_with_other
 
 CASES = goldens.load_cases()
 GOLDENS = goldens.load_goldens()
+
+# The behaviour script, identified as `test_checkbox.py` identifies it: the one
+# line only it has.
+SCRIPT = "closest('[data-exclusive]')"
 
 
 def a_question(**overrides: object) -> dict:
@@ -123,6 +127,54 @@ def test_a_comment_still_attaches_to_it():
     html = render_question_with_comment(a_question(), {"comment": {"label": "Why?"}})
     assert "edsl-multiple-choice-with-other-question" in html
     assert "Why?" in html
+
+
+# --------------------------------------------------------------------------
+# The one rule the markup cannot carry
+# --------------------------------------------------------------------------
+#
+# Choosing between a listed option and this one settles itself, the two being
+# radios in a group. What does not is typing: the field sits below the row it
+# belongs to, and nothing about entering text chooses it. So the page ships the
+# behaviour script for that alone -- see `templates/behaviour.html`, where the
+# checkbox flavour states the same rule for the same reason.
+
+
+def test_the_script_ships_for_a_page_holding_one():
+    """The bug this guards: the script's gate used to be "is there a checkbox
+    here", so a page of nothing but this type shipped no script at all and a
+    typed answer left the row above it unchosen."""
+    assert SCRIPT in renderer.render_page(a_question())
+
+
+def test_the_script_binds_this_type_by_name():
+    """Shipping it is half the fix. The script walks a list of classes, and this
+    type was not on it -- so even a page that happened to hold a checkbox too
+    left this question unbound."""
+    page = renderer.render_page(a_question())
+    assert "setUpChoiceOther" in page
+    assert "'.edsl-multiple-choice-with-other-question'" in page
+
+
+def test_the_add_another_button_is_not_parked_for_it():
+    """The script's gate and the template's are separate questions now. This
+    type takes one written answer, so there is no row to add a second to, and
+    parking the button would put markup on the page nothing could use."""
+    page = renderer.render_page(a_question())
+    assert 'id="preview-other-add"' not in page
+
+
+def test_an_ordinary_choice_question_still_ships_nothing():
+    """Widening the gate must not hand the script to every survey."""
+    page = renderer.render_page(
+        {
+            "question_name": "destination",
+            "question_type": "multiple_choice",
+            "question_text": "Where would you go?",
+            "question_options": ["Beach", "City"],
+        }
+    )
+    assert SCRIPT not in page
 
 
 def _main() -> int:

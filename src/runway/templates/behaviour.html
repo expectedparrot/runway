@@ -1,13 +1,18 @@
-{# Checkbox behaviour: the part of these two types that is neither markup nor
+{# Option behaviour: the part of these three types that is neither markup nor
    browser default.
 
    Most of a preview is live for free. A radio group settles because the markup
    names it correctly; a checkbox ticks because that is what a checkbox does.
    What is left over are rules -- what "all" means, that "None of the above"
-   clears the rest, that typing an answer of one's own ticks the box above it --
-   and a rule has no markup to be recorded from. So this file is a
+   clears the rest, that typing an answer of one's own chooses the row above it
+   -- and a rule has no markup to be recorded from. So this file is a
    reimplementation -- one of two in the package, the other being
    `carousel.html`, which moves a matrix carousel between its rows.
+
+   The third type is here for the last of those rules and nothing else.
+   `multiple_choice_with_other` draws its "other" row as a radio in the options'
+   own group, so choosing between the two settles itself and `setUpChoiceOther`
+   at the foot of this file is the whole of what it needs.
 
    Two things keep that from being a second, unchecked copy of the application.
 
@@ -244,9 +249,46 @@
         refresh();
     }
 
+    /* `multiple_choice_with_other`, which needs one rule and none of the rest.
+     *
+     * Its "other" row is a radio in the same group as the options, so the two
+     * are exclusive of each other with no rule anywhere -- which is why nothing
+     * below clears an option, settles a Select all row, or adds and removes
+     * rows. This type takes one written answer, in one field.
+     *
+     * What is left is the rule `bindRow` states for the checkbox flavour, for
+     * the same reason: nobody should type something and have it ignored for
+     * want of a click.
+     *
+     * It only ever chooses, though, which is where it parts company with the
+     * checkbox one. Over there emptying every row unticks the box; here
+     * backspacing the field to nothing leaves the row chosen, because that is
+     * what the live survey does. The tempting symmetry -- an "other" with
+     * nothing written in it is not an answer, so release it -- would be this
+     * package inventing a rule and drawing a preview of a survey nobody is
+     * fielding. Whether an empty "other" should submit is the reference's
+     * question to answer, and it has.
+     *
+     * Deselecting is the browser's either way: choosing a listed option
+     * releases this radio, the two being one radio group, and the words the
+     * respondent typed are left where they can still see and clear them. */
+    function setUpChoiceOther(question) {
+        var other = question.querySelector(
+            '.edsl-other-option input[type="radio"]');
+        var input = question.querySelector(
+            '.edsl-other-option .edsl-other-input');
+        if (!other || !input) return;
+        input.addEventListener('input', function () {
+            if (input.value.trim() !== '') other.checked = true;
+        });
+    }
+
     Array.prototype.forEach.call(
         document.querySelectorAll(
             '.edsl-checkbox-question, .edsl-checkbox-with-other-question'),
         setUp);
+    Array.prototype.forEach.call(
+        document.querySelectorAll('.edsl-multiple-choice-with-other-question'),
+        setUpChoiceOther);
 })();
 </script>

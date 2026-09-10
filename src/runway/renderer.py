@@ -45,9 +45,18 @@ STYLESHEET = ASSETS_DIR / "questions.css"
 # Marker styles the stepped indicator has a shape for.
 MARKERS = ("number", "dot")
 
-# The types whose rules the page script implements. Both carry options that a
-# humanize schema can mark exclusive, and one of them draws a Select all row.
+# The types whose checkbox rules the page script implements. Both carry options
+# that a humanize schema can mark exclusive, and one of them draws a Select all
+# row. This is also what decides whether the "Add another" button is parked for
+# cloning, which is why `multiple_choice_with_other` is not one of them: its
+# written answer is a single field with nothing to add a row to.
 CHECKBOX_TYPES = ("checkbox", "checkbox_with_other")
+
+# Every type the page script has a rule for. The one beyond the checkbox pair
+# needs a single line of it -- typing an answer of one's own chooses the row
+# above -- but a rule it never receives is a rule it does not have, so the
+# script has to reach the page carrying it.
+SCRIPTED_TYPES = CHECKBOX_TYPES + ("multiple_choice_with_other",)
 
 # The web survey loads this font, and Tailwind's preflight sets it as the html
 # font-family from theme.fontFamily.sans. Without it every metric shifts --
@@ -354,7 +363,7 @@ def page_exclusive(items: list[tuple[dict, dict | None]]) -> str | None:
 
 
 def has_checkbox(questions: list[dict]) -> bool:
-    """Whether anything here needs the behaviour script at all.
+    """Whether the "Add another" button has to be parked for cloning.
 
     Asked on its own rather than read off the positions, which used to carry
     this too: an ordinary survey should ship no script it has no use for, and
@@ -363,6 +372,19 @@ def has_checkbox(questions: list[dict]) -> bool:
     """
     return any(
         question.get("question_type") in CHECKBOX_TYPES for question in questions
+    )
+
+
+def has_behaviour(questions: list[dict]) -> bool:
+    """Whether anything here needs the behaviour script at all.
+
+    A wider question than :func:`has_checkbox`, and they were one until
+    `multiple_choice_with_other` arrived wanting the script but not the template
+    the same flag was shipping. A page of nothing but that type used to get
+    neither, so typing an answer of one's own left the row above it unchosen.
+    """
+    return any(
+        question.get("question_type") in SCRIPTED_TYPES for question in questions
     )
 
 
@@ -421,6 +443,7 @@ def _document(
     toolbar_html: str = "",
     carousels: list[dict] | None = None,
     checkbox_present: bool = False,
+    behaviour_present: bool = False,
     root_exclusive: str | None = None,
 ) -> str:
     """Wrap composed body markup in the standalone document shell.
@@ -446,6 +469,7 @@ def _document(
         # them.
         carousels=carousels or [],
         checkbox_present=checkbox_present,
+        behaviour_present=behaviour_present,
         root_exclusive=root_exclusive,
         add_icon=Markup(icons.render("plus", class_name="w-4 h-4")),
         body_html=Markup(body_html),
@@ -517,6 +541,7 @@ def render_page_of(
             [] if unserved else carousel_questions(questions, _as_survey_schema(items))
         ),
         checkbox_present=not unserved and has_checkbox(questions),
+        behaviour_present=not unserved and has_behaviour(questions),
         root_exclusive=None if unserved else page_exclusive(items),
     )
 
@@ -708,4 +733,5 @@ def render_bundle(
         toolbar_html=toolbar,
         carousels=carousels,
         checkbox_present=has_checkbox(questions),
+        behaviour_present=has_behaviour(questions),
     )

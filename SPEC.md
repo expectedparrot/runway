@@ -547,6 +547,25 @@ everything else, rendered from `questions/_other_add.html`, parked in a
 `<template>` and cloned; a test holds the parked copy to the recorded one byte
 for byte.
 
+`multiple_choice_with_other` carries the same script for **one** of those rules
+and none of the others. Its "other" row is a radio in the options' own group, so
+choosing between the two settles itself and needs nothing; typing does not, and
+the rule is the checkbox flavour's — entering an answer of one's own chooses the
+row above it. Only that: backspacing the field to nothing leaves the row chosen,
+where emptying every row in the checkbox flavour unticks its box. The two differ
+because the live survey does, and the preview follows it rather than tidying it
+— whether an empty "other" should stand as an answer is the reference's question
+and it has answered. Choosing a listed option does release the row, which is the
+browser's doing and not a rule, and the words already typed are left where the
+respondent can still see and clear them. Nothing is parked in a `<template>` for
+this type: its written answer is a single field, so there is no row to add a
+second to.
+
+That is why the script's gate and the template's are separate questions. They
+were one — "is there a checkbox on this page" — and a page of nothing but
+`multiple_choice_with_other` therefore shipped neither, so a typed answer sat
+beside a row nothing had chosen.
+
 ### The matrix carousel
 
 A humanize schema can ask for `matrix` as a **carousel** — one row at a time,
