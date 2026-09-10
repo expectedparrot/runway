@@ -322,15 +322,6 @@ humanize_schema = {
     background: rgb(22 163 74 / 0.1);
 }
 
-/* The dots are the overview the grid gave away: a filled one is a row already
-    rated. Same green, so the survey has one meaning for "done". */
-.edsl-matrix-question .edsl-matrix-carousel-dot-answered > span {
-    background: rgb(22 163 74);
-}
-
-.edsl-matrix-question .edsl-matrix-carousel-dot-current > span {
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(22 163 74);
-}
 """,
         "progress": {
             "type": "steps",
