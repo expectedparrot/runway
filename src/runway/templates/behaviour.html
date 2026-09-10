@@ -41,6 +41,62 @@
    checking it. #}
 <script>
 (function () {
+    /* Which control is chosen, published the way the reference publishes it.
+     *
+     * The real input is `sr-only`; what a respondent sees is the span drawn
+     * around it and the dot or tick inside. Those two read `data-checked` /
+     * `data-unchecked`, and over there React rewrites the pair on every
+     * re-render. A preview has no re-render, so left alone every control stays
+     * `data-unchecked` however often it is clicked: the outline stays grey, the
+     * dot stays hidden, and the page invites a click and then looks broken.
+     *
+     * This used to be three authored rules in `base.css` keyed off `:checked`.
+     * They drew the right thing and cost too much: beating the utility that
+     * hides the dot took more weight than a survey's own
+     * `.edsl-radio-indicator` rule had, so a survey hiding an indicator was
+     * overruled in a preview and obeyed on the live page. Rewriting the
+     * attribute has no such cost. The utilities the component already carries
+     * do all the drawing, an author's CSS meets exactly the cascade it meets
+     * live, and `[data-checked]` selectors -- the ones an author writes against
+     * the live page -- start meaning something in a preview at last.
+     *
+     * A full sweep rather than the control that changed: choosing a radio
+     * unchoses its whole group, and the browser reports that as one event on
+     * one input. Cheap enough at any page size to be worth not reasoning about.
+     * The attribute is only touched when it is actually wrong, so a page of
+     * untouched controls costs a read apiece. */
+    function publish(control, inputClass, chosen) {
+        var indicator = control.querySelector('.' + inputClass + '-indicator');
+        [control, indicator].forEach(function (element) {
+            if (!element) return;
+            if (element.hasAttribute('data-checked') === chosen) return;
+            element.setAttribute(
+                chosen ? 'data-checked' : 'data-unchecked', '');
+            element.removeAttribute(chosen ? 'data-unchecked' : 'data-checked');
+        });
+    }
+
+    function syncControls() {
+        ['edsl-radio', 'edsl-checkbox'].forEach(function (inputClass) {
+            Array.prototype.forEach.call(
+                document.querySelectorAll('.' + inputClass + '-control'),
+                function (control) {
+                    var input = control.querySelector('.' + inputClass);
+                    if (input) publish(control, inputClass, input.checked);
+                });
+        });
+    }
+
+    /* Every control on the page, whichever question drew it, and whatever moved
+     * it -- a click, or one of the rules below setting `checked` itself. A
+     * delegated listener catches the first; the rules that reach for `checked`
+     * without an event call `syncControls` where they finish. */
+    document.addEventListener('change', syncControls);
+
+    /* Once at load, for the state the markup did not come with: a browser
+     * restoring a form on reload sets `checked` back without firing anything. */
+    syncControls();
+
     function hasAnswer(texts) {
         return texts.some(function (text) { return text.trim() !== ''; });
     }
@@ -91,8 +147,15 @@
         }
 
         /* Everything that follows from the rows: how each is named, whether it
-         * can be removed, and whether there is anything to add another to. */
+         * can be removed, and whether there is anything to add another to.
+         *
+         * Every rule below finishes here, which is why the controls are
+         * published here too: the rules that tick and untick boxes themselves
+         * fire no `change` for the delegated listener to hear, and one of them
+         * is reached by a click on a remove button rather than by an event on a
+         * control at all. */
         function refresh() {
+            syncControls();
             var current = rows();
             var removable = current.length > 1;
             current.forEach(function (row, index) {
@@ -273,13 +336,15 @@
      * releases this radio, the two being one radio group, and the words the
      * respondent typed are left where they can still see and clear them. */
     function setUpChoiceOther(question) {
-        var other = question.querySelector(
-            '.edsl-other-option input[type="radio"]');
+        var other = question.querySelector('.edsl-other-option .edsl-radio');
         var input = question.querySelector(
             '.edsl-other-option .edsl-other-input');
         if (!other || !input) return;
         input.addEventListener('input', function () {
             if (input.value.trim() !== '') other.checked = true;
+            // Typing fires `input`, not `change`, so the row this just chose
+            // would otherwise stay drawn as the unchosen one.
+            syncControls();
         });
     }
 

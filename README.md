@@ -456,11 +456,12 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   rendered.
 - **The Next button does nothing.** The `<form>` is rendered for layout parity
   but has no `action`. Use the toolbar to move between questions.
-- **A clicked option responds through the stylesheet, not the page.** The live
-  page redraws a control when React re-renders it; a preview cannot, so one
-  hand-written rule fills the dot or the tick from the input's own `:checked`
-  state instead. What that rule does not restore is anything the reference
-  animates or measures on re-render.
+- **A clicked option is redrawn by a script, not by React.** The live page
+  redraws a control when React re-renders it; a preview cannot, so the page
+  script marks the control chosen the same way React would and the styling
+  follows on its own. What it does not restore is anything the reference
+  animates or measures on re-render. A page drawing no radio or checkbox ships
+  no script at all.
 - **Only two checkbox rules work.** **Select all** and `exclusive_options` do;
   selection limits and validation do not.
 - **A Coop-linked `.ep` can change when you open it.** Previewing one may fetch a

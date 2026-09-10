@@ -18,12 +18,16 @@ Byte equality is the assertion everywhere. Do not normalize, pretty-print, or
 tree-compare. If a template has to become uglier to emit exactly what React
 emits, make it uglier.
 
-The single exception is `assets/base.css`, which carries hand-written rules for
-the selected state of a radio or a checkbox — state the reference expresses by
-rewriting data attributes on re-render, which a static page cannot do. It is
-CSS, not markup, so parity is untouched. Anything else that wants to be
-hand-written should be a recorded case instead; read that file's comment first,
-including why `:where()` is load-bearing there.
+There is no exception. `assets/base.css` used to be one, carrying hand-written
+rules for the selected state of a radio or a checkbox — state the reference
+expresses by rewriting data attributes on re-render, which a static page cannot
+do. One of those rules had to outrank the utility it replaced, which meant
+outranking a survey's own CSS too, and author CSS is emitted last precisely so
+it wins the way it wins on the live page. `templates/behaviour.html` rewrites
+the attribute instead, so the component's own utilities do the drawing and
+nothing here is authored. Read the comment at the top of `base.css` before
+adding a rule to it; anything that wants to be hand-written should be a
+recorded case instead.
 
 ## Development checks
 

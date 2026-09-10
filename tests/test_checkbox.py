@@ -208,10 +208,28 @@ def test_the_positions_are_carried_by_the_container_not_a_table():
     assert "closest('[data-exclusive]')" in page
 
 
-def test_the_script_ships_only_where_there_is_a_checkbox():
-    """An ordinary survey carries no script it has no use for."""
+def test_the_script_ships_only_where_there_is_a_control():
+    """A survey carries no script it has no use for.
+
+    The gate used to be "is there a checkbox here" and is now "was a control
+    drawn", which is a wider door: the script publishes which control is chosen,
+    so a page of radios needs it as much as a page of boxes. A question drawing
+    no control at all is what is left outside.
+    """
     with_box = renderer.render_page(a_checkbox())
     without = renderer.render_page(
+        {"question_name": "q", "question_type": "free_text", "question_text": "T"}
+    )
+    assert SCRIPT in with_box
+    assert SCRIPT not in without
+    # And nothing to read positions off, since there are none to read.
+    assert "data-exclusive" not in without
+
+
+def test_a_page_of_radios_ships_it_too():
+    """It draws the chosen state for those as well, and there is nowhere else
+    that gets drawn: `base.css` is generated from the components now."""
+    assert SCRIPT in renderer.render_page(
         {
             "question_name": "q",
             "question_type": "yes_no",
@@ -219,10 +237,6 @@ def test_the_script_ships_only_where_there_is_a_checkbox():
             "question_options": ["Yes", "No"],
         }
     )
-    assert SCRIPT in with_box
-    assert SCRIPT not in without
-    # And nothing to read positions off, since there are none to read.
-    assert "data-exclusive" not in without
 
 
 def test_the_script_reaches_a_split_page_too():

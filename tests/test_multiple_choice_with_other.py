@@ -164,14 +164,15 @@ def test_the_add_another_button_is_not_parked_for_it():
     assert 'id="preview-other-add"' not in page
 
 
-def test_an_ordinary_choice_question_still_ships_nothing():
-    """Widening the gate must not hand the script to every survey."""
+def test_a_question_drawing_no_control_still_ships_nothing():
+    """Widening the gate must not hand the script to every survey. It reaches
+    every page that draws a radio or a box, which is most of them, and stops
+    there."""
     page = renderer.render_page(
         {
             "question_name": "destination",
-            "question_type": "multiple_choice",
+            "question_type": "free_text",
             "question_text": "Where would you go?",
-            "question_options": ["Beach", "City"],
         }
     )
     assert SCRIPT not in page

@@ -52,11 +52,13 @@ MARKERS = ("number", "dot")
 # written answer is a single field with nothing to add a row to.
 CHECKBOX_TYPES = ("checkbox", "checkbox_with_other")
 
-# Every type the page script has a rule for. The one beyond the checkbox pair
-# needs a single line of it -- typing an answer of one's own chooses the row
-# above -- but a rule it never receives is a rule it does not have, so the
-# script has to reach the page carrying it.
-SCRIPTED_TYPES = CHECKBOX_TYPES + ("multiple_choice_with_other",)
+# What the page script publishes state for, found in the rendered body rather
+# than guessed from a list of types. Every question drawing a radio or a
+# checkbox needs it -- that is most of them, and the set grows whenever a new
+# type reaches for the shared control include -- so a list here would be a list
+# to forget to add to, and forgetting would look like a control that does not
+# respond to a click.
+CONTROL_CLASSES = ("edsl-radio-control", "edsl-checkbox-control")
 
 # The web survey loads this font, and Tailwind's preflight sets it as the html
 # font-family from theme.fontFamily.sans. Without it every metric shifts --
@@ -375,17 +377,20 @@ def has_checkbox(questions: list[dict]) -> bool:
     )
 
 
-def has_behaviour(questions: list[dict]) -> bool:
-    """Whether anything here needs the behaviour script at all.
+def has_behaviour(body_html: str) -> bool:
+    """Whether anything on this page needs the behaviour script at all.
 
-    A wider question than :func:`has_checkbox`, and they were one until
-    `multiple_choice_with_other` arrived wanting the script but not the template
-    the same flag was shipping. A page of nothing but that type used to get
-    neither, so typing an answer of one's own left the row above it unchosen.
+    Asked of the rendered body, not the questions: what the script publishes is
+    the chosen state of a control, so the question is literally whether one was
+    drawn. A page that draws a warning instead of its control answers no on its
+    own, with nothing here having to remember to ask.
+
+    A wider question than :func:`has_checkbox`, which stayed behind on the
+    types that park an "Add another" button. The two were one flag until a page
+    of nothing but `multiple_choice_with_other` got neither and left a typed
+    answer beside a row nothing had chosen.
     """
-    return any(
-        question.get("question_type") in SCRIPTED_TYPES for question in questions
-    )
+    return any(name in body_html for name in CONTROL_CLASSES)
 
 
 def carousel_questions(
@@ -531,9 +536,10 @@ def render_page_of(
     """
     questions = [question for question, _ in items]
     first = questions[0] if questions else {}
+    body_html = render_page_body(items, progress, unserved=unserved)
     return _document(
         title=title or first.get("question_name") or "Survey preview",
-        body_html=render_page_body(items, progress, unserved=unserved),
+        body_html=body_html,
         custom_css=custom_css,
         # Neither applies to a page that draws a warning instead of its control:
         # there is no carousel to move and no checkbox to tick.
@@ -541,7 +547,9 @@ def render_page_of(
             [] if unserved else carousel_questions(questions, _as_survey_schema(items))
         ),
         checkbox_present=not unserved and has_checkbox(questions),
-        behaviour_present=not unserved and has_behaviour(questions),
+        # No `unserved` guard: such a page draws a warning where its control
+        # would be, so there is no control in the body to find.
+        behaviour_present=has_behaviour(body_html),
         root_exclusive=None if unserved else page_exclusive(items),
     )
 
@@ -726,12 +734,13 @@ def render_bundle(
         else ""
     )
 
+    body_html = "".join(panels)
     return _document(
         title=title,
-        body_html="".join(panels),
+        body_html=body_html,
         custom_css=custom_css,
         toolbar_html=toolbar,
         carousels=carousels,
         checkbox_present=has_checkbox(questions),
-        behaviour_present=has_behaviour(questions),
+        behaviour_present=has_behaviour(body_html),
     )

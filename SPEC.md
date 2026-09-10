@@ -606,7 +606,7 @@ moved; nothing here does either, so a swipe does nothing at all. The layout
 previews faithfully and the arrows work; the feel of it under a thumb does not
 preview, and a carousel is worth trying live before a survey goes out.
 
-### A clicked option responds through the stylesheet
+### A clicked option is published, not restyled
 
 Radios and checkboxes in a preview are real, and clicking one does check it —
 the browser does that. What a respondent *sees* is a different matter. The
@@ -617,18 +617,34 @@ control keeps `data-unchecked` however often it is clicked: left alone, the
 outline would stay grey and the dot or the tick would stay hidden, and the page
 would invite a click and then look broken.
 
-`base.css` restates that state as the one the DOM really has, `:checked` on the
-input, in three rules — the radio's outline, the checkbox's outline and fill, and
-the indicator inside either. The first two are written at one class of weight,
-the same as the plain utilities they override, so a survey's own `custom_css`
-still wins exactly as it does on the live page. The third cannot be: the utility
-hiding the indicator is a variant one, and Tailwind emits those after custom CSS,
-so that rule is won on weight instead and would override a survey's own rule for
-`.edsl-radio-indicator`. Both costs are stated in the file.
+The page script rewrites the attribute, exactly as the reference does, and the
+utilities the component already carries do all the drawing. Nothing in the
+stylesheet is authored for this, which is the point: the whole of `questions.css`
+is generated from classes a component emits, so the parity tests cover it, and a
+survey's own `custom_css` meets precisely the cascade it meets on the live page.
+It also means `[data-checked]` selectors — the ones an author writes against the
+live page — mean something in a preview, which while the state lived in
+`:checked` they never could.
+
+This replaced three authored rules in `base.css` that restated the state as
+`:checked` on the input. They drew the right thing, and one of them could not be
+made to lose gracefully: the utility hiding the indicator is a variant one, and
+Tailwind emits those after custom CSS, so outranking it took more weight than a
+survey's own `.edsl-radio-indicator` rule had. A survey hiding an indicator was
+overruled in a preview and obeyed on the live page. No selector fixes that —
+beating the utility takes more than two class-level components and losing to a
+plain author rule takes fewer than one — so the fix was to stop needing to beat
+it.
+
+The cost is that the feedback is no longer CSS-only: the script ships on every
+page that draws a control, which is most of them. `has_behaviour` decides that
+by looking for a control in the rendered body rather than by listing the types
+that draw one, so a type that starts drawing one is covered without being added
+to a list.
 
 What is still not reproduced is anything the reference does *only* on re-render
-and cannot be derived from the input: nothing in the transcribed markup depends
-on it today, which is why three rules are the whole of it.
+and cannot be derived from the input's own state: nothing in the transcribed
+markup depends on it today.
 
 ### A message, which is a page with nothing on it
 
@@ -746,18 +762,17 @@ does, or a newly supported type will keep reading as unsupportable.
 
 ## Regenerating the stylesheet
 
-`assets/questions.css` is vendored, generated output — ~50 KB, ~9 KB gzipped.
+`assets/questions.css` is vendored, generated output — ~62 KB, ~11 KB gzipped.
 It covers the whole respondent component tree, so adding most question types
 needs no regeneration. A *template* that starts emitting utilities nothing
 emitted before does; the stepped progress markers were one.
 
-`assets/base.css` is the build input. It is `@tailwind base` + `@tailwind
-utilities` plus **one hand-written block**, which is the only styling in this
-package not derived from a component: the selected state of a radio or a
-checkbox. See *A clicked option responds through the stylesheet* under
-[Known gaps](README.md#known-gaps) for why it has to be hand-written, and read
-the comment in that file before changing it —
-the `:where()` wrapping is what keeps it from outranking a survey's own CSS.
+`assets/base.css` is the build input, and it is `@tailwind base` + `@tailwind
+utilities` and **nothing else** — every rule the package ships is derived from a
+class a component emits. It carried one hand-written block until the selected
+state moved into the page script; see *A clicked option is published, not
+restyled* under [Known gaps](README.md#known-gaps) for why it could not stay,
+and read the comment at the top of the file before adding anything to it.
 
 `assets/tailwind.config.cjs` extends the live application's own Tailwind config
 rather than redeclaring a theme, so fonts, colors, screens and the
@@ -766,14 +781,21 @@ therefore needs a checkout of that application:
 
 ```bash
 RUNWAY_REFERENCE_APP=/path/to/the/web/app \
+RUNWAY_REFERENCE_COMPONENTS='/path/to/the/web/app/<respondent components>/**/*.{ts,tsx}' \
 npx tailwindcss \
   -c src/runway/assets/tailwind.config.cjs \
   -i src/runway/assets/base.css \
   -o src/runway/assets/questions.css --minify
 ```
 
-`RUNWAY_REFERENCE_COMPONENTS` narrows the component glob if the default
-(`src/components/**/*.{ts,tsx}` under that checkout) is wider than you want.
+**Both variables are required and neither has a default.** A theme guessed in
+the config would be a second source of truth, and a component glob guessed there
+is worse, because it fails quietly: point the build at that application's whole
+component tree and it produces a stylesheet several times the size that still
+draws every page correctly. Nothing about the result says it is wrong. Check the
+size against the figure above before committing a rebuild —
+`tests/test_packaging.py` bounds it at both ends for the same reason.
+
 The content globs point at the templates — where class strings actually live —
 and at the reference components; never at rendered output, which would keep
 dead classes alive in the stylesheet after a template changed.
@@ -844,6 +866,6 @@ runway/
     │       └── unsupported.html
     └── assets/
         ├── questions.css         generated, vendored — what ships
-        ├── base.css              build input + the one hand-written rule
+        ├── base.css              build input — nothing hand-written
         └── tailwind.config.cjs   build config
 ```
