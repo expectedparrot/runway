@@ -25,6 +25,7 @@ from pathlib import Path
 
 from markupsafe import Markup
 
+from . import branding as branding_module
 from . import icons
 from . import pages as pages_module
 from . import progress as progress_module
@@ -165,7 +166,7 @@ def render_question_with_comment(
     )
 
 
-def render_progress(payload: dict | None = None) -> str:
+def render_progress(payload: dict | None = None, column: bool = False) -> str:
     """Render a progress payload -- see :mod:`progress` -- as HTML.
 
     ``None`` is the unconfigured survey: a bar at 0%, which is what a survey
@@ -176,6 +177,9 @@ def render_progress(payload: dict | None = None) -> str:
     Both readings are clamped and rounded to a whole percent *before* anything
     is drawn, exactly as the reference does, so ``aria-valuenow`` and the label
     beneath the bar can never disagree.
+
+    ``column`` puts the indicator on the page's column, as the survey page
+    mounts it. Off, it is the indicator alone, which is what is recorded.
     """
     payload = payload or {}
     kind = payload.get("type", "bar")
@@ -187,6 +191,7 @@ def render_progress(payload: dict | None = None) -> str:
         return render_template(
             "progress.html",
             kind="steps",
+            column=column,
             # A marker style this package predates renders as a numbered step
             # rather than as a marker with no shape at all.
             marker=(
@@ -212,12 +217,25 @@ def render_progress(payload: dict | None = None) -> str:
     return render_template(
         "progress.html",
         kind="bar",
+        column=column,
         percent=percent,
         # "loading" below 100% and "complete" at it, matching the progress
         # primitive the reference builds the bar from.
         state="complete" if percent >= 100 else "loading",
         show_label=payload.get("label", progress_module.PERCENT_LABEL) is not None,
     )
+
+
+def render_banner(branding: dict | None = None) -> str:
+    """Render a resolved branding block -- see :mod:`branding` -- as HTML.
+
+    ``None``, and a block with no logo, render the empty string: the reference
+    draws no banner at all for a survey without a logo, rather than an empty one.
+    """
+    logo = (branding or {}).get("logo")
+    if not logo:
+        return ""
+    return render_template("banner.html", logo=logo)
 
 
 def render_item(
@@ -246,6 +264,7 @@ def render_item(
     )
     return render_template(
         "survey_item.html",
+        question_name=question.get("question_name") or "",
         item_html=Markup(body),
         exclusive=exclusive,
     )
@@ -255,6 +274,8 @@ def render_page_body(
     items: list[tuple[dict, dict | None]],
     progress: dict | None = None,
     unserved: bool = False,
+    branding: dict | None = None,
+    group_name: str | None = None,
 ) -> str:
     """Render the respond page's body markup around a page's items.
 
@@ -272,11 +293,18 @@ def render_page_body(
     rather than of any question on it, which is why it arrives here and not in
     the question dicts; such a page is always one question, since a group is
     what puts two of them together.
+
+    ``branding`` is a resolved block from :func:`branding.resolve`; omitted,
+    the page has no banner, which is how a survey without a logo is drawn.
+    ``group_name`` names the question group a page serves, which the page puts
+    on its container for the author's CSS; omitted for a page of one question.
     """
     several = len(items) > 1
     return render_template(
         "body.html",
-        progress_html=Markup(render_progress(progress)),
+        banner_html=Markup(render_banner(branding)),
+        progress_html=Markup(render_progress(progress, column=True)),
+        group_name=group_name,
         items_html=Markup(
             "".join(
                 render_item(
@@ -299,9 +327,12 @@ def render_body(
     question: dict,
     humanize_schema: dict | None = None,
     progress: dict | None = None,
+    branding: dict | None = None,
 ) -> str:
     """Render the respond page's body markup around one question."""
-    return render_page_body([(question, humanize_schema)], progress)
+    return render_page_body(
+        [(question, humanize_schema)], progress, branding=branding
+    )
 
 
 def exclusive_positions(
@@ -500,6 +531,7 @@ def render_page(
     humanize_schema: dict | None = None,
     custom_css: str | None = None,
     progress: dict | None = None,
+    branding: dict | None = None,
 ) -> str:
     """Render a complete, standalone HTML document for one question.
 
@@ -510,9 +542,14 @@ def render_page(
 
     ``progress`` is a payload from :mod:`progress`; omitting it draws the bar at
     0%, and ``progress.HIDDEN`` leaves the indicator off the page entirely.
+    ``branding`` is a resolved block from :func:`branding.resolve`, which draws
+    the survey's logo above the page; omitted, there is no banner.
     """
     return render_page_of(
-        [(question, humanize_schema)], custom_css=custom_css, progress=progress
+        [(question, humanize_schema)],
+        custom_css=custom_css,
+        progress=progress,
+        branding=branding,
     )
 
 
@@ -522,6 +559,8 @@ def render_page_of(
     progress: dict | None = None,
     title: str | None = None,
     unserved: bool = False,
+    branding: dict | None = None,
+    group_name: str | None = None,
 ) -> str:
     """Render one page of a survey -- its whole run of items -- as a document.
 
@@ -536,7 +575,9 @@ def render_page_of(
     """
     questions = [question for question, _ in items]
     first = questions[0] if questions else {}
-    body_html = render_page_body(items, progress, unserved=unserved)
+    body_html = render_page_body(
+        items, progress, unserved=unserved, branding=branding, group_name=group_name
+    )
     return _document(
         title=title or first.get("question_name") or "Survey preview",
         body_html=body_html,
@@ -562,6 +603,7 @@ def render_bundle(
     variants: list[list[dict]] | None = None,
     scenarios: list[dict] | None = None,
     pages: list[pages_module.Page] | None = None,
+    assets: dict | None = None,
 ) -> str:
     """Render a whole survey as one standalone document.
 
@@ -597,12 +639,18 @@ def render_bundle(
     as serving all of them; only a page that actually varies is repeated. So a
     survey that pipes nothing collapses to exactly the panel list it has without
     scenarios, and a bundle grows only where the survey really differs.
+
+    ``assets`` is what :func:`assets.fetch` returned for this schema. The logo it
+    holds is drawn on every page, as the live page keeps its banner across them;
+    a logo it does not hold -- every logo, when nothing was fetched -- draws as
+    a placeholder. See :mod:`branding`.
     """
     humanize_schema = humanize_schema or {}
     per_question = humanize_schema.get("questions") or {}
     survey_schema = humanize_schema.get("survey") or {}
     custom_css = survey_schema.get("custom_css")
     progress_config = survey_schema.get("progress")
+    branding = branding_module.resolve(humanize_schema, assets)
 
     names = [
         question.get("question_name") or f"question-{index + 1}"
@@ -663,7 +711,11 @@ def render_bundle(
             ]
             key = (
                 render_page_body(
-                    bound_items, progress=progress, unserved=page.unserved
+                    bound_items,
+                    progress=progress,
+                    unserved=page.unserved,
+                    branding=branding,
+                    group_name=page.group,
                 ),
                 None if page.unserved else page_exclusive(bound_items),
             )

@@ -118,9 +118,9 @@ def test_an_unknown_step_status_renders_as_upcoming():
             ],
         }
     )
-    assert "edsl-progress-step-upcoming" in html
+    assert 'data-status="upcoming" class="edsl-progress-step ' in html
     assert "not yet reached" in html
-    assert "edsl-progress-step-skipped" not in html
+    assert 'data-status="skipped"' not in html
 
 
 def test_an_unknown_marker_style_renders_as_a_numbered_step():

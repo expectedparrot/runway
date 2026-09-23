@@ -162,6 +162,10 @@ and position are still checkable.
 - Media in question text and in option labels is drawn — an image, video or
   PDF held in a scenario is inlined into the page, so the file's bytes are in
   the HTML.
+- Math (`$$…$$`) shows as the TeX source; the live page typesets it.
+- A logo (`survey.branding.logo`) draws as a placeholder. `render
+  --fetch-assets` fetches it from Coop with your API key, embeds it, and keeps
+  a copy in `<out>/assets/` so the next render there needs no network.
 ````
 
 ## Install
@@ -262,6 +266,21 @@ across the top to jump between questions (arrows, a dropdown, arrow keys).
 but a short survey because each file re-inlines the stylesheet. `--json` on
 `check`, `types` and `version` gives machine-readable output.
 
+A survey whose schema names a logo gets its banner on every page
+(`examples/src/logo_survey.py` has one), with the logo drawn as a placeholder — the logo is an asset on Coop, and fetching it is a
+network call, so it is not done unless you ask:
+
+```bash
+runway render survey.ep --schema schema.json --fetch-assets
+```
+
+That fetches the logo with your Coop API key, which works for your own assets
+and for any survey's logo you can view. The image is **embedded in the page**,
+so the preview is still one file you can send anywhere, and a copy is kept in
+`<out>/assets/`: rendering into the same directory again uses it rather than
+the network, and deleting the folder is how to forget it. A logo that cannot be
+fetched is a warning and a placeholder, not a failed render.
+
 Questions with no control here still get a full page — same shell, same progress
 indicator, and **their question text rendered in the usual markup** — with a note
 or a warning standing in for the input, so a mixed survey previews end to end and
@@ -315,16 +334,16 @@ survey can be checked meanwhile.
 
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
-| `budget`              | — not yet       |     | `list`                       | — not yet       |
-| `checkbox`            | **✅ available** |     | `matrix`                     | **✅ available** |
-| `checkbox_with_other` | **✅ available** |     | `multiple_choice`            | **✅ available** |
-| `compute`             | **✅ automatic** |     | `multiple_choice_with_other` | **✅ available** |
+| `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
+| `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
+| `checkbox_with_other` | **✅ available** |     | `matrix`                     | **✅ available** |
+| `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
+| `distribution`        | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
 | `file_upload`         | — not yet       |     | `numerical`                  | **✅ available** |
 | `free_text`           | **✅ available** |     | `rank`                       | — not yet       |
 | `image_generation`    | **✅ automatic** |     | `survey_message`             | **✅ available** |
 | `interview`           | — not yet       |     | `top_k`                      | — not yet       |
 | `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
-| `linear_scale`        | **✅ available** |     |                              |                 |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing
@@ -403,6 +422,13 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   a swipe does nothing at all. On a touch screen that is the difference between
   reading the layout and using it — preview the format here, then try a real
   one on a phone before the survey goes out.
+- **Math.** The live page typesets `$$…$$` with KaTeX in question text, option
+  labels and instructions — double dollars only, so a price such as "$5 or $10"
+  stays text. A preview shows the TeX as written, delimiters included:
+  `Solve $$x^2 = 4$$` previews as exactly that. Nothing is lost or mangled, so
+  the source can still be proofread, but how the equation looks — its size, and
+  the line height around a displayed one — is not shown. No recorded case holds
+  math yet, which is the first step to drawing it.
 - **Option randomization.** Not applied; the authored order is shown.
 - **Agent traits and prior answers.** `{{ agent.x }}` and `{{ q_name.answer }}`
   render as written — there is no agent and no earlier answer to resolve them
@@ -447,6 +473,15 @@ What a preview cannot show you. [SPEC.md](SPEC.md) explains why in each case.
   before it is rendered, so a tag outside its allowlist (`<div>`, `<script>`) is
   dropped where a preview shows it. Nothing executes in either — HTML is not
   supported in scenarios.
+- **A logo is a placeholder unless fetched.** See `--fetch-assets` above. Each
+  page of a bundle embeds its own copy, as with scenario media, so a large logo
+  on a long survey makes a large file.
+- **The page layout is transcribed by hand, for now.** Everything else here is
+  held byte for byte to markup recorded from the live page. The page's outer
+  layout (the container, the column everything lines up on, the footer) can't
+  be recorded at the moment, so it is copied from the live page's source
+  instead. It matches today, but nothing would catch it drifting until
+  recording resumes. See [SPEC.md](SPEC.md#design-constraints).
 - **Position is inferred** from the authored item list, where the live page
   resolves it from survey flow — so a survey with skip logic will differ, the
   further a respondent skips the more so. The renderings themselves are exact.

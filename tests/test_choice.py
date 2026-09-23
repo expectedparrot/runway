@@ -58,6 +58,24 @@ def test_every_case_has_a_golden():
     goldens.check_pairing()
 
 
+def test_every_recorded_kind_is_compared_somewhere():
+    """No case kind is recorded without a test that compares it.
+
+    The question kinds are compared below through ``RENDER_BY_KIND``, which
+    skips every other kind -- rightly, since they are not questions. Each of
+    those is compared in a file of its own, and this is the list of them: a new
+    kind landing in a re-recording fails here until it has a home, rather than
+    sitting green and never checked.
+    """
+    elsewhere = {
+        "progress": "test_progress.py",
+        "banner": "test_branding.py",
+        "shell": "test_survey.py",
+    }
+    unchecked = {case["kind"] for case in CASES.values()} - set(RENDER_BY_KIND)
+    assert unchecked <= set(elsewhere), f"no test compares {unchecked - set(elsewhere)}"
+
+
 def test_every_recorded_question_case_matches():
     """Every question case in the file, compared against its recording.
 

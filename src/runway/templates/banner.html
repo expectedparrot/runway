@@ -1,0 +1,28 @@
+{# The survey's branding banner: the author's logo, above everything else on
+   the page. Drawn from a resolved branding block -- see `branding.resolve` --
+   and never from the schema, which is how the reference draws it too.
+
+   The content div's class list is NOT a concatenation of its sources. The
+   reference builds it with its class-merging helper from `flex w-full`, the
+   position's justify utility and the page's column classes, and the merge
+   keeps only the later of the two `w-full`s -- so the justify utility lands
+   between `flex` and `w-full`. Recorded, not assembled: the `banner_` cases hold
+   this to the component's output.
+
+   `width` and `height` are the image's intrinsic size, there only so the
+   browser reserves the right shape before the image arrives; the logo's drawn
+   size is `h-10 w-auto`, which an author's own CSS on `.edsl-logo` overrides. #}
+{%- set JUSTIFY = {
+    'left': 'justify-start',
+    'center': 'justify-center',
+    'right': 'justify-end',
+} %}
+<div class="edsl-survey-banner w-full py-4">
+{#- -#}
+<div class="edsl-survey-banner-content flex {{ JUSTIFY[logo.position] }} w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24">
+{#- -#}
+<img class="edsl-logo h-10 w-auto max-w-full object-contain" src="{{ logo.url }}" alt="{{ logo.alt }}" width="{{ logo.width }}" height="{{ logo.height }}"/>
+{#- -#}
+</div>
+{#- -#}
+</div>

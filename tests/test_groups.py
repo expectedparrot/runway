@@ -253,10 +253,11 @@ def test_progress_is_read_from_where_the_page_begins():
     # Three steps over four pages: the schema's boundaries name the last question
     # of a group, so the marker moves as a group is submitted and holds across
     # the pages inside the last step.
-    complete = [panel.count("edsl-progress-step-complete") for panel in panels]
+    step = 'data-status="complete" class="edsl-progress-step '
+    complete = [panel.count(step) for panel in panels]
     assert complete == [0, 1, 2, 2]
     for panel in panels:
-        assert panel.count("edsl-progress-step-current") == 1
+        assert panel.count('data-status="current" class="edsl-progress-step ') == 1
 
 
 def test_a_page_is_deduplicated_across_scenarios_as_a_whole():

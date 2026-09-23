@@ -18,7 +18,7 @@ from pathlib import Path
 
 import examples
 import goldens
-from runway.renderer import render_body, render_bundle
+from runway.renderer import render_body, render_bundle, render_page_body
 from runway.survey import render_survey
 
 EXAMPLE = examples.EXAMPLES / "mixed_survey.json"
@@ -60,21 +60,45 @@ def _split_page(question_name: str) -> str:
 # --------------------------------------------------------------------------
 
 
-def test_shell_around_a_question_matches_react():
-    """The layout container the survey page sits in, byte for byte.
+# The shell as it is recorded today: the layout container the live page no
+# longer draws. Pinned so this exception cannot outlive its reason -- see below.
+STALE_SHELL = (
+    '<div class="h-full w-full flex flex-col grow items-stretch justify-start">'
+    '<div class="h-full overflow-y-auto px-5 pt-3 sm:px-16 space-y-4 '
+    'edsl-survey-container min-h-screen pb-8 flex flex-col">'
+    "__SURVEY_PREVIEW_CONTENT__</div></div>"
+)
 
-    Its class list is not the concatenation of its two sources -- the reference
-    implementation merges them through clsx + tailwind-merge, which drops pb-16
-    for the later pb-8 and de-duplicates `flex flex-col` -- so this is recorded
-    from the component rather than assembled by hand.
+
+def test_shell_around_a_question_matches_react():
+    """TEMPORARILY LOOSENED -- the one exception to byte parity.
+
+    This used to hold the page to the recorded shell byte for byte, and it will
+    again. The recording is stale: the live page stopped drawing that layout
+    container and draws `edsl-survey-container` itself, on a single page column,
+    but the recorder still renders the old container. `body.html` follows the
+    live page by hand until the recorder catches up.
+
+    So this asserts two things. First, that the recording is still the stale
+    one: the day the shell is re-recorded, this fails, and the fix is to restore
+    the byte comparison below and bring `body.html` to the new recording --
+    not to update `STALE_SHELL`. Second, what the old and the live page still
+    share: the container class that authors' CSS targets, as the page's outer
+    element.
     """
     cases, recorded = goldens.load_cases(), goldens.load_goldens()
-    # The shell is recorded around a marker; what goes inside it is a question,
-    # covered by its own cases.
-    before, after = recorded["survey_shell"].split(goldens.CONTENT_MARKER)
+    assert recorded["survey_shell"] == STALE_SHELL, (
+        "the shell has been re-recorded: remove this exception and hold "
+        "body.html to the recording byte for byte again"
+    )
     body = render_body(cases["multiple_choice_radio"]["question"])
-    assert body.startswith(before)
-    assert body.endswith(after)
+    assert body.startswith('<div class="edsl-survey-container ')
+    assert body.endswith("</footer></div>")
+
+    # Restore when the shell is re-recorded:
+    #   before, after = recorded["survey_shell"].split(goldens.CONTENT_MARKER)
+    #   assert body.startswith(before)
+    #   assert body.endswith(after)
 
 
 def test_the_nav_and_next_button_carry_their_styling_hooks():
@@ -90,6 +114,35 @@ def test_the_nav_and_next_button_carry_their_styling_hooks():
     body = render_body(cases["multiple_choice_radio"]["question"])
     assert '<div class="edsl-survey-nav flex justify-start">' in body
     assert 'class="edsl-next-button flex items-center gap-2' in body
+
+
+def test_the_page_lines_up_on_one_column():
+    """What the hand transcription of the live page is for.
+
+    Every part of the page sits on the same column, so a logo, the progress
+    indicator, the questions and the footer line up -- and the container's top
+    padding gives way to a banner, so a banner background reaches the top.
+    """
+    column = "w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24"
+    question = goldens.load_cases()["multiple_choice_radio"]["question"]
+    plain = render_body(question)
+    assert 'class="edsl-survey-content ' + column in plain
+    assert '<footer class="' + column in plain
+    assert "gap-1.5 mb-6 " + column in plain  # the progress bar
+    assert "pb-8 pt-3" in plain
+
+    logo = {"logo": {"url": "x", "alt": "", "width": 4, "height": 1, "position": "left"}}
+    branded = render_body(question, branding=logo)
+    assert "pb-8 pt-3" not in branded
+    assert branded.index("edsl-survey-banner") < branded.index("edsl-progress")
+
+
+def test_a_group_page_names_its_group():
+    question = goldens.load_cases()["multiple_choice_radio"]["question"]
+    body = render_page_body([(question, None)], group_name="about_you")
+    assert body.startswith('<div class="edsl-survey-container ')
+    assert 'data-group-name="about_you"' in body.split(">", 1)[0]
+    assert "data-group-name" not in render_page_body([(question, None)])
 
 
 # --------------------------------------------------------------------------
@@ -190,7 +243,7 @@ def test_bundle_draws_a_stepped_indicator_when_one_is_configured():
     # One panel per question, each with its own reading of the same two steps:
     # the two questions up to the boundary sit on step one, the five after it
     # on step two.
-    assert html.count("edsl-progress-step-current") == 7
+    assert html.count('data-status="current" class="edsl-progress-step ') == 7
     assert html.count("Step 1 of 2: Your commute, current step") == 2
     assert html.count("Step 2 of 2: Details, current step") == 5
 

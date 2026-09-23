@@ -7,6 +7,7 @@ import json
 import re
 from pathlib import Path
 
+from . import branding as branding_module
 from . import pages as pages_module
 from . import progress as progress_module
 from .pages import NON_QUESTION_CLASSES
@@ -313,6 +314,7 @@ def render_survey(
     name: str | None = None,
     scenarios: list[tuple[int, dict]] | None = None,
     groups: dict | None = None,
+    assets: dict | None = None,
 ) -> list[Path]:
     """Write a survey preview into ``out_dir``. Returns the paths written.
 
@@ -339,6 +341,10 @@ def render_survey(
     group where the schema asks for that presentation, and does nothing at all
     otherwise: a page is one question unless both halves say so. See
     :mod:`pages`.
+
+    ``assets`` is what :func:`assets.fetch` returned for ``humanize_schema``:
+    the images it names, fetched from Coop. Given none, a logo the schema names
+    previews as a placeholder -- see :mod:`branding`.
     """
     humanize_schema = humanize_schema or {}
     out_dir = Path(out_dir or "previews")
@@ -375,6 +381,7 @@ def render_survey(
                     else None
                 ),
                 pages=survey_pages,
+                assets=assets,
             ),
             encoding="utf-8",
         )
@@ -384,6 +391,7 @@ def render_survey(
     per_question = humanize_schema.get("questions") or {}
     custom_css = survey_schema.get("custom_css")
     progress_config = survey_schema.get("progress")
+    branding = branding_module.resolve(humanize_schema, assets)
     total = len(questions)
 
     # One pass per binding, in the order output_paths names them -- which is
@@ -414,6 +422,8 @@ def render_survey(
                 ),
                 title=page.name,
                 unserved=page.unserved,
+                branding=branding,
+                group_name=page.group,
             ),
             encoding="utf-8",
         )
