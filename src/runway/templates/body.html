@@ -1,31 +1,49 @@
-{# The respondent-facing survey page, inside the app's layout container.
+{# The respondent-facing survey page.
 
-   No golden covers this file: the recorded shell case is the layout container
-   with a marker where the questions go, so everything here between that
-   container and the footer -- the form, the nav and its Next button -- is
-   transcribed by eye and checked by reading. `edsl-survey-nav` and
+   TRANSCRIBED BY HAND, AND KNOWN TO DIFFER FROM THE RECORDING. The recorded
+   shell case is the layout container the live page used to draw its survey in.
+   It has since stopped: it draws `edsl-survey-container` itself, directly, and
+   lines everything on the page -- banner, progress, form, footer -- up on one
+   column. The recorder still renders the old container, so the recording is
+   stale, and this file follows the live page instead. `test_survey` holds it to
+   the recording only as far as the two still agree; see the note on
+   `test_shell_around_a_question_matches_react`. This is the one exception to
+   byte parity, and it ends when the recorder renders the live page's shell and
+   the pair is re-recorded -- at which point this file is updated to match that
+   recording, like any other.
+
+   Every merged class list here -- the container, the form, the footer and, via
+   `progress.html`, the progress indicator -- was captured from the reference's
+   own class-merging helper (clsx + tailwind-merge) given the arguments the
+   page passes it, not assembled by hand. The column is the page's own:
+   `w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24`.
+
+   The container's top padding gives way to a banner, so a banner background
+   reaches the top of the screen; the banner pads itself. `data-group-name` is
+   there on a page serving a question group, as a hook for the author's CSS.
+
+   What the live page draws only in states a preview is never in is left out:
+   the test-mode notice, the per-question timer, the "time's up" and network
+   error messages, and the submitting indicator. The Next button's own
+   submitting state is likewise not drawn. The form carries no `method`,
+   though the live one posts: a POST from a file on disk or a static server
+   navigates to an error, where the default GET only reloads the page.
+   `edsl-survey-nav` and
    `edsl-next-button` are hooks an author writes CSS against, so a preview
-   missing them would report a survey's own styling as having no effect.
-
-   The inner container's class list is NOT a concatenation of the two sources
-   it comes from. The reference implementation merges the layout container's
-   base classes with the page's own through a class-merging helper (clsx +
-   tailwind-merge), which drops pb-16 in favour of the later pb-8 and
-   de-duplicates flex flex-col. The merged string below was captured from that
-   helper rather than assembled by hand. See README. #}
-<div class="h-full w-full flex flex-col grow items-stretch justify-start">
+   missing them would report a survey's own styling as having no effect. #}
+<div class="edsl-survey-container h-full min-h-screen overflow-y-auto flex flex-col gap-4 pb-8{% if not banner_html %} pt-3{% endif %}"{% if group_name %} data-group-name="{{ group_name }}"{% endif %}>
 {#- -#}
-<div class="h-full overflow-y-auto px-5 pt-3 sm:px-16 space-y-4 edsl-survey-container min-h-screen pb-8 flex flex-col">
+{%- if banner_html %}
+{{ banner_html }}
 {#- -#}
-<form class="flex flex-col flex-grow">
-{#- -#}
-<div class="flex flex-col gap-4 px-4 md:px-12 w-full lg:w-3/4 mx-auto flex-grow">
-{#- -#}
+{%- endif %}
 {%- if progress_html %}
 {{ progress_html }}
 {#- -#}
 {%- endif %}
-{{ items_html }}
+<form class="edsl-survey-content w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24 flex flex-col flex-grow gap-4">
+{#- -#}
+<fieldset class="flex flex-col gap-4 min-w-0 border-0 p-0 m-0">{{ items_html }}</fieldset>
 {#- -#}
 <div class="edsl-survey-nav flex justify-start">
 {#- -#}
@@ -33,13 +51,9 @@
 {#- -#}
 </div>
 {#- -#}
-</div>
-{#- -#}
 </form>
 {#- -#}
-<footer class="w-full lg:w-3/4 mx-auto px-4 md:px-12 mb-8 mt-auto">
-{#- -#}
-<div class="text-left space-y-1">
+<footer class="w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24 mb-8 mt-auto space-y-1">
 {#- -#}
 <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">Powered by Expected Parrot 🦜</p>
 {#- -#}
@@ -47,10 +61,6 @@
 {#- -#}
 <a href="/" target="_blank" rel="noopener noreferrer" class="text-xs text-landing-green-600 hover:text-gray-900 underline">expectedparrot.com</a>
 {#- -#}
-</div>
-{#- -#}
 </footer>
-{#- -#}
-</div>
 {#- -#}
 </div>

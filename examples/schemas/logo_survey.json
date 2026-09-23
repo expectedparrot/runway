@@ -1,0 +1,15 @@
+{
+  "survey": {
+    "custom_css": ".edsl-survey-banner {\n    background: #1f3a5f;\n}\n.edsl-logo {\n    height: 48px;\n}\n.edsl-progress-fill { background: #1f3a5f }\n",
+    "branding": {
+      "logo": {
+        "source": {
+          "type": "asset",
+          "asset_uuid": "00000000-0000-4000-8000-000000000000"
+        },
+        "alt": "Decision Research Lab",
+        "position": "left"
+      }
+    }
+  }
+}

@@ -48,7 +48,27 @@ exists, and previews never emit one.
 
 **The shell is the respondent page.** `renderer.py` reproduces the page someone
 taking the survey sees — containers, progress bar, Next button, footer — not
-the authoring-side preview. Two values in it cannot be derived by reading the
+the authoring-side preview.
+
+**The page shell, for now, is the one exception.** The live page stopped
+drawing the layout container the recorded `survey_shell` case holds: it draws
+`edsl-survey-container` itself, puts the banner, progress indicator, form and
+footer on one column, and drops the container's top padding under a banner so a
+banner background reaches the top of the screen. The recorder still renders the
+old container, because the new one is written inline in the page rather than
+as a component it can import. Until the reference repository extracts it and
+the shell is re-recorded, `body.html` follows the live page by hand, and
+`test_shell_around_a_question_matches_react` is loosened to match. It pins the
+stale recording exactly, so the day the shell is re-recorded it fails and says
+so. The fix then is to restore the byte comparison and bring `body.html` to the
+new recording, not to update the pin. Every merged class list in the
+transcription (container, form, footer, the progress indicator on the column)
+was captured from the reference's own class-merging helper given the page's
+arguments. The recorded progress cases are the indicator with no column, which
+`render_progress` still draws unless the page asks for the column.
+
+The paragraph below still describes how the old container's class list was
+captured. Two values in it cannot be derived by reading the
 reference source and were captured from its runtime output instead: the merged
 container class list (a class-merging helper resolves conflicting Tailwind
 utilities, so it is not a concatenation), and the progress bar's ARIA and
@@ -92,7 +112,11 @@ what teaches every parity test at once.
 
 `react_goldens.json` also holds one shell case, recorded around a literal
 content marker so the markup before and after a question can be checked without
-the recording knowing what a question looks like.
+the recording knowing what a question looks like, and the `progress` and
+`banner` cases, which are not questions and are compared in files of their own.
+`test_every_recorded_kind_is_compared_somewhere` lists those files, so a kind
+that arrives in a re-recording with nothing to compare it fails rather than
+sitting green.
 
 ## Tests
 
@@ -115,7 +139,9 @@ respondent is shown — compute, image generation and the `thinking_question()`
 wrapper, which keeps the type it wrapped and so has to be intercepted ahead of
 the type registry — via `examples/background_survey.json`; `test_markdown`
 covers the two markdown surfaces — question text and option labels, which
-serialize differently — and what is deliberately not rendered.
+serialize differently — and what is deliberately not rendered; `test_branding`
+covers the logo banner — its markup against the recording, the block a schema
+resolves to, and the fetch, against a stand-in for Coop.
 
 ## Loading a survey
 
@@ -500,6 +526,50 @@ sits on step one. A step naming an item the survey no longer has is dropped, and
 if fewer than two survive the indicator falls back to the bar, exactly as the
 live survey resolves it.
 
+## The banner
+
+`humanize_schema["survey"]["branding"]["logo"]` puts the author's logo in a
+banner above every page. The schema says *which* image, not what it looks like:
+
+```json
+{"source": {"type": "asset", "asset_uuid": "…"}, "alt": "Lab name", "position": "center"}
+```
+
+The image is an asset in the author's library on Coop. The live page never reads
+this config to draw it: the server resolves the asset and hands the page a block
+of its own — a signed URL, the image's intrinsic `width` and `height`, the alt
+text and the position — and the banner draws that block. `branding.resolve` is
+the same resolution for a preview, returning the same block, so the template is
+written against one payload however the image arrived:
+
+- **Not fetched**, the default. The logo is `LOGO_PLACEHOLDER`, a dashed box at a
+  wordmark's 4:1, with the author's alt text and position — so the banner is
+  where it will be, and only the picture is missing. That is the line this
+  package draws for an offloaded scenario image, which it never fetches either.
+  `check` names the asset it stands in for.
+- **Fetched**, with `render --fetch-assets`. `assets.fetch` asks edsl's
+  `Coop.get_human_survey_asset` — edsl owns the key, the endpoint and the access
+  rule — and the image is embedded as a `data:` URI at its real size. It is also
+  kept in `<out>/assets/`, as the image plus a metadata file written last, and
+  an asset already there is not fetched again. Assets are immutable, so a kept
+  one cannot go stale. Nothing is written anywhere else.
+
+Fetching is opt-in because it is a network call with the caller's credentials,
+and a render without the flag ignores `<out>/assets/` even when it holds the
+logo: the output depends on the inputs, not on what a directory happens to
+contain. A fetch that fails for any reason — no key, no access, no network, an
+asset that is not a PNG, JPEG, WebP or GIF — is a warning and a placeholder,
+never a failed render.
+
+The banner is recorded (the `banner_` cases, compared in `test_branding.py`).
+Its content div is the class-merging helper's output, not a concatenation: the
+merge keeps the later of two `w-full`s, which is why the justify utility sits
+between `flex` and `w-full`.
+
+**The page around it is transcribed by hand — the one exception to byte
+parity, and a temporary one.** See *The page shell, for now* under Design
+constraints.
+
 ## What a preview reproduces
 
 Most of a preview is live for free: a radio group settles because the markup
@@ -716,6 +786,11 @@ from runway import render_page_of
 paths = render_survey(questions, humanize_schema,    # pages by question group
                       groups=survey["question_groups"])
 html  = render_page_of([(question, schema), ...])    # one page, several questions
+
+from runway import assets, branding
+fetched, problems = assets.fetch(humanize_schema, Path("previews"))  # Coop; opt-in
+paths = render_survey(questions, humanize_schema, assets=fetched)   # logo embedded
+html  = render_page(question, branding=branding.resolve(humanize_schema, fetched))
 ```
 
 `load` returns the survey as `Survey.to_dict()` writes it, in any format edsl
@@ -813,7 +888,8 @@ runway/
 │   ├── markdown_survey.json      markdown in question and option text
 │   ├── scenario_survey.json      a survey bound to a scenario list
 │   ├── scenarios/                scenario lists, where a survey has one
-│   └── styled_survey.json        a survey with custom_css
+│   ├── styled_survey.json        a survey with custom_css
+│   └── logo_survey.json          a logo in a banner, drawn as its placeholder
 ├── tests/
 │   ├── goldens.py                reads the two recorded files
 │   ├── react_cases.json          what was rendered
@@ -826,6 +902,8 @@ runway/
     ├── __main__.py               `python -m runway`
     ├── renderer.py               page/body/progress composition
     ├── progress.py               which indicator a config draws at a position
+    ├── branding.py               the logo block a schema resolves to, fetched or not
+    ├── assets.py                 fetching a logo from Coop, opt-in; kept in <out>/assets
     ├── survey.py                 input parsing, one-page-per-question output
     ├── scenarios.py              binding a survey to a scenario, once per scenario
     ├── templating.py             the Jinja environment (escaping + whitespace)
@@ -849,6 +927,7 @@ runway/
     │   ├── panel.html            one question's page inside a bundle
     │   ├── body.html             the respondent page
     │   ├── progress.html         the bar and the stepped indicator
+    │   ├── banner.html           the author's logo, above the page
     │   ├── comment.html          the box a schema can attach to a question
     │   ├── behaviour.html        reimplemented: the checkbox rules
     │   ├── carousel.html         reimplemented: moving a carousel between rows

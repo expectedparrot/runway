@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, inspection, pages, scenarios
+from . import __version__, branding, inspection, pages, scenarios
 from .question_types import RENDERERS, background, unsupported
 from .survey import (
     SurveyLoadError,
@@ -99,9 +99,11 @@ from it with `--scenario-index`.
 What a preview cannot show: agent traits and prior answers (`{{ agent.x }}` and
 `{{ q.answer }}` render as written, and a question applying a *filter* to one of
 those does not pipe at all), option randomization, media resolved server-side
-from a file (an option referencing one previews as its reference text), a matrix
-configured as a carousel (it previews as a note naming the reason), and position
-under skip logic, which is inferred from authored order. Controls tick but
+from a file (an option referencing one previews as its reference text), a
+numerical question configured as a slider (it previews as a note naming the
+reason), a survey's logo unless `render --fetch-assets` fetches it from Coop (a
+placeholder stands in), and position under skip logic, which is inferred from
+authored order. Controls tick but
 mostly do not behave: checkbox Select all and exclusive options work; validation,
 selection limits and the Next button do not.
 
@@ -123,6 +125,16 @@ def cmd_render(args: argparse.Namespace) -> int:
     if _colliding(surveys, args.out, args.split, scenarios):
         return 1
 
+    # Fetched once, before anything is written: every survey here shares the one
+    # schema, and a logo that cannot be had is a warning, never a failure.
+    assets = None
+    if args.fetch_assets:
+        from .assets import fetch
+
+        assets, problems = fetch(surveys[0][2], args.out)
+        for problem in problems:
+            print(f"warning: {problem} -- drawing a placeholder", file=sys.stderr)
+
     written: list[Path] = []
     for path, questions, humanize_schema, groups in surveys:
         name = name_for(path)
@@ -136,6 +148,7 @@ def cmd_render(args: argparse.Namespace) -> int:
                 name=name,
                 scenarios=scenarios,
                 groups=groups,
+                assets=assets,
             )
         )
     for path in written:
@@ -183,7 +196,8 @@ def cmd_check(args: argparse.Namespace) -> int:
                 "pages": len(survey_pages),
                 "questions": entries,
                 "summary": inspection.summarize(entries),
-                "notes": _group_notes(humanize_schema, groups),
+                "notes": _group_notes(humanize_schema, groups)
+                + _branding_notes(humanize_schema),
             }
         )
 
@@ -379,6 +393,28 @@ def _group_notes(humanize_schema: dict, groups: dict) -> list[str]:
             "question groups -- it will be served a question at a time"
         )
     return notes
+
+
+def _branding_notes(humanize_schema: dict) -> list[str]:
+    """What is worth saying about the survey's logo, if it has one.
+
+    A logo is an asset on Coop, which ``check`` never contacts, so the one thing
+    it can say is which asset a preview will stand a placeholder in for, and how
+    to have the picture instead.
+    """
+    logo = branding.logo_config(humanize_schema)
+    if logo is None:
+        return []
+    uuid = branding.asset_uuid(logo)
+    if uuid is None:
+        return [
+            "the survey has a logo from a source this package cannot fetch -- "
+            "it previews as a placeholder"
+        ]
+    return [
+        f"the survey has a logo (asset {uuid}) -- it previews as a placeholder "
+        "unless rendered with --fetch-assets"
+    ]
 
 
 def _add_piping(
@@ -664,6 +700,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Document title for the bundled page (default: the survey's own "
         "name -- its file name with the format suffix taken off).",
+    )
+    render.add_argument(
+        "--fetch-assets",
+        action="store_true",
+        help="Fetch the logo the humanize schema names from Coop, with your "
+        "Coop API key, and draw it (default: a placeholder in its place). "
+        "The image is embedded in the page, and kept in an assets folder in "
+        "the output directory so rendering there again needs no network.",
     )
     render.set_defaults(func=cmd_render)
 

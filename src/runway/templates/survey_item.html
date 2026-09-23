@@ -21,4 +21,4 @@
 
    Styled inline because a split page has no preview stylesheet to put it in,
    and this must be right on every kind of page it can appear on. #}
-{% if exclusive is not none %}<div class="preview-item" style="display:contents" data-exclusive="{{ exclusive }}">{% endif %}<div class="edsl-survey-item">{{ item_html }}</div>{% if exclusive is not none %}</div>{% endif %}
+{% if exclusive is not none %}<div class="preview-item" style="display:contents" data-exclusive="{{ exclusive }}">{% endif %}<div class="edsl-survey-item" data-question-name="{{ question_name }}">{{ item_html }}</div>{% if exclusive is not none %}</div>{% endif %}

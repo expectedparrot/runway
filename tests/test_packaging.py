@@ -27,6 +27,7 @@ PACKAGE_DIR = Path(runway.__file__).resolve().parent
 # Every template the package renders by name. Listed rather than globbed: a
 # glob over whatever shipped would pass on a wheel that shipped nothing.
 TEMPLATES = (
+    "banner.html",
     "body.html",
     "comment.html",
     "page.html",

@@ -360,6 +360,64 @@
       ]
     }
   },
+  "banner_left": {
+    "kind": "banner",
+    "branding": {
+      "logo": {
+        "url": "https://example.com/logo.png?X-Goog-Signature=ab&X-Goog-Expires=10800",
+        "alt": "Lab's \"Brand\" logo",
+        "width": 640,
+        "height": 160,
+        "position": "left"
+      }
+    }
+  },
+  "banner_center": {
+    "kind": "banner",
+    "branding": {
+      "logo": {
+        "url": "https://example.com/logo.png?X-Goog-Signature=ab&X-Goog-Expires=10800",
+        "alt": "Lab's \"Brand\" logo",
+        "width": 640,
+        "height": 160,
+        "position": "center"
+      }
+    }
+  },
+  "banner_right": {
+    "kind": "banner",
+    "branding": {
+      "logo": {
+        "url": "https://example.com/logo.png?X-Goog-Signature=ab&X-Goog-Expires=10800",
+        "alt": "Lab's \"Brand\" logo",
+        "width": 640,
+        "height": 160,
+        "position": "right"
+      }
+    }
+  },
+  "banner_decorative": {
+    "kind": "banner",
+    "branding": {
+      "logo": {
+        "url": "https://example.com/logo.png?X-Goog-Signature=ab&X-Goog-Expires=10800",
+        "alt": "",
+        "width": 640,
+        "height": 160,
+        "position": "left"
+      }
+    }
+  },
+  "banner_no_logo": {
+    "kind": "banner",
+    "branding": {
+      "logo": null
+    }
+  },
+  "banner_no_branding": {
+    "kind": "banner",
+    "branding": null
+  },
   "survey_shell": {
     "kind": "shell",
     "additional_classes": "edsl-survey-container min-h-screen pb-8 flex flex-col"

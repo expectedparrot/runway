@@ -40,6 +40,7 @@ HUMANIZED_TYPES = frozenset(
         "checkbox",
         "checkbox_with_other",
         "compute",
+        "distribution",
         "file_upload",
         "free_text",
         "image_generation",

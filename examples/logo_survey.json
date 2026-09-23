@@ -1,0 +1,92 @@
+{
+  "questions": [
+    {
+      "question_name": "role",
+      "question_text": "Which best describes your role?",
+      "question_options": [
+        "Hiring manager",
+        "Recruiter",
+        "Team member who interviews",
+        "None of these"
+      ],
+      "question_type": "multiple_choice",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "confidence",
+      "question_text": "How confident are you in judging a candidate from a resume?",
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Not at all",
+        "5": "Completely"
+      },
+      "question_type": "linear_scale",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "signals",
+      "question_text": "What on a resume do you look at first, and why?",
+      "question_type": "free_text",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "role",
+      "confidence",
+      "signals"
+    ],
+    "survey_question_texts": [
+      "Which best describes your role?",
+      "How confident are you in judging a candidate from a resume?",
+      "What on a resume do you look at first, and why?"
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "role": 0,
+      "confidence": 1,
+      "signals": 2
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 3
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}

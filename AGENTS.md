@@ -18,7 +18,17 @@ Byte equality is the assertion everywhere. Do not normalize, pretty-print, or
 tree-compare. If a template has to become uglier to emit exactly what React
 emits, make it uglier.
 
-There is no exception. `assets/base.css` used to be one, carrying hand-written
+There is one exception, and it is temporary: the page shell. The live page
+stopped drawing the layout container the `survey_shell` golden records, and the
+recorder cannot yet import the one it draws instead, so `body.html` is
+transcribed from the live page by hand and
+`test_shell_around_a_question_matches_react` is loosened to match. That test
+pins the stale recording. When it fails because the shell was re-recorded,
+restore the byte comparison and bring `body.html` to the recording. Do not
+update the pin, and do not extend the exception to anything else. SPEC.md,
+*The page shell, for now*, has the details.
+
+Beyond that there is no exception. `assets/base.css` used to be one, carrying hand-written
 rules for the selected state of a radio or a checkbox — state the reference
 expresses by rewriting data attributes on re-render, which a static page cannot
 do. One of those rules had to outrank the utility it replaced, which meant
@@ -154,11 +164,11 @@ fails there rather than in someone's report.
 
 A renderer that draws only *some* of what its type can be configured as says so
 through `question_types.DECLINES` rather than by rendering the wrong thing.
-`DECLINES` is **empty** today — `matrix` was its one entry, for the carousel
-format it now draws — and it is kept all the same: both `render_question` and
-`classify` ask `declined()` before the registry, which is what keeps the two
-from disagreeing, and a new partial renderer belongs there rather than in
-either caller.
+`numerical` is its one entry today, declining the slider format, which is not
+transcribed; `matrix` was the entry before it, for the carousel format it now
+draws. Both `render_question` and `classify` ask `declined()` before the
+registry, which is what keeps the two from disagreeing, and a new partial
+renderer belongs there rather than in either caller.
 
 ## Pages
 
@@ -190,10 +200,19 @@ Reading a survey does go through edsl, in every format, and the import is kept
 lazy in `survey._load_questions` so that `types`, `version`, `guide` and every
 library call starting from a question dict do not pay for it.
 
-Reading a `.ep` is the one exception to run-time isolation: it shells out to
+Reading a `.ep` is one exception to run-time isolation: it shells out to
 `git`, and, for a package Coop holds, syncs it against the remote and rewrites
 the file. That is edsl's `load()` semantics rather than a choice made here; it is
 documented in the README under Known gaps.
+
+`render --fetch-assets` is the other, and it is opt-in: it fetches the logo a
+schema names from Coop through edsl's client and keeps it in `<out>/assets/`.
+Keep all three halves of that. Without the flag nothing is fetched **and nothing
+kept is read** — a preview is a function of its inputs, not of what a directory
+happens to hold. The image is embedded as a `data:` URI, so a page gains no
+external reference. And nothing is written outside the output directory: no
+user-level cache. Rendering itself still takes the fetched bytes as an argument;
+only `assets.fetch` touches the network.
 
 The single external reference in a rendered page is the Google Fonts stylesheet
 link, which is deliberate and documented under **Known gaps**. Keep it that way:
