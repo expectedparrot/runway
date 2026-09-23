@@ -25,7 +25,10 @@
    What the live page draws only in states a preview is never in is left out:
    the test-mode notice, the per-question timer, the "time's up" and network
    error messages, and the submitting indicator. The Next button's own
-   submitting state is likewise not drawn. `edsl-survey-nav` and
+   submitting state is likewise not drawn. The form carries no `method`,
+   though the live one posts: a POST from a file on disk or a static server
+   navigates to an error, where the default GET only reloads the page.
+   `edsl-survey-nav` and
    `edsl-next-button` are hooks an author writes CSS against, so a preview
    missing them would report a survey's own styling as having no effect. #}
 <div class="edsl-survey-container h-full min-h-screen overflow-y-auto flex flex-col gap-4 pb-8{% if not banner_html %} pt-3{% endif %}"{% if group_name %} data-group-name="{{ group_name }}"{% endif %}>
@@ -38,7 +41,7 @@
 {{ progress_html }}
 {#- -#}
 {%- endif %}
-<form method="post" class="edsl-survey-content w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24 flex flex-col flex-grow gap-4">
+<form class="edsl-survey-content w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24 flex flex-col flex-grow gap-4">
 {#- -#}
 <fieldset class="flex flex-col gap-4 min-w-0 border-0 p-0 m-0">{{ items_html }}</fieldset>
 {#- -#}
