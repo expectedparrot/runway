@@ -4,7 +4,7 @@ unsupported question types.
 Uses examples/mixed_survey.json, which carries one of everything this package
 can be asked for: the question types it draws, a type it does not draw yet
 (``rank``), and a type no human survey can put to a respondent at all
-(``dict``) -- so both fallback paths are exercised end to end alongside the
+(``extract``) -- so both fallback paths are exercised end to end alongside the
 real ones.
 
 Runs under pytest, or directly:
@@ -194,7 +194,7 @@ def test_bundle_has_a_toolbar_entry_per_question():
     assert '<option value="3">4. commute_satisfaction — Linear Scale</option>' in html
     assert '<option value="4">5. commute_switch — Yes/No</option>' in html
     assert '<option value="5">6. commute_barriers — Rank</option>' in html
-    assert '<option value="6">7. commute_breakdown — Dict</option>' in html
+    assert '<option value="6">7. commute_breakdown — Extract</option>' in html
     assert 'id="preview-prev"' in html and 'id="preview-next"' in html
     assert html.count('id="preview-counter"') == 1
     assert ">1 / 7<" in html
@@ -424,12 +424,12 @@ def test_a_type_awaiting_a_preview_renders_the_notice():
 
 
 def test_a_type_no_human_survey_can_run_renders_the_warning():
-    # dict has no humanize configuration at all, so the survey itself is what
+    # extract has no humanize configuration at all, so the survey itself is what
     # needs changing -- a different message, and a louder one.
     html = _split_page("commute_breakdown")
     assert "Not supported in human surveys" in html
     assert "No preview is available" not in html
-    assert "<code>dict</code>" in html
+    assert "<code>extract</code>" in html
     assert "edsl-survey-container" in html
 
 

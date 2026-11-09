@@ -40,7 +40,12 @@ HUMANIZED_TYPES = frozenset(
         "checkbox",
         "checkbox_with_other",
         "compute",
+        "demand",
+        "dict",
         "distribution",
+        "dropdown",
+        "edit",
+        "email",
         "file_upload",
         "free_text",
         "image_generation",
@@ -55,6 +60,7 @@ HUMANIZED_TYPES = frozenset(
         "rank",
         "survey_message",
         "top_k",
+        "url",
         "yes_no",
     }
 )

@@ -122,7 +122,7 @@ mixed_survey.json  -  7 items
   drawn      commute_satisfaction  linear_scale
   drawn      commute_switch        yes_no
   note       commute_barriers      rank    (no preview built for this type yet)
-  warning    commute_breakdown     dict    (never shown to a respondent)
+  warning    commute_breakdown     extract (never shown to a respondent)
 
 5 drawn, 1 note, 1 warning
 ```
@@ -217,10 +217,12 @@ $ runway check examples/mixed_survey.json
 mixed_survey.json  -  7 items
 
   drawn      commute_mode          multiple_choice
+  drawn      commute_time          multiple_choice
   drawn      commute_enjoyment     likert_five
   drawn      commute_satisfaction  linear_scale
+  drawn      commute_switch        yes_no
   note       commute_barriers      rank             (no preview built for this type yet)
-  warning    commute_breakdown     dict             (never shown to a respondent)
+  warning    commute_breakdown     extract          (never shown to a respondent)
 
 5 drawn, 1 note, 1 warning
 ```
@@ -334,16 +336,19 @@ survey can be checked meanwhile.
 
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
-| `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
-| `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
-| `checkbox_with_other` | **✅ available** |     | `matrix`                     | **✅ available** |
-| `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
+| `budget`              | — not yet       |     | `interview`                  | — not yet       |
+| `checkbox`            | **✅ available** |     | `likert_five`                | **✅ available** |
+| `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
+| `compute`             | **✅ automatic** |     | `list`                       | — not yet       |
+| `demand`              | — not yet       |     | `matrix`                     | **✅ available** |
+| `dict`                | — not yet       |     | `multiple_choice`            | **✅ available** |
 | `distribution`        | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
-| `file_upload`         | — not yet       |     | `numerical`                  | **✅ available** |
-| `free_text`           | **✅ available** |     | `rank`                       | — not yet       |
-| `image_generation`    | **✅ automatic** |     | `survey_message`             | **✅ available** |
-| `interview`           | — not yet       |     | `top_k`                      | — not yet       |
-| `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `dropdown`            | — not yet       |     | `numerical`                  | **✅ available** |
+| `edit`                | — not yet       |     | `rank`                       | — not yet       |
+| `email`               | — not yet       |     | `survey_message`             | **✅ available** |
+| `file_upload`         | — not yet       |     | `top_k`                      | — not yet       |
+| `free_text`           | **✅ available** |     | `url`                        | — not yet       |
+| `image_generation`    | **✅ automatic** |     | `yes_no`                     | **✅ available** |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing
@@ -354,7 +359,7 @@ a `numerical` configured as a slider gets the note rather than a control, since
 only its number-field form is transcribed.
 [SPEC.md](SPEC.md#what-a-preview-reproduces) has why.
 
-A type **outside** this table — `dict`, for instance — cannot be shown to a
+A type **outside** this table — `extract`, for instance — cannot be shown to a
 respondent at all, so its page carries a warning rather than a note: what needs
 changing is the survey.
 

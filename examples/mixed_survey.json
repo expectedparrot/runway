@@ -89,26 +89,14 @@
       "edsl_class_name": "QuestionBase"
     },
     {
-      "question_type": "dict",
       "question_name": "commute_breakdown",
       "question_text": "Roughly how does a typical week's commuting break down?",
-      "answer_keys": [
-        "days_in_office",
-        "minutes_each_way",
-        "usual_departure"
-      ],
-      "value_types": [
-        "int",
-        "int",
-        "str"
-      ],
-      "value_descriptions": [
-        "Days per week you travel to a workplace",
-        "Door-to-door minutes, one way",
-        "The time you normally leave home"
-      ],
-      "include_comment": true,
-      "permissive": false,
+      "answer_template": {
+        "days_in_office": 3,
+        "minutes_each_way": 25,
+        "usual_departure": "8:15"
+      },
+      "question_type": "extract",
       "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }

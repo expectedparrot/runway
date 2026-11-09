@@ -90,6 +90,7 @@ PRETTY_TYPES = {
     "survey_message": "Message",
     "yes_no": "Yes/No",
     "dict": "Dict",
+    "url": "URL",
 }
 
 

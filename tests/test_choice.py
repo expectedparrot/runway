@@ -385,20 +385,20 @@ def test_unregistered_type_falls_back_to_notice():
 
 
 def test_a_type_no_human_survey_can_run_is_warned_about_instead():
-    # dict has no humanize configuration, so no preview could exist and the
+    # extract has no humanize configuration, so no preview could exist and the
     # survey itself is what needs changing. That has to read differently from a
     # type this package simply has not got to yet.
-    assert "dict" not in unsupported.HUMANIZED_TYPES
+    assert "extract" not in unsupported.HUMANIZED_TYPES
     html = render_question(
         {
-            "question_type": "dict",
+            "question_type": "extract",
             "question_name": "d",
             "question_text": "Break it down.",
         }
     )
     assert "Not supported in human surveys" in html
     assert "No preview is available" not in html
-    assert "<code>dict</code>" in html
+    assert "<code>extract</code>" in html
     # Still the louder of the two: solid amber rather than a dashed grey note.
     assert "border-amber-300" in html and "border-dashed" not in html
     assert "lucide-triangle-alert" in html
