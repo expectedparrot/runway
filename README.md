@@ -130,8 +130,8 @@ mixed_survey.json  -  7 items
 Four outcomes, and they mean different things:
 
 - `drawn` — the real control; the preview is accurate.
-- `automatic` — `compute`, `image_generation`, or any type wrapped by
-  `thinking_question()`. Nobody is ever asked it; nothing is missing.
+- `automatic` — `compute`, `detect_ai`, `image_generation`, or any type
+  wrapped by `thinking_question()`. Nobody is ever asked it; nothing is missing.
 - `note` — a type a human survey supports but runway hasn't transcribed yet.
   The survey is fine; the tool is behind.
 - `warning` — nothing a respondent could be served: a type with no
@@ -341,14 +341,15 @@ survey can be checked meanwhile.
 | `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
 | `compute`             | **✅ automatic** |     | `list`                       | — not yet       |
 | `demand`              | — not yet       |     | `matrix`                     | **✅ available** |
-| `dict`                | — not yet       |     | `multiple_choice`            | **✅ available** |
-| `distribution`        | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
-| `dropdown`            | — not yet       |     | `numerical`                  | **✅ available** |
-| `edit`                | — not yet       |     | `rank`                       | — not yet       |
-| `email`               | — not yet       |     | `survey_message`             | **✅ available** |
-| `file_upload`         | — not yet       |     | `top_k`                      | — not yet       |
-| `free_text`           | **✅ available** |     | `url`                        | — not yet       |
-| `image_generation`    | **✅ automatic** |     | `yes_no`                     | **✅ available** |
+| `detect_ai`           | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
+| `dict`                | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
+| `distribution`        | — not yet       |     | `numerical`                  | **✅ available** |
+| `dropdown`            | — not yet       |     | `rank`                       | — not yet       |
+| `edit`                | — not yet       |     | `survey_message`             | **✅ available** |
+| `email`               | — not yet       |     | `top_k`                      | — not yet       |
+| `file_upload`         | — not yet       |     | `url`                        | — not yet       |
+| `free_text`           | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `image_generation`    | **✅ automatic** |     |                              |                 |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing
@@ -363,8 +364,8 @@ A type **outside** this table — `extract`, for instance — cannot be shown to
 respondent at all, so its page carries a warning rather than a note: what needs
 changing is the survey.
 
-`compute`, `image_generation` and anything wrapped by `thinking_question()` are
-marked *automatic* — the survey answers them itself and no respondent ever sees
+`compute`, `detect_ai`, `image_generation` and anything wrapped by
+`thinking_question()` are marked *automatic* — the survey answers them itself and no respondent ever sees
 them. Their pages still show the question's text, since a prompt for a model is
 the one part of one of these that can be wrong; the notice under it says who
 answers. `examples/background_survey.json` has all three.

@@ -168,11 +168,12 @@ def test_types_json_covers_every_humanized_type(capsys):
 
 
 def test_types_marks_the_automatic_ones_as_handled(capsys):
-    """compute and image_generation have no control and need none."""
+    """compute, detect_ai and image_generation have no control and need none."""
     main(["types", "--json"])
     rows = {row["type"]: row["status"] for row in json.loads(capsys.readouterr().out)["types"]}
     assert rows["compute"] == "automatic"
     assert rows["image_generation"] == "automatic"
+    assert rows["detect_ai"] == "automatic"
     assert rows["multiple_choice"] == "drawn"
     assert rows["rank"] == "note"
 

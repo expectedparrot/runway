@@ -41,6 +41,7 @@ HUMANIZED_TYPES = frozenset(
         "checkbox_with_other",
         "compute",
         "demand",
+        "detect_ai",
         "dict",
         "distribution",
         "dropdown",
@@ -69,8 +70,8 @@ HUMANIZED_TYPES = frozenset(
 # would suggest the survey displays something it does not. Interview questions
 # use it as internal instruction for the interviewer: the question *is* put to a
 # respondent, just not in those words. The other questions whose text nobody
-# reads -- compute, image generation, thinking -- are not put to a respondent at
-# all, and never reach this module; see ``background``.
+# reads -- compute, image generation, AI detection, thinking -- are not put to
+# a respondent at all, and never reach this module; see ``background``.
 HIDDEN_TEXT_TYPES = frozenset({"interview"})
 
 

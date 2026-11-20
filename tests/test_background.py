@@ -101,6 +101,24 @@ def test_each_kind_says_why_it_is_answered_without_a_respondent():
     assert "using the model and system prompt" in _render("pet_category")
 
 
+def test_a_detect_ai_question_is_answered_without_a_respondent():
+    # The server pipes in an earlier answer and sends it to an AI-text
+    # detector, so its page gets the background notice, with the piped text
+    # still shown, rather than the "no preview yet" note.
+    question = {
+        "question_name": "essay_check",
+        "question_type": "detect_ai",
+        "question_text": "{{ essay.answer }}",
+    }
+    assert background.kind_of(question) == "detect_ai"
+    html = render_question(question)
+    assert NOTICE in html
+    assert "AI-text detector" in html
+    assert "{{ essay.answer }}" in html
+    assert "No preview is available" not in html
+    assert "Not supported in human surveys" not in html
+
+
 def test_the_notice_is_neither_the_note_nor_the_warning():
     # Three situations, three notices. "No preview yet" would be wrong (there
     # is nothing to preview) and so would "not supported in human surveys" (it
