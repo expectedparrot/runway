@@ -10,7 +10,7 @@ font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
 and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other`,
-`numerical`, `free_text`, `email`, `url` and `survey_message`.** Every other type renders a "No preview is
+`numerical`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
 available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
@@ -141,11 +141,11 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (12)
+## Drawn today (13)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
 `checkbox`, `checkbox_with_other`, `numerical`, `free_text`, `email`, `url`,
-`survey_message`. Everything
+`list`, `survey_message`. Everything
 else renders a complete page with a note where the control would be — so wording
 and position are still checkable.
 
@@ -340,7 +340,7 @@ survey can be checked meanwhile.
 | `budget`              | — not yet       |     | `interview`                  | — not yet       |
 | `checkbox`            | **✅ available** |     | `likert_five`                | **✅ available** |
 | `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
-| `compute`             | **✅ automatic** |     | `list`                       | — not yet       |
+| `compute`             | **✅ automatic** |     | `list`                       | **✅ available** |
 | `demand`              | — not yet       |     | `matrix`                     | **✅ available** |
 | `detect_ai`           | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
 | `dict`                | — not yet       |     | `multiple_choice_with_other` | **✅ available** |

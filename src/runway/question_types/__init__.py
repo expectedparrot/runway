@@ -29,6 +29,7 @@ from . import (
     choice,
     email,
     free_text,
+    list,
     matrix,
     multiple_choice_with_other,
     numerical,
@@ -52,6 +53,7 @@ RENDERERS: dict[str, Renderer] = {
     "free_text": free_text.render,
     "email": email.render,
     "url": url.render,
+    "list": list.render,
     "survey_message": survey_message.render,
 }
 

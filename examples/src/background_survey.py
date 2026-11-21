@@ -15,7 +15,8 @@ so the two are indistinguishable by type.
 
 `pet_story` is here for the other axis: a type that *is* asked but has no
 control transcribed yet, so it gets the plain note. It stands in for whatever is
-undrawn at the time -- it was `free_text` until free_text was drawn.
+undrawn at the time -- it was `free_text` until free_text was drawn, then
+`list` until list was.
 """
 
 from edsl.language_models import Model
@@ -23,8 +24,8 @@ from edsl.questions import (
     QuestionCompute,
     QuestionImageGeneration,
     QuestionLinearScale,
-    QuestionList,
     QuestionMultipleChoice,
+    QuestionRank,
     thinking_question,
 )
 from edsl.surveys import Survey
@@ -67,9 +68,10 @@ survey = Survey(
             question_options=[1, 2, 3, 4, 5],
             option_labels={1: "Not at all", 5: "Completely"},
         ),
-        QuestionList(
+        QuestionRank(
             question_name="pet_story",
-            question_text="Tell us about them.",
+            question_text="Rank these chores from your favourite to your least favourite.",
+            question_options=["Feeding", "Grooming", "Vet visits"],
         ),
     ]
 )

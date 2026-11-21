@@ -173,13 +173,13 @@ def test_a_question_with_no_text_draws_no_empty_text_div():
 
 
 def test_an_undrawn_type_that_is_shown_still_gets_the_plain_note():
-    # `list` has no control here yet, but it is put to a respondent, so it
+    # `rank` has no control here yet, but it is put to a respondent, so it
     # keeps the "no preview yet" note and its question text. It stands in for
-    # whatever is undrawn at the time: this was free_text until free_text was
-    # drawn, which is the failure that says to move it on again.
+    # whatever is undrawn at the time: this was free_text, then list, until each
+    # was drawn, which is the failure that says to move it on again.
     html = _render("pet_story")
     assert "No preview is available" in html
-    assert "Tell us about them." in html
+    assert "Rank these chores from your favourite to your least favourite." in html
     assert NOTICE not in html
 
 

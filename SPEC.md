@@ -920,6 +920,7 @@ runway/
     │   ├── free_text.py          free_text — a textarea, and nothing else
     │   ├── email.py              email — one input, and nothing else
     │   ├── url.py                url — one input, and nothing else
+    │   ├── list.py               list — an instruction and a textarea
     │   ├── survey_message.py     survey_message — text, and no control at all
     │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/detect_ai/image_generation/thinking: never shown
@@ -945,6 +946,7 @@ runway/
     │       ├── free_text.html
     │       ├── email.html
     │       ├── url.html
+    │       ├── list.html
     │       ├── survey_message.html
     │       ├── background.html
     │       └── unsupported.html

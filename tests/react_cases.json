@@ -1146,6 +1146,16 @@
     },
     "humanize_schema": null
   },
+  "list": {
+    "kind": "controlled_question",
+    "component": "ControlledListQuestion",
+    "question": {
+      "question_name": "packing",
+      "question_type": "list",
+      "question_text": "What's on your packing list?"
+    },
+    "humanize_schema": null
+  },
   "multiple_choice_with_other": {
     "kind": "controlled_question",
     "component": "ControlledMultipleChoiceWithOtherQuestion",
