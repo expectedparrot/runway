@@ -10,7 +10,7 @@ font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
 and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other`,
-`free_text` and `survey_message`.** Every other type renders a "No preview is
+`numerical`, `free_text`, `email`, `url` and `survey_message`.** Every other type renders a "No preview is
 available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
@@ -141,10 +141,11 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (9)
+## Drawn today (12)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
-`checkbox`, `checkbox_with_other`, `free_text`, `survey_message`. Everything
+`checkbox`, `checkbox_with_other`, `numerical`, `free_text`, `email`, `url`,
+`survey_message`. Everything
 else renders a complete page with a note where the control would be — so wording
 and position are still checkable.
 
@@ -346,8 +347,8 @@ survey can be checked meanwhile.
 | `distribution`        | — not yet       |     | `numerical`                  | **✅ available** |
 | `dropdown`            | — not yet       |     | `rank`                       | — not yet       |
 | `edit`                | — not yet       |     | `survey_message`             | **✅ available** |
-| `email`               | — not yet       |     | `top_k`                      | — not yet       |
-| `file_upload`         | — not yet       |     | `url`                        | — not yet       |
+| `email`               | **✅ available** |     | `top_k`                      | — not yet       |
+| `file_upload`         | — not yet       |     | `url`                        | **✅ available** |
 | `free_text`           | **✅ available** |     | `yes_no`                     | **✅ available** |
 | `image_generation`    | **✅ automatic** |     |                              |                 |
 

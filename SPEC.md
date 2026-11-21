@@ -918,6 +918,8 @@ runway/
     │   ├── checkbox.py           checkbox — and whether Select all is drawn
     │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
     │   ├── free_text.py          free_text — a textarea, and nothing else
+    │   ├── email.py              email — one input, and nothing else
+    │   ├── url.py                url — one input, and nothing else
     │   ├── survey_message.py     survey_message — text, and no control at all
     │   ├── values.py             how a question's own values are spelled
     │   ├── background.py         compute/detect_ai/image_generation/thinking: never shown
@@ -941,6 +943,8 @@ runway/
     │       ├── checkbox_with_other.html
     │       ├── _other_add.html   the "Add another" button, parked for cloning
     │       ├── free_text.html
+    │       ├── email.html
+    │       ├── url.html
     │       ├── survey_message.html
     │       ├── background.html
     │       └── unsupported.html
