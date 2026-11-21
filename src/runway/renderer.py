@@ -153,6 +153,12 @@ def render_comment(question: dict, humanize_schema: dict | None = None) -> str:
     )
 
 
+def render_theme() -> str:
+    """The theme's CSS variables, as the reference application's stylesheet
+    declares them on ``:root``. See ``templates/theme.html``."""
+    return render_template("theme.html")
+
+
 def render_question_with_comment(
     question: dict, humanize_schema: dict | None = None
 ) -> str:
@@ -162,9 +168,18 @@ def render_question_with_comment(
     composed here rather than by the question renderers -- which means every
     question type gets it, including those that fall back to the "no preview"
     notice.
+
+    The question is wrapped in ``.edsl-question-container`` and the comment box
+    is not, as on the live page: the container is the element an author's
+    script is handed as "the question", and a survey's CSS can target it, so it
+    is always drawn, script or no script. It carries no utilities, so nothing
+    is lost to the stylesheet build by its class living here.
     """
-    return render_question(question, humanize_schema) + render_comment(
-        question, humanize_schema
+    return (
+        '<div class="edsl-question-container">'
+        + render_question(question, humanize_schema)
+        + "</div>"
+        + render_comment(question, humanize_schema)
     )
 
 
@@ -499,6 +514,7 @@ def _document(
         body_class=BODY_CLASS,
         root_class=ROOT_CLASS,
         font_href=FONT_HREF,
+        theme=Markup(render_theme()),
         stylesheet=Markup(STYLESHEET.read_text(encoding="utf-8")),
         custom_css=Markup(custom) if custom else "",
         toolbar_html=Markup(toolbar_html) if toolbar_html else "",

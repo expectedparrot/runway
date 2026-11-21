@@ -1669,5 +1669,8 @@
         "type": "carousel"
       }
     }
+  },
+  "theme_variables": {
+    "kind": "theme_variables"
   }
 }

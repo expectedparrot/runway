@@ -63,7 +63,7 @@
 {%- for row in rows %}
 <li class="flex items-stretch gap-1">
 {#- -#}
-<input type="text" placeholder="Enter an item" aria-label="{{ row.aria_label }}" aria-describedby="{{ question_name }}-other-hint" class="edsl-other-input grow px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-sky-600 focus:border-sky-600" value="{{ row.value }}"/>
+<input type="text" placeholder="Enter an item" aria-label="{{ row.aria_label }}" aria-describedby="{{ question_name }}-other-hint" class="edsl-other-input grow p-2 border border-gray-400 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring placeholder:text-gray-400 dark:placeholder:text-gray-500" value="{{ row.value }}"/>
 {#- -#}
 {# Kept in the layout at all times -- reserving the slot stops the inputs
    resizing as rows come and go, and a hover-only control is unreachable on

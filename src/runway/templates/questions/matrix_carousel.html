@@ -65,11 +65,11 @@
    would invite reading the options as things to scroll past on the way to it. #}
 <div class="edsl-matrix-carousel-nav flex items-center justify-center gap-4 py-3">
 {#- -#}
-<button type="button" disabled="" aria-label="Previous item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_left }}</button>
+<button type="button" disabled="" aria-label="Previous item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_left }}</button>
 {#- -#}
 <span class="edsl-matrix-carousel-status text-sm text-gray-600 dark:text-gray-400">1 of {{ items|length }}</span>
 {#- -#}
-<button type="button"{% if items|length <= 1 %} disabled=""{% endif %} aria-label="Next item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_right }}</button>
+<button type="button"{% if items|length <= 1 %} disabled=""{% endif %} aria-label="Next item" class="edsl-matrix-carousel-button flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">{{ chevron_right }}</button>
 {#- -#}
 </div>
 {%- if items %}
