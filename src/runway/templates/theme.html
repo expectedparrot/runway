@@ -1,0 +1,13 @@
+{# Transcription of the reference application's theme variables: the `:root`
+   block its stylesheet defines, which the theme's colours are built on.
+
+   Utilities such as `ring-ring` and `border-ring` don't name a colour; they
+   read one -- `hsl(var(--ring))` -- and without these declarations that read
+   comes back empty and the colour silently does not apply. The values are
+   copied, not chosen, and the `theme_variables` case holds them to the
+   reference's own stylesheet: a change there fails here until this is updated.
+
+   Only `:root`. A preview never turns on dark mode, so the `.dark` values would
+   be declarations nothing reads. Written compactly, one declaration after
+   another, because that is the form the recording takes. #}
+:root{--radius:0.5rem;--background:0 0% 100%;--foreground:240.1 11.2% 4%;--card:0 0% 100%;--card-foreground:240.1 11.2% 4%;--popover:0 0% 100%;--popover-foreground:240.1 11.2% 4%;--primary:147.1 100% 38.9%;--primary-foreground:138.5 76.5% 96.7%;--secondary:240 3.5% 95.8%;--secondary-foreground:240 6% 10%;--muted:240 3.5% 95.8%;--muted-foreground:240.1 4.4% 46.3%;--accent:240 3.5% 95.8%;--accent-foreground:240 6% 10%;--destructive:354.1 100% 44.6%;--border:240 5.9% 90%;--input:240 5.9% 90%;--ring:147.1 100% 38.9%;--chart-1:21.9 100% 46.2%;--chart-2:175.1 100% 29.1%;--chart-3:195.8 72.1% 22.9%;--chart-4:45.1 100% 48.9%;--chart-5:38.5 100% 48.2%;--sidebar:240 3.5% 95.8%;--sidebar-foreground:240.1 11.2% 4%;--sidebar-primary:147.1 100% 38.9%;--sidebar-primary-foreground:138.5 76.5% 96.7%;--sidebar-accent:240 3.5% 95.8%;--sidebar-accent-foreground:240 6% 10%;--sidebar-border:240 5.9% 90%;--sidebar-ring:147.1 100% 38.9%}

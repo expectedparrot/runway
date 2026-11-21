@@ -7,8 +7,12 @@
    it can be written with ordinary newlines. Only the `#root` div is kept
    tight, since its contents are compared.
 
-   `stylesheet`, `custom_css`, `toolbar_html` and `body_html` arrive as Markup:
-   they are already HTML/CSS and must not be escaped. #}
+   `theme`, `stylesheet`, `custom_css`, `toolbar_html` and `body_html` arrive
+   as Markup: they are already HTML/CSS and must not be escaped.
+
+   The theme's variables come first: the stylesheet's colour utilities read
+   them, and a survey's own CSS, emitted after both, can redefine them as it can
+   on the live page. #}
 <!doctype html>
 <html class="{{ html_class }}" lang="en">
 <head>
@@ -16,6 +20,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>{{ title }} — preview</title>
 <link rel="stylesheet" href="{{ font_href }}"/>
+<style>{{ theme }}</style>
 <style>{{ stylesheet }}</style>
 {% if custom_css %}
 <style>{{ custom_css }}</style>

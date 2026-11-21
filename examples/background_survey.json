@@ -72,8 +72,15 @@
     },
     {
       "question_name": "pet_story",
-      "question_text": "Tell us about them.",
-      "question_type": "list",
+      "question_text": "Rank these chores from your favourite to your least favourite.",
+      "question_options": [
+        "Feeding",
+        "Grooming",
+        "Vet visits"
+      ],
+      "num_selections": 3,
+      "use_code": true,
+      "question_type": "rank",
       "edsl_version": "1.0.8.dev1",
       "edsl_class_name": "QuestionBase"
     }
@@ -93,7 +100,7 @@
       "A warm watercolour portrait of {{ pet.answer }}, on a plain background.",
       "{{ pet.answer | length }}",
       "How attached are you to your pet?",
-      "Tell us about them."
+      "Rank these chores from your favourite to your least favourite."
     ],
     "data": {}
   },

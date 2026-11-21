@@ -1,14 +1,14 @@
 """One of everything runway can be asked for.
 
 Types it draws, a type it does not draw yet (`rank`), and a type no human survey
-can put to a respondent at all (`dict`) -- so both fallback paths are exercised
+can put to a respondent at all (`extract`) -- so both fallback paths are exercised
 alongside the real ones. Most of the survey-level tests read this file, which is
 why its shape is worth leaving alone: several of them assert progress values
 that follow from there being seven items.
 """
 
 from edsl.questions import (
-    QuestionDict,
+    QuestionExtract,
     QuestionLikertFive,
     QuestionLinearScale,
     QuestionMultipleChoice,
@@ -67,16 +67,14 @@ survey = Survey(
         ),
         # No human-survey rendering anywhere, so no preview could exist: this one
         # previews as a warning, which is about the survey rather than the tool.
-        QuestionDict(
+        QuestionExtract(
             question_name="commute_breakdown",
             question_text="Roughly how does a typical week's commuting break down?",
-            answer_keys=["days_in_office", "minutes_each_way", "usual_departure"],
-            value_types=["int", "int", "str"],
-            value_descriptions=[
-                "Days per week you travel to a workplace",
-                "Door-to-door minutes, one way",
-                "The time you normally leave home",
-            ],
+            answer_template={
+                "days_in_office": 3,
+                "minutes_each_way": 25,
+                "usual_departure": "8:15",
+            },
         ),
     ]
 )

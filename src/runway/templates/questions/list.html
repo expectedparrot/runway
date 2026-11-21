@@ -1,0 +1,23 @@
+{# Transcription of the reference implementation's list question.
+
+   The question text, a fixed instruction, and a textarea the respondent fills
+   one item per line; nothing about it varies with the question or the schema.
+   The textarea is empty because a preview shows the unanswered page, and React
+   renders a controlled textarea with an empty value as empty content rather
+   than a `value` attribute -- which is why there is no space between the tags.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only to suppress
+   whitespace between literal elements; JSX discards that whitespace, so
+   emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-list-question mb-6 space-y-4">
+{#- -#}
+{% include "questions/_question_text.html" %}
+{#- -#}
+<p>Please enter one item per line.</p>
+{#- -#}
+<textarea class="edsl-textarea w-full resize-none p-2 border border-gray-400 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring" rows="4"></textarea>
+{#- -#}
+</div>

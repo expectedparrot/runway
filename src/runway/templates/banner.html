@@ -19,7 +19,7 @@
 } %}
 <div class="edsl-survey-banner w-full py-4">
 {#- -#}
-<div class="edsl-survey-banner-content flex {{ JUSTIFY[logo.position] }} w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24">
+<div class="edsl-survey-banner-content flex {{ JUSTIFY[logo.position] }} w-full lg:w-3/4 mx-auto px-9 sm:px-20 md:px-28 lg:px-24 [:where([data-assistant=sidebar])_&amp;]:w-full [:where([data-assistant=sidebar])_&amp;]:max-w-3xl [:where([data-assistant=sidebar])_&amp;]:px-8">
 {#- -#}
 <img class="edsl-logo h-10 w-auto max-w-full object-contain" src="{{ logo.url }}" alt="{{ logo.alt }}" width="{{ logo.width }}" height="{{ logo.height }}"/>
 {#- -#}

@@ -1126,6 +1126,36 @@
     },
     "humanize_schema": null
   },
+  "email": {
+    "kind": "controlled_question",
+    "component": "ControlledEmailQuestion",
+    "question": {
+      "question_name": "contact_email",
+      "question_type": "email",
+      "question_text": "What's the best email to reach you at?"
+    },
+    "humanize_schema": null
+  },
+  "url": {
+    "kind": "controlled_question",
+    "component": "ControlledURLQuestion",
+    "question": {
+      "question_name": "homepage",
+      "question_type": "url",
+      "question_text": "What's your company's website?"
+    },
+    "humanize_schema": null
+  },
+  "list": {
+    "kind": "controlled_question",
+    "component": "ControlledListQuestion",
+    "question": {
+      "question_name": "packing",
+      "question_type": "list",
+      "question_text": "What's on your packing list?"
+    },
+    "humanize_schema": null
+  },
   "multiple_choice_with_other": {
     "kind": "controlled_question",
     "component": "ControlledMultipleChoiceWithOtherQuestion",
@@ -1649,5 +1679,8 @@
         "type": "carousel"
       }
     }
+  },
+  "theme_variables": {
+    "kind": "theme_variables"
   }
 }

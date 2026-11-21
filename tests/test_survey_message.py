@@ -143,7 +143,9 @@ def test_a_schema_that_asks_for_a_comment_is_still_a_sibling():
     one here -- the message schema has no comment field -- but the box is not
     the renderer's to refuse, and a message's own markup is unchanged by it."""
     html = render_question_with_comment(QUESTION, {"comment": {"label": "Why?"}})
-    assert html.startswith(render_question(QUESTION))
+    assert html.startswith(
+        '<div class="edsl-question-container">' + render_question(QUESTION) + "</div>"
+    )
 
 
 def test_it_is_named_message_in_the_toolbar():

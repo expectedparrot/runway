@@ -27,12 +27,15 @@ from . import (
     checkbox,
     checkbox_with_other,
     choice,
+    email,
     free_text,
+    list,
     matrix,
     multiple_choice_with_other,
     numerical,
     survey_message,
     unsupported,
+    url,
 )
 
 Renderer = Callable[[dict, "dict | None"], str]
@@ -48,6 +51,9 @@ RENDERERS: dict[str, Renderer] = {
     "multiple_choice_with_other": multiple_choice_with_other.render,
     "numerical": numerical.render,
     "free_text": free_text.render,
+    "email": email.render,
+    "url": url.render,
+    "list": list.render,
     "survey_message": survey_message.render,
 }
 

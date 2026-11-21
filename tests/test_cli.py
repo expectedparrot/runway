@@ -97,7 +97,7 @@ def test_a_thinking_wrapper_beats_its_type():
 
 
 def test_an_unrenderable_type_is_a_warning_not_a_note():
-    assert inspection.classify({"question_type": "dict", "question_name": "q"}) == "warning"
+    assert inspection.classify({"question_type": "extract", "question_name": "q"}) == "warning"
     assert inspection.classify({"question_type": "rank", "question_name": "q"}) == "note"
 
 
@@ -144,7 +144,7 @@ def test_check_writes_nothing(tmp_path):
 
 
 def test_check_fails_only_on_an_unshowable_question():
-    # mixed_survey carries a `dict`, which no survey can put to a person.
+    # mixed_survey carries an `extract`, which no survey can put to a person.
     assert main(["check", str(MIXED)]) == 1
     # background_survey's undrawn types are this package being behind, which is
     # not the survey's problem and must not fail a build.
@@ -168,11 +168,12 @@ def test_types_json_covers_every_humanized_type(capsys):
 
 
 def test_types_marks_the_automatic_ones_as_handled(capsys):
-    """compute and image_generation have no control and need none."""
+    """compute, detect_ai and image_generation have no control and need none."""
     main(["types", "--json"])
     rows = {row["type"]: row["status"] for row in json.loads(capsys.readouterr().out)["types"]}
     assert rows["compute"] == "automatic"
     assert rows["image_generation"] == "automatic"
+    assert rows["detect_ai"] == "automatic"
     assert rows["multiple_choice"] == "drawn"
     assert rows["rank"] == "note"
 

@@ -10,7 +10,7 @@ font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
 and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other`,
-`free_text` and `survey_message`.** Every other type renders a "No preview is
+`numerical`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
 available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
@@ -122,7 +122,7 @@ mixed_survey.json  -  7 items
   drawn      commute_satisfaction  linear_scale
   drawn      commute_switch        yes_no
   note       commute_barriers      rank    (no preview built for this type yet)
-  warning    commute_breakdown     dict    (never shown to a respondent)
+  warning    commute_breakdown     extract (never shown to a respondent)
 
 5 drawn, 1 note, 1 warning
 ```
@@ -130,8 +130,8 @@ mixed_survey.json  -  7 items
 Four outcomes, and they mean different things:
 
 - `drawn` — the real control; the preview is accurate.
-- `automatic` — `compute`, `image_generation`, or any type wrapped by
-  `thinking_question()`. Nobody is ever asked it; nothing is missing.
+- `automatic` — `compute`, `detect_ai`, `image_generation`, or any type
+  wrapped by `thinking_question()`. Nobody is ever asked it; nothing is missing.
 - `note` — a type a human survey supports but runway hasn't transcribed yet.
   The survey is fine; the tool is behind.
 - `warning` — nothing a respondent could be served: a type with no
@@ -141,10 +141,11 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (9)
+## Drawn today (13)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
-`checkbox`, `checkbox_with_other`, `free_text`, `survey_message`. Everything
+`checkbox`, `checkbox_with_other`, `numerical`, `free_text`, `email`, `url`,
+`list`, `survey_message`. Everything
 else renders a complete page with a note where the control would be — so wording
 and position are still checkable.
 
@@ -217,10 +218,12 @@ $ runway check examples/mixed_survey.json
 mixed_survey.json  -  7 items
 
   drawn      commute_mode          multiple_choice
+  drawn      commute_time          multiple_choice
   drawn      commute_enjoyment     likert_five
   drawn      commute_satisfaction  linear_scale
+  drawn      commute_switch        yes_no
   note       commute_barriers      rank             (no preview built for this type yet)
-  warning    commute_breakdown     dict             (never shown to a respondent)
+  warning    commute_breakdown     extract          (never shown to a respondent)
 
 5 drawn, 1 note, 1 warning
 ```
@@ -334,16 +337,20 @@ survey can be checked meanwhile.
 
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
-| `budget`              | — not yet       |     | `linear_scale`               | **✅ available** |
-| `checkbox`            | **✅ available** |     | `list`                       | — not yet       |
-| `checkbox_with_other` | **✅ available** |     | `matrix`                     | **✅ available** |
-| `compute`             | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
-| `distribution`        | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
-| `file_upload`         | — not yet       |     | `numerical`                  | **✅ available** |
-| `free_text`           | **✅ available** |     | `rank`                       | — not yet       |
-| `image_generation`    | **✅ automatic** |     | `survey_message`             | **✅ available** |
-| `interview`           | — not yet       |     | `top_k`                      | — not yet       |
-| `likert_five`         | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `budget`              | — not yet       |     | `interview`                  | — not yet       |
+| `checkbox`            | **✅ available** |     | `likert_five`                | **✅ available** |
+| `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
+| `compute`             | **✅ automatic** |     | `list`                       | **✅ available** |
+| `demand`              | — not yet       |     | `matrix`                     | **✅ available** |
+| `detect_ai`           | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
+| `dict`                | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
+| `distribution`        | — not yet       |     | `numerical`                  | **✅ available** |
+| `dropdown`            | — not yet       |     | `rank`                       | — not yet       |
+| `edit`                | — not yet       |     | `survey_message`             | **✅ available** |
+| `email`               | **✅ available** |     | `top_k`                      | — not yet       |
+| `file_upload`         | — not yet       |     | `url`                        | **✅ available** |
+| `free_text`           | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `image_generation`    | **✅ automatic** |     |                              |                 |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing
@@ -354,12 +361,12 @@ a `numerical` configured as a slider gets the note rather than a control, since
 only its number-field form is transcribed.
 [SPEC.md](SPEC.md#what-a-preview-reproduces) has why.
 
-A type **outside** this table — `dict`, for instance — cannot be shown to a
+A type **outside** this table — `extract`, for instance — cannot be shown to a
 respondent at all, so its page carries a warning rather than a note: what needs
 changing is the survey.
 
-`compute`, `image_generation` and anything wrapped by `thinking_question()` are
-marked *automatic* — the survey answers them itself and no respondent ever sees
+`compute`, `detect_ai`, `image_generation` and anything wrapped by
+`thinking_question()` are marked *automatic* — the survey answers them itself and no respondent ever sees
 them. Their pages still show the question's text, since a prompt for a model is
 the one part of one of these that can be wrong; the notice under it says who
 answers. `examples/background_survey.json` has all three.

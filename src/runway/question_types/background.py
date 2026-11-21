@@ -2,12 +2,13 @@
 
 Some survey items are answered without anyone being asked. A ``compute``
 question is evaluated on the server, an ``image_generation`` question is sent to
-an image model, and a question of *any* type can be wrapped by EDSL's
+an image model, a ``detect_ai`` question sends its text to an AI-text
+detector, and a question of *any* type can be wrapped by EDSL's
 ``thinking_question()`` to be answered by its own model rather than by a person.
-The survey navigator runs all three between pages and advances straight past
-them -- it asks whether a question is thinking-wrapped or an instance of the
-compute or image-generation types, which is the test this module mirrors -- so a
-page for one is never served to anybody.
+The survey navigator runs all of these between pages and advances straight past
+them -- it asks whether a question is thinking-wrapped or an instance of one of
+the background types, which is the test this module mirrors -- so a page for one
+is never served to anybody.
 
 That makes them a third situation, not a variant of the two in ``unsupported``.
 The note there means this package is behind; the warning there means the survey
@@ -42,7 +43,7 @@ TEMPLATE = "questions/background.html"
 ICON_CLASS = "mt-0.5 size-4 shrink-0 text-blue-600"
 
 # Question types that are always run in the background, whatever else they say.
-BACKGROUND_TYPES = frozenset({"compute", "image_generation"})
+BACKGROUND_TYPES = frozenset({"compute", "detect_ai", "image_generation"})
 
 # What ``thinking_question()`` leaves behind in ``to_dict()``. The system prompt
 # is not a reliable marker -- it defaults to the empty string -- so the model is
@@ -55,6 +56,7 @@ THINKING_KEY = "thinking_model"
 REASONS = {
     "compute": "Its answer is computed on the server from the answers before it.",
     "image_generation": "An image model generates its answer on the server.",
+    "detect_ai": "An AI-text detector scores its text on the server.",
     "thinking": (
         "A model answers it on the server, using the model and system prompt "
         "carried on the question rather than the survey's."

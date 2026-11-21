@@ -71,6 +71,7 @@ def test_every_recorded_kind_is_compared_somewhere():
         "progress": "test_progress.py",
         "banner": "test_branding.py",
         "shell": "test_survey.py",
+        "theme_variables": "test_theme.py",
     }
     unchecked = {case["kind"] for case in CASES.values()} - set(RENDER_BY_KIND)
     assert unchecked <= set(elsewhere), f"no test compares {unchecked - set(elsewhere)}"
@@ -291,10 +292,14 @@ def test_question_block_without_comment_matches_react():
 
 def test_a_configured_comment_is_the_only_difference():
     # The comment box is purely additive: with no comment configured the block
-    # is the bare question, byte for byte. Recorded, not assumed -- the live
-    # page reaches the question through a controlled wrapper, and this is what
-    # says that wrapper contributes no markup of its own.
-    assert GOLDENS["question_block_without_comment"] == GOLDENS["multiple_choice_radio"]
+    # is the bare question inside its container, byte for byte. Recorded, not
+    # assumed -- the live page reaches the question through a controlled
+    # wrapper, and this is what says the container is all that wrapper adds.
+    assert GOLDENS["question_block_without_comment"] == (
+        '<div class="edsl-question-container">'
+        + GOLDENS["multiple_choice_radio"]
+        + "</div>"
+    )
     with_comment = GOLDENS["question_block_with_comment"]
     assert with_comment.startswith(GOLDENS["question_block_without_comment"])
 
@@ -385,20 +390,20 @@ def test_unregistered_type_falls_back_to_notice():
 
 
 def test_a_type_no_human_survey_can_run_is_warned_about_instead():
-    # dict has no humanize configuration, so no preview could exist and the
+    # extract has no humanize configuration, so no preview could exist and the
     # survey itself is what needs changing. That has to read differently from a
     # type this package simply has not got to yet.
-    assert "dict" not in unsupported.HUMANIZED_TYPES
+    assert "extract" not in unsupported.HUMANIZED_TYPES
     html = render_question(
         {
-            "question_type": "dict",
+            "question_type": "extract",
             "question_name": "d",
             "question_text": "Break it down.",
         }
     )
     assert "Not supported in human surveys" in html
     assert "No preview is available" not in html
-    assert "<code>dict</code>" in html
+    assert "<code>extract</code>" in html
     # Still the louder of the two: solid amber rather than a dashed grey note.
     assert "border-amber-300" in html and "border-dashed" not in html
     assert "lucide-triangle-alert" in html

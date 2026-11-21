@@ -739,11 +739,12 @@ list markers and a heading size again.
 
 ### Questions answered without a respondent
 
-`compute` and `image_generation` are marked *automatic* because nobody is ever
-asked them: the survey evaluates the one and sends the other to an image model
-between pages, then advances past both. The same is true of a question of **any**
-type wrapped by `thinking_question()`, which answers it with its own model and
-system prompt. All three are run by the survey navigator, and their pages carry a
+`compute`, `detect_ai` and `image_generation` are marked *automatic* because
+nobody is ever asked them: between pages the survey evaluates a `compute`
+question, sends a `detect_ai` question's text to an AI-text detector, and sends
+an `image_generation` prompt to an image model, then advances past all three.
+The same is true of a question of **any** type wrapped by `thinking_question()`,
+which answers it with its own model and system prompt. All of these are run by the survey navigator, and their pages carry a
 third notice saying so — neither "no preview yet" nor "not supported", since
 nothing is missing and nothing is wrong.
 
@@ -917,9 +918,12 @@ runway/
     │   ├── checkbox.py           checkbox — and whether Select all is drawn
     │   ├── checkbox_with_other.py  checkbox_with_other — options plus typed answers
     │   ├── free_text.py          free_text — a textarea, and nothing else
+    │   ├── email.py              email — one input, and nothing else
+    │   ├── url.py                url — one input, and nothing else
+    │   ├── list.py               list — an instruction and a textarea
     │   ├── survey_message.py     survey_message — text, and no control at all
     │   ├── values.py             how a question's own values are spelled
-    │   ├── background.py         compute/image_generation/thinking: never shown
+    │   ├── background.py         compute/detect_ai/image_generation/thinking: never shown
     │   └── unsupported.py        the stand-in: a note, or a warning
     ├── templates/
     │   ├── page.html             document shell + toolbar script
@@ -940,6 +944,9 @@ runway/
     │       ├── checkbox_with_other.html
     │       ├── _other_add.html   the "Add another" button, parked for cloning
     │       ├── free_text.html
+    │       ├── email.html
+    │       ├── url.html
+    │       ├── list.html
     │       ├── survey_message.html
     │       ├── background.html
     │       └── unsupported.html
