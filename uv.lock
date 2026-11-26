@@ -435,7 +435,7 @@ wheels = [
 [[package]]
 name = "edsl"
 version = "1.0.8.dev1"
-source = { git = "https://github.com/expectedparrot/edsl.git?rev=main#d98b68d43f600cb1ed156927485e2278e6741263" }
+source = { git = "https://github.com/expectedparrot/edsl.git?rev=main#0005da57dbb4314f33e51f35c6b0558e30840849" }
 dependencies = [
     { name = "aiohttp" },
     { name = "click" },
