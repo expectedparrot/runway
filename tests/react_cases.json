@@ -1182,6 +1182,32 @@
     },
     "humanize_schema": null
   },
+  "numerical_range": {
+    "kind": "controlled_question",
+    "component": "ControlledNumericalRangeQuestion",
+    "question": {
+      "question_name": "budget_range",
+      "question_type": "numerical_range",
+      "question_text": "What's the most and least you'd spend on a meal out?"
+    },
+    "humanize_schema": null
+  },
+  "numerical_range_bounded": {
+    "kind": "controlled_question",
+    "component": "ControlledNumericalRangeQuestion",
+    "question": {
+      "question_name": "age_range",
+      "question_text": "Which ages should the study include?",
+      "question_type": "numerical_range",
+      "min_value": 18,
+      "max_value": 99
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "input"
+      }
+    }
+  },
   "checkbox": {
     "kind": "controlled_question",
     "component": "ControlledCheckBoxQuestion",
@@ -1679,6 +1705,101 @@
         "type": "carousel"
       }
     }
+  },
+  "checkbox_matrix_grid": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckboxMatrixQuestion",
+    "question": {
+      "question_name": "activities",
+      "question_type": "checkbox_matrix",
+      "question_text": "Which do you do on each day?",
+      "question_items": [
+        "Monday",
+        "Wednesday",
+        "Saturday"
+      ],
+      "question_options": [
+        "Exercise",
+        "Cook dinner",
+        "Couldn't say"
+      ],
+      "min_selections": 0,
+      "max_selections": 3
+    },
+    "humanize_schema": null
+  },
+  "checkbox_matrix_labelled": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckboxMatrixQuestion",
+    "question": {
+      "question_name": "acceptable",
+      "question_type": "checkbox_matrix",
+      "question_text": "Which scores would you accept?",
+      "question_items": [
+        "Price",
+        "The staff's attention"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Poor",
+        "5": "Excellent"
+      },
+      "min_selections": 1,
+      "max_selections": 3
+    },
+    "humanize_schema": null
+  },
+  "checkbox_matrix_item_blocks": {
+    "kind": "controlled_question",
+    "component": "ControlledCheckboxMatrixQuestion",
+    "question": {
+      "question_name": "shots",
+      "question_type": "checkbox_matrix",
+      "question_text": "Which words fit each image?",
+      "question_items": [
+        "Watercolor <see file wc>",
+        "Couldn't say <see file cs>"
+      ],
+      "question_options": [
+        "Calm",
+        "Bright"
+      ],
+      "min_selections": 0,
+      "max_selections": 2,
+      "question_items_blocks": [
+        [
+          {
+            "type": "text",
+            "content": "Watercolor"
+          },
+          {
+            "type": "file",
+            "filename": "wc",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "content": "Couldn't say"
+          },
+          {
+            "type": "file",
+            "filename": "cs",
+            "file_type": "image",
+            "file_load_link": "data:image/png;base64,AA"
+          }
+        ]
+      ]
+    },
+    "humanize_schema": null
   },
   "theme_variables": {
     "kind": "theme_variables"

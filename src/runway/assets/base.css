@@ -13,7 +13,9 @@
  * Nothing is hand-written here, and that is the point.
  *
  * Every rule in this stylesheet is generated from classes the components emit,
- * so the parity tests cover the whole of it.
+ * so the parity tests cover the whole of it -- or read, as written, from the
+ * plain stylesheets those components import (see tailwind.config.cjs), which
+ * style the hooks the same tests hold the markup to.
  *
  * There used to be a block below showing which control a respondent had chosen.
  * The reference hides the real input with `sr-only`, draws the control as a span

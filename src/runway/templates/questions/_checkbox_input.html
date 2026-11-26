@@ -32,7 +32,7 @@
 {#- -#}
 <span class="edsl-checkbox-control relative inline-flex shrink-0 items-center justify-center border border-gray-500 bg-white dark:border-gray-600 dark:bg-gray-900 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sky-600 has-[:focus-visible]:ring-offset-2 dark:has-[:focus-visible]:ring-offset-gray-900 rounded-[3px] text-white data-[checked]:border-sky-600 data-[checked]:bg-sky-600 dark:data-[checked]:border-blue-500 dark:data-[checked]:bg-blue-500 {{ control_class }}" {% if checked %}data-checked=""{% else %}data-unchecked=""{% endif %}>
 {#- -#}
-<input type="checkbox"{% if input_id is not none %} id="{{ input_id }}"{% endif %} class="edsl-checkbox sr-only"{% if checked %} checked=""{% endif %}/>
+<input type="checkbox"{% if input_id is not none %} id="{{ input_id }}"{% endif %}{% if input_name is defined and input_name is not none %} name="{{ input_name }}"{% endif %} class="edsl-checkbox sr-only"{% if checked %} checked=""{% endif %}{% if input_value is defined and input_value is not none %} value="{{ input_value }}"{% endif %}/>
 {#- -#}
 <span class="edsl-checkbox-indicator data-[unchecked]:hidden" {% if checked %}data-checked=""{% else %}data-unchecked=""{% endif %}>
 {#- -#}

@@ -38,6 +38,7 @@ HUMANIZED_TYPES = frozenset(
     {
         "budget",
         "checkbox",
+        "checkbox_matrix",
         "checkbox_with_other",
         "compute",
         "date",

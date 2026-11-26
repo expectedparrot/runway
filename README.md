@@ -9,8 +9,8 @@ the live web survey a respondent would see — same markup, same stylesheet, sam
 font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
-and `linear_scale` — plus `matrix`, `checkbox`, `checkbox_with_other`,
-`numerical`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
+and `linear_scale` — plus `matrix`, `checkbox_matrix`, `checkbox`, `checkbox_with_other`,
+`numerical`, `numerical_range`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
 available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
@@ -141,10 +141,11 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (13)
+## Drawn today (16)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
-`checkbox`, `checkbox_with_other`, `numerical`, `free_text`, `email`, `url`,
+`checkbox_matrix`, `checkbox`, `checkbox_with_other`, `multiple_choice_with_other`,
+`numerical`, `numerical_range`, `free_text`, `email`, `url`,
 `list`, `survey_message`. Everything
 else renders a complete page with a note where the control would be — so wording
 and position are still checkable.
@@ -339,19 +340,20 @@ survey can be checked meanwhile.
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
 | `budget`              | — not yet       |     | `image_generation`           | **✅ automatic** |
 | `checkbox`            | **✅ available** |     | `interview`                  | — not yet       |
-| `checkbox_with_other` | **✅ available** |     | `likert_five`                | **✅ available** |
-| `compute`             | **✅ automatic** |     | `linear_scale`               | **✅ available** |
-| `date`                | — not yet       |     | `list`                       | **✅ available** |
-| `date_time`           | — not yet       |     | `matrix`                     | **✅ available** |
-| `demand`              | — not yet       |     | `multiple_choice`            | **✅ available** |
-| `detect_ai`           | **✅ automatic** |     | `multiple_choice_with_other` | **✅ available** |
-| `dict`                | — not yet       |     | `numerical`                  | **✅ available** |
-| `distribution`        | — not yet       |     | `numerical_range`            | — not yet       |
-| `dropdown`            | — not yet       |     | `rank`                       | — not yet       |
-| `edit`                | — not yet       |     | `survey_message`             | **✅ available** |
-| `email`               | **✅ available** |     | `top_k`                      | — not yet       |
-| `file_upload`         | — not yet       |     | `url`                        | **✅ available** |
-| `free_text`           | **✅ available** |     | `yes_no`                     | **✅ available** |
+| `checkbox_matrix`     | **✅ available** |     | `likert_five`                | **✅ available** |
+| `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
+| `compute`             | **✅ automatic** |     | `list`                       | **✅ available** |
+| `date`                | — not yet       |     | `matrix`                     | **✅ available** |
+| `date_time`           | — not yet       |     | `multiple_choice`            | **✅ available** |
+| `demand`              | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
+| `detect_ai`           | **✅ automatic** |     | `numerical`                  | **✅ available** |
+| `dict`                | — not yet       |     | `numerical_range`            | **✅ available** |
+| `distribution`        | — not yet       |     | `rank`                       | — not yet       |
+| `dropdown`            | — not yet       |     | `survey_message`             | **✅ available** |
+| `edit`                | — not yet       |     | `top_k`                      | — not yet       |
+| `email`               | **✅ available** |     | `url`                        | **✅ available** |
+| `file_upload`         | — not yet       |     | `yes_no`                     | **✅ available** |
+| `free_text`           | **✅ available** |     |                              |                 |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing

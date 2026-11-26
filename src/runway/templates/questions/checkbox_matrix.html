@@ -1,0 +1,147 @@
+{# Transcription of the reference implementation's checkbox matrix question:
+   matrix's two views, with a checkbox in every cell instead of a radio.
+
+   Everything matrix.html says about the pair holds here -- both views emitted,
+   ids and group names held apart under `_stack`, indices rather than text in
+   every id. What differs is what the reference changes and nothing else:
+
+   - each part carries its matrix class and a checkbox matrix one beside it
+     (`edsl-matrix-row edsl-checkbox-matrix-row`), so a survey's matrix CSS
+     reaches this grid too and the second name styles it alone;
+   - a stacked row is a `group`, not a `radiogroup`;
+   - the hover halo is square, to sit round a square control;
+   - there is no carousel: a row of checkboxes has no click that finishes it.
+
+   Class strings are inline for the same reason as in matrix.html: so this file
+   diffs against the reference side by side, and so the stylesheet build sees
+   them. The empty-comment separator lines suppress whitespace JSX discards.
+
+   (Do not write a literal whitespace-control comment inside a comment like this
+   one -- Jinja comments do not nest.) #}
+<div class="edsl-question edsl-checkbox-matrix-question mb-6">
+{#- -#}
+{% include "questions/_question_text.html" %}
+{#- -#}
+{# The gap under the question text is set here, once, so the two views open
+   alike -- and it is the same gap the stacked list keeps between its rows,
+   which is the only rhythm either view has. The wrapper is what takes focus
+   when a submit finds the question unanswered, because a checkbox in the hidden
+   view cannot. #}
+<div tabindex="-1" class="edsl-matrix-views edsl-checkbox-matrix-views pt-7 focus:outline-none">
+{#- -#}
+<div class="edsl-matrix-stack-view edsl-checkbox-matrix-stack-view md:hidden">
+{#- -#}
+<div class="edsl-matrix-stack edsl-checkbox-matrix-stack">
+{#- -#}
+{%- for item in items %}
+{%- set row = loop.index0 %}
+<div class="edsl-matrix-stack-row edsl-checkbox-matrix-stack-row mt-7 border-t border-gray-200 pt-7 first:mt-0 first:border-t-0 first:pt-0 dark:border-gray-700">
+{#- -#}
+<div id="{{ question_name }}_stack_{{ row }}_label" class="edsl-matrix-stack-item edsl-checkbox-matrix-stack-item mb-3 text-base text-gray-900 dark:text-white">{% with label_html = item.label_html, blocks = item.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</div>
+{#- -#}
+<div role="group" aria-labelledby="{{ question_name }}_stack_{{ row }}_label" class="edsl-options space-y-1.5">
+{#- -#}
+{%- for option in options %}
+<label for="{{ question_name }}_stack_{{ row }}_{{ loop.index0 }}" class="edsl-option flex items-center">
+{#- -#}
+{% with control_class = "h-4 w-4", input_id = question_name ~ "_stack_" ~ row ~ "_" ~ loop.index0, input_name = question_name ~ "_stack_" ~ row, input_value = option.value %}{% include "questions/_checkbox_input.html" %}{% endwith %}
+{#- -#}
+<span class="edsl-option-label ml-2 min-w-0 py-1">{% with label_html = option.row_label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}{{ option.row_label_suffix }}</span>
+{#- -#}
+</label>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
+{#- -#}
+<div class="edsl-matrix-table-view edsl-checkbox-matrix-table-view hidden md:block">
+{#- -#}
+<div class="overflow-x-auto -mx-4 sm:mx-0">
+{#- -#}
+<table class="edsl-matrix-table edsl-checkbox-matrix-table w-full border-separate border-spacing-0" style="--edsl-matrix-option-count:{{ option_count }}">
+{#- -#}
+{# The row labels take a share of the grid and the options divide the rest, both
+   halves off one custom property -- so custom CSS rebalances a grid by setting
+   that property and nothing else, with no per-question share to work out. #}
+<colgroup>
+{#- -#}
+<col class="edsl-matrix-item-column edsl-checkbox-matrix-item-column w-[var(--edsl-matrix-item-column,25%)]"/>
+{#- -#}
+{%- for option in options %}
+<col class="edsl-matrix-option-column edsl-checkbox-matrix-option-column w-[calc((100%_-_var(--edsl-matrix-item-column,25%))_/_var(--edsl-matrix-option-count))]"/>
+{%- endfor %}
+</colgroup>
+{#- -#}
+<thead>
+{#- -#}
+{# Separate borders rather than collapsed ones, set on the table above: a
+   collapsed border belongs to the table and not to the cell, so the line beside
+   the sticky column slides out from under it on a sideways scroll. Rows carry
+   no border in this model, so each cell draws its own. #}
+<tr class="edsl-matrix-header-row edsl-checkbox-matrix-header-row">
+{#- -#}
+<th class="sticky left-0 z-10 px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"></th>
+{#- -#}
+{%- for option in options %}
+<th class="px-2 py-3 text-center text-sm font-normal text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 align-bottom min-h-[3.5rem]">
+{#- -#}
+<div class="flex flex-col items-center justify-end gap-1 min-h-[2.5rem]">
+{#- -#}
+{%- if option.header_label %}
+<span class="break-words text-center">{{ option.header_label }}</span>
+{#- -#}
+{%- endif %}
+<span>{% with label_html = option.label_html, blocks = option.blocks, compact = true %}{% include "questions/_option_label.html" %}{% endwith %}</span>
+{#- -#}
+</div>
+{#- -#}
+</th>
+{%- endfor %}
+</tr>
+{#- -#}
+</thead>
+{#- -#}
+<tbody>
+{#- -#}
+{%- for item in items %}
+{%- set row = loop.index0 %}
+<tr class="edsl-matrix-row edsl-checkbox-matrix-row group transition-colors">
+{#- -#}
+<td class="edsl-matrix-label-cell edsl-checkbox-matrix-label-cell sticky left-0 z-10 px-4 py-3 text-sm text-gray-900 dark:text-white align-middle bg-white dark:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30 border-b border-r border-gray-200 dark:border-gray-700">{% with label_html = item.label_html, blocks = item.blocks %}{% include "questions/_option_label.html" %}{% endwith %}</td>
+{#- -#}
+{%- for option in options %}
+<td class="edsl-matrix-cell edsl-checkbox-matrix-cell px-2 py-3 text-center align-middle border-b border-gray-200 dark:border-gray-700 group-hover:bg-gray-50 dark:group-hover:bg-gray-800/30">
+{#- -#}
+<label for="{{ question_name }}_{{ row }}_{{ loop.index0 }}" class="group/bubble flex items-center justify-center cursor-pointer w-full h-full min-h-[2rem]">
+{#- -#}
+{# The hover halo rides on a wrapper of its own rather than on the control: it
+   is a shadow, and the control's focus ring is a ring, so the two compose here
+   instead of overwriting each other. The ring itself belongs to the control,
+   which is where every question draws it. #}
+<span class="inline-flex rounded-[3px] group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.200)] dark:group-hover/bubble:shadow-[0_0_0_8px_theme(colors.gray.700)]">
+{#- -#}
+{% with control_class = "h-5 w-5 cursor-pointer", input_id = question_name ~ "_" ~ row ~ "_" ~ loop.index0, input_name = question_name ~ "_" ~ row, input_value = option.value %}{% include "questions/_checkbox_input.html" %}{% endwith %}
+{#- -#}
+</span>
+{#- -#}
+</label>
+{#- -#}
+</td>
+{%- endfor %}
+</tr>
+{%- endfor %}
+</tbody>
+{#- -#}
+</table>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
+{#- -#}
+</div>
