@@ -1,0 +1,128 @@
+{
+  "questions": [
+    {
+      "question_name": "weekly_activities",
+      "question_text": "Which of these do you usually do on each day?",
+      "min_selections": 0,
+      "max_selections": 4,
+      "question_items": [
+        "Monday",
+        "Wednesday",
+        "Saturday"
+      ],
+      "question_options": [
+        "Exercise",
+        "Cook dinner",
+        "Read",
+        "Couldn't say"
+      ],
+      "option_labels": {},
+      "permissive": false,
+      "question_type": "checkbox_matrix",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "acceptable_scores",
+      "question_text": "Which scores would you be happy to give each of these?",
+      "min_selections": 1,
+      "max_selections": 3,
+      "question_items": [
+        "The food",
+        "The staff's attention",
+        "Value for money"
+      ],
+      "question_options": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "option_labels": {
+        "1": "Poor",
+        "5": "Excellent"
+      },
+      "permissive": false,
+      "question_type": "checkbox_matrix",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    },
+    {
+      "question_name": "channels",
+      "question_text": "Where have you heard about each of these products in the last month? Check every place that applies.",
+      "min_selections": 0,
+      "max_selections": 8,
+      "question_items": [
+        "The new phone plan",
+        "The home broadband bundle",
+        "The streaming add-on"
+      ],
+      "question_options": [
+        "TV",
+        "Radio",
+        "Podcast",
+        "Social media",
+        "A search ad",
+        "A friend or colleague",
+        "In a shop",
+        "I haven't heard of it"
+      ],
+      "option_labels": {},
+      "permissive": false,
+      "question_type": "checkbox_matrix",
+      "edsl_version": "1.0.8.dev1",
+      "edsl_class_name": "QuestionBase"
+    }
+  ],
+  "memory_plan": {
+    "survey_question_names": [
+      "weekly_activities",
+      "acceptable_scores",
+      "channels"
+    ],
+    "survey_question_texts": [
+      "Which of these do you usually do on each day?",
+      "Which scores would you be happy to give each of these?",
+      "Where have you heard about each of these products in the last month? Check every place that applies."
+    ],
+    "data": {}
+  },
+  "rule_collection": {
+    "question_name_to_index": {
+      "weekly_activities": 0,
+      "acceptable_scores": 1,
+      "channels": 2
+    },
+    "rules": [
+      {
+        "current_q": 0,
+        "expression": "True",
+        "next_q": 1,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 1,
+        "expression": "True",
+        "next_q": 2,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      },
+      {
+        "current_q": 2,
+        "expression": "True",
+        "next_q": 3,
+        "priority": -1,
+        "before_rule": false,
+        "question_name_to_index": {}
+      }
+    ],
+    "num_questions": 3
+  },
+  "question_groups": {},
+  "edsl_version": "1.0.8.dev1",
+  "edsl_class_name": "Survey"
+}
