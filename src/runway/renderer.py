@@ -91,6 +91,7 @@ PRETTY_TYPES = {
     "yes_no": "Yes/No",
     "dict": "Dict",
     "detect_ai": "Detect AI",
+    "date_time": "Date and Time",
     "url": "URL",
 }
 

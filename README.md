@@ -337,20 +337,21 @@ survey can be checked meanwhile.
 
 | question type         | preview         |     | question type                | preview         |
 | --------------------- | --------------- | --- | ---------------------------- | --------------- |
-| `budget`              | — not yet       |     | `interview`                  | — not yet       |
-| `checkbox`            | **✅ available** |     | `likert_five`                | **✅ available** |
-| `checkbox_with_other` | **✅ available** |     | `linear_scale`               | **✅ available** |
-| `compute`             | **✅ automatic** |     | `list`                       | **✅ available** |
-| `demand`              | — not yet       |     | `matrix`                     | **✅ available** |
-| `detect_ai`           | **✅ automatic** |     | `multiple_choice`            | **✅ available** |
-| `dict`                | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
-| `distribution`        | — not yet       |     | `numerical`                  | **✅ available** |
+| `budget`              | — not yet       |     | `image_generation`           | **✅ automatic** |
+| `checkbox`            | **✅ available** |     | `interview`                  | — not yet       |
+| `checkbox_with_other` | **✅ available** |     | `likert_five`                | **✅ available** |
+| `compute`             | **✅ automatic** |     | `linear_scale`               | **✅ available** |
+| `date`                | — not yet       |     | `list`                       | **✅ available** |
+| `date_time`           | — not yet       |     | `matrix`                     | **✅ available** |
+| `demand`              | — not yet       |     | `multiple_choice`            | **✅ available** |
+| `detect_ai`           | **✅ automatic** |     | `multiple_choice_with_other` | **✅ available** |
+| `dict`                | — not yet       |     | `numerical`                  | **✅ available** |
+| `distribution`        | — not yet       |     | `numerical_range`            | — not yet       |
 | `dropdown`            | — not yet       |     | `rank`                       | — not yet       |
 | `edit`                | — not yet       |     | `survey_message`             | **✅ available** |
 | `email`               | **✅ available** |     | `top_k`                      | — not yet       |
 | `file_upload`         | — not yet       |     | `url`                        | **✅ available** |
 | `free_text`           | **✅ available** |     | `yes_no`                     | **✅ available** |
-| `image_generation`    | **✅ automatic** |     |                              |                 |
 
 
 Four results are worth expecting: `checkbox` draws a **Select all** row nothing
