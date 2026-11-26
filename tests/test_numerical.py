@@ -76,10 +76,14 @@ def test_a_slider_is_declined_rather_than_drawn_as_a_field():
 
 def test_the_field_carries_no_bounds_of_its_own():
     """The reference puts none on it, whatever the schema says elsewhere. A
-    `min` or `max` here would be validation this package invented."""
+    `min` or `max` here would be validation this package invented.
+
+    `step="any"` is the reference's, and is not a bound: it lets the field take
+    a decimal, where the browser's default step of 1 would mark 2.5 invalid."""
     html = render_question(QUESTION, {"format": {"type": "input"}})
-    for attribute in ('min="', 'max="', 'step="'):
+    for attribute in ('min="', 'max="'):
         assert attribute not in html
+    assert html.count('step="') == html.count('step="any"') == 1
 
 
 def test_a_comment_still_attaches_to_it():

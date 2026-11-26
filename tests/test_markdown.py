@@ -120,9 +120,18 @@ def test_strikethrough_is_del_not_s():
 
 def test_a_table_carries_no_newlines_between_its_cells():
     assert render_question_text("| a |\n| - |\n| 1 |") == (
-        "<table><thead><tr><th>a</th></tr></thead>"
-        "<tbody><tr><td>1</td></tr></tbody></table>"
+        '<div class="edsl-table-wrapper" tabindex="0" role="region" '
+        'aria-label="Table"><table class="edsl-table">'
+        "<thead><tr><th>a</th></tr></thead>"
+        "<tbody><tr><td>1</td></tr></tbody></table></div>"
     )
+
+
+def test_an_option_table_gets_the_same_wrapper():
+    """Both surfaces draw a table through the same component over there."""
+    html = render_option_text("| a |\n| - |\n| 1 |")
+    assert html.startswith('<div class="edsl-table-wrapper"')
+    assert html.endswith("</table></div>")
 
 
 def test_a_raw_html_block_is_escaped_and_unwrapped():

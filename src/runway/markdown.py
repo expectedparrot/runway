@@ -19,6 +19,8 @@ Concretely, against the recordings in ``tests/react_goldens.json``:
 * void elements are ``<br/>``, not ``<br />``
 * ``~~x~~`` is ``<del>``, where markdown-it emits ``<s>``
 * table elements carry no newlines between them, where markdown-it indents
+* a table sits in a focusable wrapper, so a wide one scrolls inside the column,
+  and carries a class of its own (:data:`TABLE_OPEN`)
 * a raw HTML block is escaped text with **no** paragraph around it, because
   ``react-markdown`` runs without ``rehype-raw``
 
@@ -53,6 +55,16 @@ from .html import escape
 # indents table markup; React writes it as one line.
 TIGHT_TAGS = frozenset({"table", "thead", "tbody", "tr", "th", "td"})
 
+# What the reference's markdown component draws round a table, on both surfaces:
+# a wrapper that scrolls a wide table inside the column and takes keyboard focus
+# so it can be scrolled, and a class on the table. Both classes are what an
+# author's CSS targets, and what the reference styles.
+TABLE_OPEN = (
+    '<div class="edsl-table-wrapper" tabindex="0" role="region" aria-label="Table">'
+    '<table class="edsl-table">'
+)
+TABLE_CLOSE = "</table></div>"
+
 # The classes the reference's option-label component puts on a link and on
 # inline code. Written out rather than derived, and held to the recordings --
 # they are that component's choices, not ours.
@@ -72,6 +84,11 @@ class ReactRenderer(RendererHTML):
     default_code_class: str | None = None
 
     def renderToken(self, tokens, idx, options, env):
+        token_type = tokens[idx].type
+        if token_type == "table_open":
+            return TABLE_OPEN
+        if token_type == "table_close":
+            return TABLE_CLOSE
         result = super().renderToken(tokens, idx, options, env)
         # React writes void elements as `<img/>`; markdown-it as `<img />`.
         if tokens[idx].nesting == 0:

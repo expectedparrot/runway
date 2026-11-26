@@ -838,14 +838,16 @@ does, or a newly supported type will keep reading as unsupportable.
 
 ## Regenerating the stylesheet
 
-`assets/questions.css` is vendored, generated output — ~62 KB, ~11 KB gzipped.
+`assets/questions.css` is vendored, generated output — ~70 KB, ~12 KB gzipped.
 It covers the whole respondent component tree, so adding most question types
 needs no regeneration. A *template* that starts emitting utilities nothing
 emitted before does; the stepped progress markers were one.
 
 `assets/base.css` is the build input, and it is `@tailwind base` + `@tailwind
 utilities` and **nothing else** — every rule the package ships is derived from a
-class a component emits. It carried one hand-written block until the selected
+class a component emits, or read as written from a plain stylesheet those
+components import (a markdown table's frame is one: the reference styles it by
+its `edsl-table` hooks, not with utilities). It carried one hand-written block until the selected
 state moved into the page script; see *A clicked option is published, not
 restyled* under [Known gaps](README.md#known-gaps) for why it could not stay,
 and read the comment at the top of the file before adding anything to it.
@@ -857,16 +859,25 @@ therefore needs a checkout of that application:
 
 ```bash
 RUNWAY_REFERENCE_APP=/path/to/the/web/app \
-RUNWAY_REFERENCE_COMPONENTS='/path/to/the/web/app/<respondent components>/**/*.{ts,tsx}' \
+RUNWAY_REFERENCE_COMPONENTS='/path/to/the/web/app/<respondent components>/{*.tsx,!(<assistant>)/**/*.tsx}' \
+RUNWAY_REFERENCE_STYLESHEETS='/path/to/the/web/app/<respondent components>/<table stylesheet>.css' \
 npx tailwindcss \
   -c src/runway/assets/tailwind.config.cjs \
   -i src/runway/assets/base.css \
   -o src/runway/assets/questions.css --minify
 ```
 
-**Both variables are required and neither has a default.** A theme guessed in
-the config would be a second source of truth, and a component glob guessed there
-is worse, because it fails quietly: point the build at that application's whole
+Run the application's own Tailwind (its `node_modules/.bin/tailwindcss`) rather
+than whatever `npx` fetches: this package has no `node_modules`, and a fetched
+Tailwind 4 does not read this config.
+
+**All three variables are required and none has a default.** A theme or a
+stylesheet guessed in the config would be a second source of truth; the
+stylesheets are listed by the platform's path delimiter (`:`, or `;` on
+Windows), and the config reads each one with the application's postcss and adds
+it to the base layer unchanged. The survey assistant's chat is not drawn here,
+so its components stay out of the glob. A component glob guessed there is the
+worst of the three, because it fails quietly: point the build at that application's whole
 component tree and it produces a stylesheet several times the size that still
 draws every page correctly. Nothing about the result says it is wrong. Check the
 size against the figure above before committing a rebuild —
