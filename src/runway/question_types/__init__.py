@@ -25,6 +25,7 @@ from collections.abc import Callable
 from . import (
     background,
     checkbox,
+    checkbox_matrix,
     checkbox_with_other,
     choice,
     email,
@@ -48,6 +49,7 @@ RENDERERS: dict[str, Renderer] = {
     "matrix": matrix.render,
     "checkbox": checkbox.render,
     "checkbox_with_other": checkbox_with_other.render,
+    "checkbox_matrix": checkbox_matrix.render,
     "multiple_choice_with_other": multiple_choice_with_other.render,
     "numerical": numerical.render,
     "free_text": free_text.render,
