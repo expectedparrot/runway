@@ -10,7 +10,7 @@ font. No browser, no node, no server: a file in, a file out.
 
 **Scope today: the choice family — `multiple_choice`, `likert_five`, `yes_no`
 and `linear_scale` — plus `matrix`, `checkbox_matrix`, `checkbox`, `checkbox_with_other`,
-`numerical`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
+`numerical`, `numerical_range`, `free_text`, `email`, `url`, `list` and `survey_message`.** Every other type renders a "No preview is
 available" notice.
 Types are added one at a time because each is held to byte-for-byte agreement
 with the live survey's own components — see [SPEC.md](SPEC.md).
@@ -141,11 +141,11 @@ Four outcomes, and they mean different things:
 `check` exits 1 on `warning`, and on a file it cannot read. `--json` on
 `check`, `types` and `version`.
 
-## Drawn today (15)
+## Drawn today (16)
 
 `multiple_choice`, `yes_no`, `likert_five`, `linear_scale`, `matrix`,
 `checkbox_matrix`, `checkbox`, `checkbox_with_other`, `multiple_choice_with_other`,
-`numerical`, `free_text`, `email`, `url`,
+`numerical`, `numerical_range`, `free_text`, `email`, `url`,
 `list`, `survey_message`. Everything
 else renders a complete page with a note where the control would be — so wording
 and position are still checkable.
@@ -347,7 +347,7 @@ survey can be checked meanwhile.
 | `date_time`           | — not yet       |     | `multiple_choice`            | **✅ available** |
 | `demand`              | — not yet       |     | `multiple_choice_with_other` | **✅ available** |
 | `detect_ai`           | **✅ automatic** |     | `numerical`                  | **✅ available** |
-| `dict`                | — not yet       |     | `numerical_range`            | — not yet       |
+| `dict`                | — not yet       |     | `numerical_range`            | **✅ available** |
 | `distribution`        | — not yet       |     | `rank`                       | — not yet       |
 | `dropdown`            | — not yet       |     | `survey_message`             | **✅ available** |
 | `edit`                | — not yet       |     | `top_k`                      | — not yet       |

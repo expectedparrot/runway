@@ -1182,6 +1182,32 @@
     },
     "humanize_schema": null
   },
+  "numerical_range": {
+    "kind": "controlled_question",
+    "component": "ControlledNumericalRangeQuestion",
+    "question": {
+      "question_name": "budget_range",
+      "question_type": "numerical_range",
+      "question_text": "What's the most and least you'd spend on a meal out?"
+    },
+    "humanize_schema": null
+  },
+  "numerical_range_bounded": {
+    "kind": "controlled_question",
+    "component": "ControlledNumericalRangeQuestion",
+    "question": {
+      "question_name": "age_range",
+      "question_text": "Which ages should the study include?",
+      "question_type": "numerical_range",
+      "min_value": 18,
+      "max_value": 99
+    },
+    "humanize_schema": {
+      "format": {
+        "type": "input"
+      }
+    }
+  },
   "checkbox": {
     "kind": "controlled_question",
     "component": "ControlledCheckBoxQuestion",

@@ -1,0 +1,37 @@
+{# Transcription of the reference implementation's numerical range question: a
+   From field and a To field, each a label over a number input.
+
+   The inputs are numerical's, classes and all, with a range hook added to each;
+   `step="any"` and `value=""` are there for the same reasons they are in
+   numerical.html. Neither field carries the question's bounds -- the reference
+   checks them when the page is submitted -- so a bounded range draws exactly
+   what an unbounded one does.
+
+   The two fields sit side by side from `sm` up and stack below it. Their ids
+   are the question name with `-min` and `-max`, which is what each label's
+   `for` points at.
+
+   Class strings are inline rather than passed in, so this file can be diffed
+   against the reference component side by side; a class string in a .py file is
+   invisible to the stylesheet build, which scans templates and would drop the
+   rules for it. The empty-comment separator lines exist only
+   to suppress whitespace between literal elements; JSX discards that
+   whitespace, so emitting it would break byte parity. See README. #}
+<div class="edsl-question edsl-numerical-range-question mb-6">
+{#- -#}
+{% include "questions/_question_text.html" %}
+{#- -#}
+<div class="edsl-numerical-range-fields flex flex-wrap items-start gap-x-2 gap-y-3">
+{#- -#}
+{%- for end, label in [("min", "From"), ("max", "To")] %}
+<div class="w-full sm:w-48">
+{#- -#}
+<label for="{{ question_name }}-{{ end }}" class="edsl-numerical-range-label mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ label }}</label>
+{#- -#}
+<input id="{{ question_name }}-{{ end }}" type="number" step="any" class="edsl-input edsl-numerical-range-input w-full p-2 border border-gray-400 dark:border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring" value=""/>
+{#- -#}
+</div>
+{%- endfor %}
+</div>
+{#- -#}
+</div>
